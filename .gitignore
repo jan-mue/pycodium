@@ -1,7 +1,3 @@
-.web
-*.db
-.states
-assets/external/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -201,3 +197,10 @@ cython_debug/
 
 # MacOS
 .DS_Store
+
+# Reflex
+assets/external/
+.web
+*.db
+.states
+requirements.txt

@@ -1,12 +1,15 @@
 """Build hook for exporting the Reflex frontend during the build process."""
 
-from typing import Any, override
+from __future__ import annotations
+
+from typing import Any
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 from reflex import constants
 from reflex.config import environment
 from reflex.utils import prerequisites
 from reflex.utils.export import export
+from typing_extensions import override
 
 
 class ReflexBuildHook(BuildHookInterface[Any]):

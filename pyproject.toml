@@ -52,6 +52,7 @@ dev = [
     "httpx==0.28.1",
     "pyright==1.1.402",
     "pytest==8.4.0",
+    "uvicorn==0.34.3",
 ]
 
 [tool.hatch.build]

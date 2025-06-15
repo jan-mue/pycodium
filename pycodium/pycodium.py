@@ -10,7 +10,7 @@ class State(rx.State):
 
 
 def index() -> rx.Component:
-    # Welcome Page (Index)
+    """The index page of the app."""
     return rx.container(
         rx.color_mode.button(position="top-right"),
         rx.vstack(

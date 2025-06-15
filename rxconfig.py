@@ -1,3 +1,5 @@
+"""Configuration for the Reflex application."""
+
 import reflex as rx
 
 config = rx.Config(

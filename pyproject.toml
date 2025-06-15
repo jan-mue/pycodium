@@ -37,6 +37,8 @@ dependencies = [
     "aiofiles==24.1.0",
     # To detect file encodings
     "charset-normalizer==3.4.2",
+    # Running the Reflex backend
+    "granian==2.3.4",
     # To detect programming languages
     "pygments==2.19.1",
     # Displays the web UI in a native window

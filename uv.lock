@@ -666,6 +666,8 @@ source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
     { name = "charset-normalizer" },
+    { name = "granian" },
+    { name = "psutil" },
     { name = "pygments" },
     { name = "pywebview" },
     { name = "reflex" },
@@ -687,6 +689,8 @@ dev = [
 requires-dist = [
     { name = "aiofiles", specifier = "==24.1.0" },
     { name = "charset-normalizer", specifier = "==3.4.2" },
+    { name = "granian", specifier = "==2.3.4" },
+    { name = "psutil", specifier = "==7.0.0" },
     { name = "pygments", specifier = "==2.19.1" },
     { name = "pywebview", specifier = "==5.4" },
     { name = "reflex", specifier = "==0.7.14" },

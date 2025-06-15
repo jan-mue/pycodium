@@ -1,6 +1,7 @@
 """Main entry point for running the PyCodium IDE via its CLI."""
 
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Annotated
@@ -45,6 +46,7 @@ def run_app_with_pywebview(
         backend_port: The port for the backend server
         backend_host: The host for the backend server
     """
+    os.chdir(PROJECT_ROOT_DIR)
     config = get_config()
 
     backend_host = backend_host or config.backend_host

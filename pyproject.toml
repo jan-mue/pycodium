@@ -39,7 +39,7 @@ urls.Source = "https://github.com/jan-mue/pycodium"
 dev = [
     "coverage==7.9.1",
     "httpx==0.28.1",
-    "mypy==1.16.0",
+    "pyright==1.1.402",
     "pytest==8.4.0",
 ]
 
@@ -109,17 +109,11 @@ exclude_also = [
     "@(typing(_extensions)?\\.)?overload",
 ]
 
-[tool.mypy]
-strict = true
-implicit_reexport = true
-enable_error_code = [
-    "explicit-override",
-    "ignore-without-code",
-    "redundant-expr",
-    "redundant-self",
-    "truthy-bool",
-    "truthy-iterable",
-    "unimported-reveal",
-    "unused-awaitable",
-    "unused-ignore",
-]
+[tool.pyright]
+typeCheckingMode = "strict"
+reportImplicitOverride = true
+reportUnnecessaryTypeIgnoreComment = true
+reportUnknownArgumentType = false
+reportUnknownLambdaType = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false

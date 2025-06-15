@@ -1,8 +1,9 @@
 """Defines the file explorer component."""
 
-from typing import override
+from __future__ import annotations
 
 import reflex as rx
+from typing_extensions import override
 
 from pycodium.models.files import FilePath
 from pycodium.state import EditorState
@@ -95,7 +96,7 @@ def explorer() -> rx.Component:
             class_name="p-2 text-xs uppercase font-bold flex justify-between items-center",
         ),
         rx.el.div(
-            file_tree_view(name=EditorState.file_tree.name, sub_paths=EditorState.file_tree.sub_paths, is_dir=True),
+            file_tree_view(name=EditorState.file_tree.name, sub_paths=EditorState.file_tree.sub_paths, is_dir=True),  # type: ignore[reportOptionalMemberAccess]
             class_name="mt-2",
         ),
         class_name="w-full h-full overflow-auto",

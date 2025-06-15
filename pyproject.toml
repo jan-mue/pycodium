@@ -45,6 +45,8 @@ dependencies = [
     "reflex==0.7.14",
     # CLI framework
     "typer==0.16.0",
+    # Type checking backward compatibility
+    "typing-extensions==4.14.0",
 ]
 
 urls.Changelog = "https://github.com/jan-mue/pycodium/releases"

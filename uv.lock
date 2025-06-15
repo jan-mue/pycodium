@@ -670,6 +670,7 @@ dependencies = [
     { name = "pywebview" },
     { name = "reflex" },
     { name = "typer" },
+    { name = "typing-extensions" },
 ]
 
 [package.dev-dependencies]
@@ -690,6 +691,7 @@ requires-dist = [
     { name = "pywebview", specifier = "==5.4" },
     { name = "reflex", specifier = "==0.7.14" },
     { name = "typer", specifier = "==0.16.0" },
+    { name = "typing-extensions", specifier = "==4.14.0" },
 ]
 
 [package.metadata.requires-dev]

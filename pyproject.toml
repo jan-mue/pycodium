@@ -1,7 +1,10 @@
 [build-system]
 build-backend = "hatchling.build"
 requires = [
+    "aiofiles==24.1.0",
+    "charset-normalizer==3.4.2",
     "hatchling",
+    "pygments==2.19.1",
     "pywebview==5.4",
     "reflex==0.7.14",
 ]
@@ -30,6 +33,12 @@ classifiers = [
 ]
 dynamic = [ "version" ]
 dependencies = [
+    # For asynchronous file operations
+    "aiofiles==24.1.0",
+    # To detect file encodings
+    "charset-normalizer==3.4.2",
+    # To detect programming languages
+    "pygments==2.19.1",
     # Displays the web UI in a native window
     "pywebview==5.4",
     # Web framework used for the GUI
@@ -98,11 +107,12 @@ lint.select = [
     "W",    # pycodestyle warnings
 ]
 lint.ignore = [
+    "E501",    # Line too long, handled by formatter
     "PLR0913", # Too many arguments in function definition"
     "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar`
     "TC006",   # Add quotes to type expression in `typing.cast()`
 ]
-lint.per-file-ignores."__init__.py" = [ "F401" ]
+lint.per-file-ignores."__init__.py" = [ "D104", "F401" ]
 lint.per-file-ignores."tests/**" = [ "D", "PLR2004", "S101" ]
 lint.unfixable = [  ]
 lint.flake8-tidy-imports.ban-relative-imports = "all"

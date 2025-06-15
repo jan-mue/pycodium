@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 12%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 210 100% 40%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 210 100% 40%;
+
+    --radius: 0.3rem;
+
+    /* PyCodium specific variables */
+    --pycodium-bg: #1E1E1E;
+    --pycodium-sidebar-bg: #252526;
+    --pycodium-activity-bar: #333333;
+    --pycodium-editor-bg: #1E1E1E;
+    --pycodium-panel-bg: #1E1E1E;
+    --pycodium-statusbar-bg: #007ACC;
+    --pycodium-tab-active: #1E1E1E;
+    --pycodium-tab-inactive: #2D2D2D;
+    --pycodium-highlight: #264F78;
+    --pycodium-text: #D4D4D4;
+    --pycodium-icon: #D4D4D4;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    color: var(--pycodium-text);
+  }
+
+  /* Monaco editor specific styles */
+  .monaco-editor .margin {
+    background-color: var(--pycodium-editor-bg) !important;
+  }
+
+  /* Custom scrollbar for VS Code look */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--pycodium-bg);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #777;
+  }
+}
+
+@layer components {
+  /* Style for editor tabs */
+  .editor-tab {
+    @apply px-3 py-1 flex items-center gap-2 text-sm border-r border-pycodium-sidebar-bg transition-colors;
+    color: var(--pycodium-text);
+  }
+
+  .editor-tab.active {
+    @apply bg-pycodium-tab-active;
+  }
+
+  .editor-tab:not(.active) {
+    @apply bg-pycodium-tab-inactive hover:bg-opacity-80;
+  }
+
+  /* VS Code icon hover effects */
+  .pycodium-icon {
+    @apply p-2 transition-colors cursor-pointer;
+    color: var(--pycodium-icon);
+  }
+
+  .pycodium-icon:hover {
+    color: var(--pycodium-text);
+  }
+
+  .status-bar-item {
+    @apply px-2 text-xs flex items-center h-full hover:bg-opacity-80 hover:bg-white/10;
+  }
+
+  /* Command palette styles */
+  .command-palette {
+    @apply bg-pycodium-sidebar-bg border border-border shadow-lg;
+  }
+
+  .command-palette-item {
+    @apply px-4 py-2 hover:bg-pycodium-highlight text-sm cursor-pointer flex justify-between;
+    color: var(--pycodium-text);
+  }
+
+  /* File explorer styles */
+  .file-item {
+    @apply flex items-center gap-2 px-2 py-1 text-sm hover:bg-black/20 cursor-pointer;
+    color: var(--pycodium-text);
+  }
+
+  .folder-item {
+    @apply flex items-center gap-2 px-2 py-1 text-sm hover:bg-black/20 cursor-pointer font-medium;
+    color: var(--pycodium-text);
+  }
+
+  /* Tabs scrollbar - hidden by default, visible on hover */
+  .tabs-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  .tabs-scrollbar::-webkit-scrollbar {
+    height: 0px;
+    width: 0px;
+    background: transparent;
+  }
+
+  .tabs-scrollbar:hover {
+    scrollbar-width: thin; /* Firefox */
+    -ms-overflow-style: auto; /* IE and Edge */
+  }
+
+  .tabs-scrollbar:hover::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  .tabs-scrollbar:hover::-webkit-scrollbar-track {
+    background: var(--pycodium-tab-inactive);
+  }
+
+  .tabs-scrollbar:hover::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+  }
+
+  .tabs-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+    background: #777;
+  }
+}

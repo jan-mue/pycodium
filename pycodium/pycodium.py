@@ -2,36 +2,58 @@
 
 import reflex as rx
 
-from rxconfig import config
-
-
-class State(rx.State):
-    """The app state."""
+from pycodium.components.activity_bar import activity_bar
+from pycodium.components.editor_area import editor_area
+from pycodium.components.resizable_panels import group, handle, panel
+from pycodium.components.sidebar import sidebar
+from pycodium.components.status_bar import status_bar
+from pycodium.state import EditorState
 
 
 def index() -> rx.Component:
-    """The index page of the app."""
-    return rx.container(
-        rx.color_mode.button(position="top-right"),
-        rx.vstack(
-            rx.heading("Welcome to Reflex!", size="9"),
-            rx.text(
-                "Get started by editing ",
-                rx.code(f"{config.app_name}/{config.app_name}.py"),
-                size="5",
+    """Main page of the PyCodium IDE."""
+    return rx.box(
+        rx.box(
+            activity_bar(),
+            group(
+                rx.cond(
+                    EditorState.sidebar_visible,
+                    rx.fragment(
+                        panel(
+                            sidebar(),
+                            default_size=20,
+                            min_size=15,
+                            max_size=40,
+                            class_name="h-full",
+                        ),
+                        handle(
+                            class_name="w-1 hover:bg-pycodium-highlight hover:cursor-col-resize",
+                        ),
+                    ),
+                ),
+                panel(
+                    rx.box(
+                        group(
+                            panel(
+                                editor_area(),
+                                class_name="h-full overflow-hidden",
+                            ),
+                            direction="vertical",
+                            class_name="h-full",
+                        ),
+                        class_name="h-full flex flex-col overflow-hidden",
+                    ),
+                    class_name="h-full",
+                ),
+                direction="horizontal",
+                class_name="flex-1",
             ),
-            rx.link(
-                rx.button("Check out our docs!"),
-                href="https://reflex.dev/docs/getting-started/introduction/",
-                is_external=True,
-            ),
-            spacing="5",
-            justify="center",
-            min_height="85vh",
+            class_name="flex-1 flex overflow-hidden",
         ),
-        rx.logo(),
+        status_bar(),
+        class_name="h-screen flex flex-col overflow-hidden",
     )
 
 
-app = rx.App()
-app.add_page(index)
+app = rx.App(theme=rx.theme(appearance="dark"), stylesheets=["/index.css"])
+app.add_page(index, title="PyCodium", description="A modern Python IDE.", on_load=EditorState.open_project)

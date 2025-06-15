@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/jan-mue/pycodium/compare/v0.1.0...v0.1.1) (2025-06-15)
+
+
+### Bug Fixes
+
+* Make sure the stand-alone package can start ([#6](https://github.com/jan-mue/pycodium/issues/6)) ([3cd74c8](https://github.com/jan-mue/pycodium/commit/3cd74c8508ed87050d2389f011ef59e167736d4a))
+
 ## 0.1.0 (2025-06-15)
 
 

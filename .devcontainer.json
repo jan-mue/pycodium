@@ -1,0 +1,53 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/python-3
+{
+    "name": "Python 3",
+    "image": "mcr.microsoft.com/vscode/devcontainers/python:3",
+
+    // Set *default* container specific settings.json values on container create.
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash",
+        "python.defaultInterpreterPath": ".venv/bin/python",
+        "keyboard.layout": "com.apple.keylayout.German",
+        "telemetry.telemetryLevel": "off",
+        "workbench.colorTheme": "GitHub Dark",
+        "files.autoSave": "afterDelay",
+        "git.autofetch": true,
+        "git.confirmSync": false,
+        "python.analysis.typeCheckingMode": "standard",
+        "chat.agent.enabled": true,
+        "chat.mcp.enabled": true,
+        "mcp": {
+            "servers": {
+                "DeepWiki": {
+                    "url": "https://mcp.deepwiki.com/sse"
+                }
+            }
+        }
+    },
+
+    // Add the IDs of extensions you want installed when the container is created.
+    "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        "ms-python.mypy-type-checker",
+        "github.copilot",
+        "github.copilot-chat",
+        "github.github-vscode-theme",
+        "tamasfe.even-better-toml",
+        // opt-out from auto-installed extensions
+        "-ms-python.autopep8",
+        "-dbaeumer.vscode-eslint"
+    ],
+
+    // Use 'postCreateCommand' to run commands after the container is created.
+    "postCreateCommand": "uv sync --frozen && uv tool install pre-commit --with pre-commit-uv && pre-commit install",
+
+    // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    "remoteUser": "vscode",
+
+    "features": {
+        "ghcr.io/va-h/devcontainers-features/uv:1": {}
+    }
+}

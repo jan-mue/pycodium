@@ -1,0 +1,136 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = [
+    "hatchling",
+    "pywebview==5.4",
+    "reflex==0.7.14",
+]
+
+[project]
+name = "pycodium"
+description = "A Python IDE written in Python"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Jan Müller", email = "" },
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dynamic = [ "version" ]
+dependencies = [
+    # Displays the web UI in a native window
+    "pywebview==5.4",
+    # Web framework used for the GUI
+    "reflex==0.7.14",
+    # CLI framework
+    "typer==0.16.0",
+]
+
+urls.Changelog = "https://github.com/jan-mue/pycodium/releases"
+urls.Documentation = "https://github.com/jan-mue/pycodium#readme"
+urls.Issues = "https://github.com/jan-mue/pycodium/issues"
+urls.Source = "https://github.com/jan-mue/pycodium"
+
+scripts.pycodium = "pycodium.main:app"
+
+[dependency-groups]
+dev = [
+    "coverage==7.9.1",
+    "hatchling==1.27.0",
+    "httpx==0.28.1",
+    "pyright==1.1.402",
+    "pytest==8.4.0",
+    "uvicorn==0.34.3",
+]
+
+[tool.hatch.build]
+include = [ "pycodium", ".web/_static", "assets" ]
+force-include = { "rxconfig.py" = "rxconfig.py", "build_hook.py" = "build_hook.py" }
+
+[tool.hatch.build.hooks.custom]
+path = "build_hook.py"
+
+[tool.hatch.version]
+path = "pycodium/version.py"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+lint.select = [
+    "A",    # flake8-builtins
+    "ARG",  # flake8-unused-arguments
+    "B",    # flake8-bugbear
+    "BLE",  # flake8-blind-except
+    "C4",   # flake8-comprehensions
+    "D",    # pydocstyle
+    "E",    # pycodestyle errors
+    "ERA",  # no commented-out code
+    "F",    # pyflakes
+    "I",    # isort
+    "ICN",  # flake8-import-conventions
+    "LOG",  # flake8-logging)
+    "NPY",  # numpy-specific rules
+    "PERF", # perflint
+    "PGH",  # pygrep-hooks
+    "PIE",  # flake8-pie
+    "PL",   # pylint
+    "PT",   # flake8-pytest-style
+    "RUF",  # ruff-specific rules
+    "S",    # flake8-bandit
+    "S101", # don't use assert
+    "SIM",  # flake8-simplify
+    "TC",   # flake8-type-checking
+    "TID",  # flake8-tidy-imports
+    "UP",   # pyupgrade
+    "W",    # pycodestyle warnings
+]
+lint.ignore = [
+    "PLR0913", # Too many arguments in function definition"
+    "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar`
+    "TC006",   # Add quotes to type expression in `typing.cast()`
+]
+lint.per-file-ignores."__init__.py" = [ "F401" ]
+lint.per-file-ignores."tests/**" = [ "D", "PLR2004", "S101" ]
+lint.unfixable = [  ]
+lint.flake8-tidy-imports.ban-relative-imports = "all"
+lint.isort.known-first-party = [ "pycodium" ]
+lint.pydocstyle.convention = "google"
+
+[tool.codespell]
+ignore-words-list = "nin"
+
+[tool.pyproject-fmt]
+indent = 4
+column_width = 120
+keep_full_version = true
+
+[tool.coverage.report]
+exclude_also = [
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@(abc\\.)?abstractmethod",
+    "@(typing(_extensions)?\\.)?overload",
+]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+reportImplicitOverride = true
+reportUnnecessaryTypeIgnoreComment = true
+reportUnknownArgumentType = false
+reportUnknownLambdaType = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false

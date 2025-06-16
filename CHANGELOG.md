@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/jan-mue/pycodium/compare/v0.1.1...v0.1.2) (2025-06-16)
+
+
+### Bug Fixes
+
+* Not found error when running with uvx ([#8](https://github.com/jan-mue/pycodium/issues/8)) ([ab5a526](https://github.com/jan-mue/pycodium/commit/ab5a526d2431a3e1052cdb07d1d9ce77e4774205))
+
 ## [0.1.1](https://github.com/jan-mue/pycodium/compare/v0.1.0...v0.1.1) (2025-06-15)
 
 

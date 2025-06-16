@@ -1,13 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = [
-    "aiofiles==24.1.0",
-    "charset-normalizer==3.4.2",
-    "hatchling",
-    "pygments==2.19.1",
-    "pywebview==5.4",
-    "reflex==0.7.14",
-]
+requires = [ "hatchling" ]
 
 [project]
 name = "pycodium"
@@ -71,11 +64,18 @@ dev = [
 ]
 
 [tool.hatch.build]
-include = [ "pycodium", ".web/_static", "assets" ]
-force-include = { "rxconfig.py" = "rxconfig.py", "build_hook.py" = "build_hook.py" }
+include = [
+    ".web/_static",
+    "assets",
+    "pycodium",
+    "build_hook.py",
+    "rxconfig.py",
+]
+ignore-vcs = true
 
 [tool.hatch.build.hooks.custom]
 path = "build_hook.py"
+require-runtime-dependencies = true
 
 [tool.hatch.version]
 path = "pycodium/version.py"

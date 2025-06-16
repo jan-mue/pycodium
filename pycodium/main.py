@@ -16,6 +16,7 @@ from reflex.utils import exec, processes  # noqa: A004
 
 from pycodium.constants import PROJECT_ROOT_DIR
 
+# TODO: configure logging
 logger = logging.getLogger(__name__)
 app = typer.Typer()
 
@@ -26,6 +27,7 @@ def run(path: Annotated[Path | None, typer.Argument()] = None):
     logger.info(f"Opening IDE with path: {path}")
     # TODO: run the frontend in dev mode when the package is installed in editable mode
     run_app_with_pywebview()
+    # TODO: actually open path in editor
 
 
 def run_app_with_pywebview(

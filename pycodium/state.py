@@ -30,7 +30,7 @@ class EditorState(rx.State):
     active_tab_history: list[str] = []
 
     # Explorer state
-    project_root: Path = Path("../pycodium")
+    project_root: Path = Path.cwd()
     expanded_folders: set[str] = set()
     file_tree: FilePath | None = None
 

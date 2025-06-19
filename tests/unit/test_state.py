@@ -12,20 +12,17 @@ def state() -> EditorState:
     return EditorState()
 
 
-@pytest.mark.asyncio
 async def test_toggle_sidebar(state: EditorState) -> None:
     initial = state.sidebar_visible
     await state.toggle_sidebar()
     assert state.sidebar_visible is not initial
 
 
-@pytest.mark.asyncio
 async def test_set_active_sidebar_tab(state: EditorState) -> None:
     await state.set_active_sidebar_tab("settings")
     assert state.active_sidebar_tab == "settings"
 
 
-@pytest.mark.asyncio
 async def test_toggle_folder(state: EditorState) -> None:
     folder = "folder1"
     await state.toggle_folder(folder)
@@ -34,7 +31,6 @@ async def test_toggle_folder(state: EditorState) -> None:
     assert folder not in state.expanded_folders
 
 
-@pytest.mark.asyncio
 async def test_close_tab_switches_to_previous(state: EditorState) -> None:
     tab1 = EditorTab(
         id="1", title="t1", language="py", content="", encoding="utf-8", path="f1.py", on_not_active=asyncio.Event()
@@ -50,7 +46,6 @@ async def test_close_tab_switches_to_previous(state: EditorState) -> None:
     assert all(tab.id != "2" for tab in state.tabs)
 
 
-@pytest.mark.asyncio
 async def test_close_tab_no_previous(state: EditorState) -> None:
     tab1 = EditorTab(
         id="1", title="t1", language="py", content="", encoding="utf-8", path="f1.py", on_not_active=asyncio.Event()
@@ -89,7 +84,6 @@ def test_editor_content_empty(state: EditorState) -> None:
     assert state.current_file is None
 
 
-@pytest.mark.asyncio
 async def test_update_tab_content(state: EditorState) -> None:
     tab = EditorTab(
         id="1", title="t", language="py", content="abc", encoding="utf-8", path="f.py", on_not_active=asyncio.Event()

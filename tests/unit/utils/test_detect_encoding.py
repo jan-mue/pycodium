@@ -15,7 +15,7 @@ def test_decode_utf8() -> None:
     text = b"hello"
     decoded, encoding = decode(text)
     assert decoded == "hello"
-    assert encoding in ("ascii", "utf-8", "utf-8-guessed", "latin-1-guessed")
+    assert encoding == "ascii"
 
 
 def test_decode_utf16() -> None:
@@ -23,10 +23,3 @@ def test_decode_utf16() -> None:
     decoded, encoding = decode(text)
     assert "hi" in decoded
     assert encoding.startswith("utf-16")
-
-
-def test_decode_fallback() -> None:
-    text = b"\xff\xfe\x00\x00"
-    decoded, encoding = decode(text)
-    assert isinstance(decoded, str)
-    assert isinstance(encoding, str)

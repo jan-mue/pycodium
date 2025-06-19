@@ -60,8 +60,11 @@ dev = [
     "coverage==7.9.1",
     "hatchling==1.27.0",
     "httpx==0.28.1",
+    "inline-snapshot[dirty-equals]==0.23.2",
     "pyright==1.1.402",
     "pytest==8.4.0",
+    "pytest-asyncio==1.0.0",
+    "pytest-mock==3.14.1",
     "uvicorn==0.34.3",
 ]
 
@@ -87,32 +90,32 @@ target-version = "py310"
 line-length = 120
 
 lint.select = [
-    "A",    # flake8-builtins
-    "ARG",  # flake8-unused-arguments
-    "B",    # flake8-bugbear
-    "BLE",  # flake8-blind-except
-    "C4",   # flake8-comprehensions
-    "D",    # pydocstyle
-    "E",    # pycodestyle errors
-    "ERA",  # no commented-out code
-    "F",    # pyflakes
-    "I",    # isort
-    "ICN",  # flake8-import-conventions
-    "LOG",  # flake8-logging)
-    "NPY",  # numpy-specific rules
-    "PERF", # perflint
-    "PGH",  # pygrep-hooks
-    "PIE",  # flake8-pie
-    "PL",   # pylint
-    "PT",   # flake8-pytest-style
-    "RUF",  # ruff-specific rules
-    "S",    # flake8-bandit
-    "S101", # don't use assert
-    "SIM",  # flake8-simplify
-    "TC",   # flake8-type-checking
-    "TID",  # flake8-tidy-imports
-    "UP",   # pyupgrade
-    "W",    # pycodestyle warnings
+    "A",     # flake8-builtins
+    "ARG",   # flake8-unused-arguments
+    "ASYNC", # flake8-async
+    "B",     # flake8-bugbear
+    "BLE",   # flake8-blind-except
+    "C4",    # flake8-comprehensions
+    "D",     # pydocstyle
+    "E",     # pycodestyle errors
+    "ERA",   # no commented-out code
+    "F",     # pyflakes
+    "I",     # isort
+    "ICN",   # flake8-import-conventions
+    "LOG",   # flake8-logging)
+    "NPY",   # numpy-specific rules
+    "PERF",  # perflint
+    "PGH",   # pygrep-hooks
+    "PIE",   # flake8-pie
+    "PL",    # pylint
+    "PT",    # flake8-pytest-style
+    "RUF",   # ruff-specific rules
+    "S",     # flake8-bandit
+    "SIM",   # flake8-simplify
+    "TC",    # flake8-type-checking
+    "TID",   # flake8-tidy-imports
+    "UP",    # pyupgrade
+    "W",     # pycodestyle warnings
 ]
 lint.ignore = [
     "E501",    # Line too long, handled by formatter
@@ -121,7 +124,7 @@ lint.ignore = [
     "TC006",   # Add quotes to type expression in `typing.cast()`
 ]
 lint.per-file-ignores."__init__.py" = [ "D104", "F401" ]
-lint.per-file-ignores."tests/**" = [ "D", "PLR2004", "S101" ]
+lint.per-file-ignores."tests/**" = [ "D", "PLR2004", "S" ]
 lint.unfixable = [  ]
 lint.flake8-tidy-imports.ban-relative-imports = "all"
 lint.isort.known-first-party = [ "pycodium" ]
@@ -134,6 +137,10 @@ ignore-words-list = "nin"
 indent = 4
 column_width = 120
 keep_full_version = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.report]
 exclude_also = [

@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import reflex as rx
+
+if TYPE_CHECKING:
+    import asyncio
 
 
 class Tab(rx.Base):
@@ -19,5 +24,6 @@ class EditorTab(Tab):
     content: str
     encoding: str
     path: str
+    on_not_active: asyncio.Event
     is_special: bool = False
     special_component: str | None = None

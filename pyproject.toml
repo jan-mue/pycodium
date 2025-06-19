@@ -44,6 +44,8 @@ dependencies = [
     "typer==0.16.0",
     # Type checking backward compatibility
     "typing-extensions==4.14.0",
+    # Update editor content when files change
+    "watchfiles==1.0.5",
 ]
 
 urls.Changelog = "https://github.com/jan-mue/pycodium/releases"

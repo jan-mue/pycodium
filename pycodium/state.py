@@ -1,5 +1,6 @@
 """State and event handlers for the IDE."""
 
+import asyncio
 import logging
 import time
 from pathlib import Path
@@ -7,15 +8,17 @@ from uuid import uuid4
 
 import aiofiles
 import reflex as rx
-from reflex.event import KeyInputInfo, key_event
+from reflex.event import EventCallback, KeyInputInfo, key_event
 from reflex.utils import imports
 from typing_extensions import override
+from watchfiles import Change, awatch
 
 from pycodium.models.files import FilePath
 from pycodium.models.tabs import EditorTab
 from pycodium.utils.detect_encoding import decode
 from pycodium.utils.detect_lang import detect_programming_language
 
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -62,8 +65,14 @@ class EditorState(rx.State):
         else:
             self.expanded_folders.add(folder_path)
 
+    def _stop_updating_active_tab(self) -> None:
+        if not (active_tab := self.active_tab):
+            logger.warning("No active tab to stop updating")
+            return
+        active_tab.on_not_active.set()  # Signal to stop watching the file for changes
+
     @rx.event
-    async def open_file(self, file_path: str) -> rx.Component | None:
+    async def open_file(self, file_path: str) -> rx.Component | EventCallback[()] | None:
         """Open a file in the editor.
 
         Args:
@@ -92,14 +101,17 @@ class EditorState(rx.State):
                 content=decoded_file_content,
                 encoding=encoding,
                 path=file_path,
+                on_not_active=asyncio.Event(),
             )
             self.tabs.append(tab)
             logger.debug(f"Created tab {tab.id}")
 
         if self.active_tab_id:
             self.active_tab_history.append(self.active_tab_id)
+            self._stop_updating_active_tab()
 
         self.active_tab_id = tab.id
+        return EditorState.keep_active_tab_content_updated
 
     async def _save_current_file(self) -> None:
         """Save the content of the currently active tab to its file."""
@@ -121,6 +133,7 @@ class EditorState(rx.State):
             tab_id: The ID of the tab to close.
         """
         logger.debug(f"Closing tab {tab_id}")
+        self._stop_updating_active_tab()
         self.tabs = [tab for tab in self.tabs if tab.id != tab_id]
         self.active_tab_history = [tab for tab in self.active_tab_history if tab != tab_id]
 
@@ -135,7 +148,7 @@ class EditorState(rx.State):
             self.active_tab_id = None
 
     @rx.event
-    async def set_active_tab(self, tab_id: str) -> None:
+    async def set_active_tab(self, tab_id: str) -> EventCallback[()] | None:
         """Set the active tab by its ID.
 
         Args:
@@ -150,7 +163,10 @@ class EditorState(rx.State):
         logger.debug(f"Setting active tab {tab_id}")
         if self.active_tab_id is not None:
             self.active_tab_history.append(self.active_tab_id)
+            self._stop_updating_active_tab()
         self.active_tab_id = tab_id
+        self.active_tab.on_not_active.clear()  # type: ignore[reportOptionalMemberAccess]
+        return EditorState.keep_active_tab_content_updated
 
     @rx.var
     def active_tab(self) -> EditorTab | None:
@@ -254,6 +270,7 @@ class EditorState(rx.State):
                 content="{}",
                 encoding="utf-8",
                 path="settings.json",
+                on_not_active=asyncio.Event(),
                 is_special=True,
                 special_component="settings",
             )
@@ -269,6 +286,23 @@ class EditorState(rx.State):
             await self._save_current_file()
         elif key_info["meta_key"] and key.lower() == "w" and self.active_tab_id:
             await self.close_tab(self.active_tab_id)
+
+    @rx.event(background=True)
+    async def keep_active_tab_content_updated(self) -> None:
+        """Keep the content of the active tab updated by watching its file for changes."""
+        active_tab = self.active_tab
+        if not active_tab:
+            logger.warning("No active tab to watch for changes")
+            return
+        file_path = self.project_root.parent / active_tab.path
+        logger.debug(f"Starting to watch tab {active_tab.id} for changes from file {file_path}")
+        async for changes in awatch(file_path, stop_event=active_tab.on_not_active):
+            for change in changes:
+                if change[0] == Change.modified:
+                    async with aiofiles.open(file_path, encoding=active_tab.encoding) as f, self:
+                        active_tab.content = await f.read()
+                    logger.debug(f"Updated content of tab {active_tab.id} from file {file_path}")
+        logger.debug(f"Stopped watching tab {active_tab.id} for changes from file {file_path}")
 
 
 class GlobalHotkeyWatcher(rx.Fragment):

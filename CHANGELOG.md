@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0](https://github.com/jan-mue/pycodium/compare/v0.1.2...v0.2.0) (2025-06-19)
+
+
+### Features
+
+* Add CLI option to show version ([#14](https://github.com/jan-mue/pycodium/issues/14)) ([433768c](https://github.com/jan-mue/pycodium/commit/433768cf3c3fa8cae591151415df3108aaa231f0))
+* Add keyboard shortcuts (cmd+s, cmd+w) ([#15](https://github.com/jan-mue/pycodium/issues/15)) ([74e2057](https://github.com/jan-mue/pycodium/commit/74e2057fbf9d1d5c5d23844f51e5cf5d10ad27d2))
+* Update editor content when files change ([#16](https://github.com/jan-mue/pycodium/issues/16)) ([325997e](https://github.com/jan-mue/pycodium/commit/325997e3ed97a272251c38f2a9fb5931dd886c9e))
+
+
+### Bug Fixes
+
+* Hide tab bar when no tabs are open ([#11](https://github.com/jan-mue/pycodium/issues/11)) ([0b5495b](https://github.com/jan-mue/pycodium/commit/0b5495bbfe3a8aaecfb601fae2361ce4ee48bbce))
+
 ## [0.1.2](https://github.com/jan-mue/pycodium/compare/v0.1.1...v0.1.2) (2025-06-16)
 
 

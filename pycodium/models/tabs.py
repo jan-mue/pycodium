@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import asyncio  # noqa: TC003
 
 import reflex as rx
-
-if TYPE_CHECKING:
-    import asyncio
 
 
 class Tab(rx.Base):

@@ -301,6 +301,9 @@ class EditorState(rx.State):
                 if change[0] == Change.modified:
                     async with aiofiles.open(file_path, encoding=active_tab.encoding) as f, self:
                         active_tab.content = await f.read()
+
+                        # workaround for https://github.com/orgs/reflex-dev/discussions/1644
+                        self.tabs = self.tabs
                     logger.debug(f"Updated content of tab {active_tab.id} from file {file_path}")
         logger.debug(f"Stopped watching tab {active_tab.id} for changes from file {file_path}")
 

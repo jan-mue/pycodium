@@ -2,14 +2,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File",
+            "name": "Run Reflex",
             "type": "debugpy",
             "request": "launch",
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}/"
-            },
-            "program": "${file}",
-            "console": "integratedTerminal"
+            "module": "reflex",
+            "args": ["run"],
+            "justMyCode": true
         }
     ]
 }

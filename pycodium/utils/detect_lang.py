@@ -17,5 +17,5 @@ def detect_programming_language(filename: str) -> str:
         language = lexer.name
     except ClassNotFound:
         language = "undefined"
-    logger.info(f"Detected language for '{filename}': {language} in {time.perf_counter() - start_time:.4f} seconds")
+    logger.debug(f"Detected language for '{filename}': {language} in {time.perf_counter() - start_time:.4f} seconds")
     return language

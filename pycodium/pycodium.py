@@ -7,12 +7,19 @@ from pycodium.components.editor_area import editor_area
 from pycodium.components.resizable_panels import group, handle, panel
 from pycodium.components.sidebar import sidebar
 from pycodium.components.status_bar import status_bar
-from pycodium.state import EditorState
+from pycodium.state import EditorState, GlobalHotkeyWatcher
 
 
 def index() -> rx.Component:
-    """Main page of the PyCodium IDE."""
+    """Main page of the PyCodium IDE. Test."""
     return rx.el.div(
+        GlobalHotkeyWatcher.create(
+            on_key_down=lambda key, key_info: rx.cond(
+                key_info.meta_key & rx.Var.create(["s", "w"]).contains(key),
+                EditorState.on_key_down(key, key_info).prevent_default,
+                None,
+            )
+        ),
         rx.el.div(
             activity_bar(),
             group(

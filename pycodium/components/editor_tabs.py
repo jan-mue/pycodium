@@ -16,7 +16,7 @@ def editor_tabs():
                     rx.el.button(
                         rx.icon("x", size=14),
                         class_name="ml-2 opacity-50 hover:opacity-100",
-                        on_click=EditorState.close_tab(tab.id),
+                        on_click=EditorState.close_tab(tab.id).stop_propagation,
                     ),
                     class_name=(
                         "flex items-center px-3 py-1 border-r border-black/20 cursor-pointer flex-shrink-0 editor-tab",

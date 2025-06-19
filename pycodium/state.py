@@ -7,6 +7,9 @@ from uuid import uuid4
 
 import aiofiles
 import reflex as rx
+from reflex.event import KeyInputInfo, key_event
+from reflex.utils import imports
+from typing_extensions import override
 
 from pycodium.models.files import FilePath
 from pycodium.models.tabs import EditorTab
@@ -37,13 +40,13 @@ class EditorState(rx.State):
     @rx.event
     async def toggle_sidebar(self) -> None:
         """Toggle the sidebar visibility."""
-        logger.info(f"Sidebar visibility changed to {not self.sidebar_visible}")
+        logger.debug(f"Sidebar visibility changed to {not self.sidebar_visible}")
         self.sidebar_visible = not self.sidebar_visible
 
     @rx.event
     async def set_active_sidebar_tab(self, tab: str) -> None:
         """Set the active sidebar tab."""
-        logger.info(f"Active sidebar tab changed to {tab}")
+        logger.debug(f"Active sidebar tab changed to {tab}")
         self.active_sidebar_tab = tab
 
     @rx.event
@@ -53,7 +56,7 @@ class EditorState(rx.State):
         Args:
             folder_path: The path of the folder to toggle.
         """
-        logger.info(f"Toggling folder {folder_path}")
+        logger.debug(f"Toggling folder {folder_path}")
         if folder_path in self.expanded_folders:
             self.expanded_folders.remove(folder_path)
         else:
@@ -66,7 +69,7 @@ class EditorState(rx.State):
         Args:
             file_path: The path to the file to open.
         """
-        logger.info(f"Opening file {file_path}")
+        logger.debug(f"Opening file {file_path}")
 
         tab = next((tab for tab in self.tabs if tab.path == file_path), None)
 
@@ -80,7 +83,7 @@ class EditorState(rx.State):
             decoded_file_content, encoding = decode(file_content, default_encoding=default_encoding)
             if encoding.endswith("-guessed"):
                 return rx.toast.error("The file is either binary or uses an unsupported text encoding.")
-            logger.info(f"Detected encoding for {file_path}: {encoding}")
+            logger.debug(f"Detected encoding for {file_path}: {encoding}")
 
             tab = EditorTab(
                 id=str(uuid4()),
@@ -91,12 +94,24 @@ class EditorState(rx.State):
                 path=file_path,
             )
             self.tabs.append(tab)
-            logger.info(f"Created tab {tab.id}")
+            logger.debug(f"Created tab {tab.id}")
 
         if self.active_tab_id:
             self.active_tab_history.append(self.active_tab_id)
 
         self.active_tab_id = tab.id
+
+    async def _save_current_file(self) -> None:
+        """Save the content of the currently active tab to its file."""
+        active_tab = self.active_tab
+        if not active_tab:
+            logger.warning("No active tab to save")
+            return
+
+        logger.debug(f"Saving content of tab {active_tab.id} to {active_tab.path}")
+        async with aiofiles.open(self.project_root.parent / active_tab.path, "w", encoding=active_tab.encoding) as f:
+            await f.write(active_tab.content)
+        logger.debug(f"Content of tab {active_tab.id} saved successfully")
 
     @rx.event
     async def close_tab(self, tab_id: str) -> None:
@@ -105,18 +120,18 @@ class EditorState(rx.State):
         Args:
             tab_id: The ID of the tab to close.
         """
-        logger.info(f"Closing tab {tab_id}")
+        logger.debug(f"Closing tab {tab_id}")
         self.tabs = [tab for tab in self.tabs if tab.id != tab_id]
+        self.active_tab_history = [tab for tab in self.active_tab_history if tab != tab_id]
 
         if self.active_tab_id == tab_id and self.active_tab_history:
             previous_tab_id = self.active_tab_history.pop()
-            logger.info(f"Switching to previous tab {previous_tab_id}")
+            logger.debug(f"Switching to previous tab {previous_tab_id}")
             self.active_tab_id = previous_tab_id
-        elif self.active_tab_history:
-            logger.info(f"Removing tab {tab_id} from history")
-            self.active_tab_history.remove(tab_id)
+        elif self.active_tab_id != tab_id:
+            logger.debug("Active tab is not the one being closed, no switch needed")
         else:
-            logger.info("No previous tab to switch to, setting active tab to None")
+            logger.debug("No previous tab to switch to, setting active tab to None")
             self.active_tab_id = None
 
     @rx.event
@@ -130,9 +145,9 @@ class EditorState(rx.State):
             logger.warning(f"Tab {tab_id} not found in open tabs")
             return
         if self.active_tab_id == tab_id:
-            logger.info(f"Tab {tab_id} is already active, no change needed")
+            logger.debug(f"Tab {tab_id} is already active, no change needed")
             return
-        logger.info(f"Setting active tab {tab_id}")
+        logger.debug(f"Setting active tab {tab_id}")
         if self.active_tab_id is not None:
             self.active_tab_history.append(self.active_tab_id)
         self.active_tab_id = tab_id
@@ -178,7 +193,7 @@ class EditorState(rx.State):
             tab_id: The ID of the tab to update.
             content: The new content for the tab.
         """
-        logger.info(f"Updating content of tab {tab_id}")
+        logger.debug(f"Updating content of tab {tab_id}")
         for tab in self.tabs:
             if tab.id == tab_id:
                 tab.content = content
@@ -219,17 +234,17 @@ class EditorState(rx.State):
     @rx.event
     def open_project(self) -> None:
         """Open a project in the editor."""
-        logger.info(f"Opening project {self.project_root}")
+        logger.debug(f"Opening project {self.project_root}")
         start_time = time.perf_counter()
         self.file_tree = self._build_file_tree(self.project_root)
         self._sort_file_tree(self.file_tree)
         self.expanded_folders.add(self.project_root.name)
-        logger.info(f"File tree built in {time.perf_counter() - start_time:.2f} seconds")
+        logger.debug(f"File tree built in {time.perf_counter() - start_time:.2f} seconds")
 
     @rx.event
     async def open_settings(self) -> None:
         """Open the settings tab."""
-        logger.info("Opening settings tab")
+        logger.debug("Opening settings tab")
         settings_tab = next((tab for tab in self.tabs if tab.id == "settings"), None)
         if not settings_tab:
             settings_tab = EditorTab(
@@ -244,3 +259,45 @@ class EditorState(rx.State):
             )
             self.tabs.append(settings_tab)
         await self.set_active_tab(settings_tab.id)
+
+    @rx.event
+    async def on_key_down(self, key: str, key_info: KeyInputInfo) -> None:
+        """Handle global key down events."""
+        logger.debug(f"Key pressed: {key}, Key Info: {key_info}")
+        # TODO: make this work in pywebview
+        if key_info["meta_key"] and key.lower() == "s":
+            await self._save_current_file()
+        elif key_info["meta_key"] and key.lower() == "w" and self.active_tab_id:
+            await self.close_tab(self.active_tab_id)
+
+
+class GlobalHotkeyWatcher(rx.Fragment):
+    """A component that listens for key events globally.
+
+    Copied from https://reflex.dev/docs/api-reference/browser-javascript/#using-react-hooks
+    """
+
+    on_key_down: rx.EventHandler[key_event]
+
+    @override
+    def add_imports(self) -> imports.ImportDict:
+        """Add the imports for the component."""
+        return {
+            "react": [imports.ImportVar(tag="useEffect")],
+        }
+
+    @override
+    def add_hooks(self) -> list[str | rx.Var[str]]:
+        """Add the hooks for the component."""
+        return [
+            """
+            useEffect(() => {
+                const handle_key = %s;
+                document.addEventListener("keydown", handle_key, false);
+                return () => {
+                    document.removeEventListener("keydown", handle_key, false);
+                }
+            })
+            """  # noqa: UP031
+            % str(rx.Var.create(self.event_triggers["on_key_down"]))
+        ]

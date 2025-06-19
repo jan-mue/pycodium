@@ -14,6 +14,7 @@ from reflex.config import environment, get_config
 from reflex.state import reset_disk_state_manager
 from reflex.utils import exec, processes  # noqa: A004
 
+from pycodium import __version__
 from pycodium.constants import PROJECT_ROOT_DIR
 
 # TODO: configure logging
@@ -22,8 +23,14 @@ app = typer.Typer()
 
 
 @app.command()
-def run(path: Annotated[Path | None, typer.Argument()] = None):
+def run(
+    path: Annotated[Path | None, typer.Argument()] = None,
+    show_version: Annotated[bool, typer.Option("--version", "-v", help="Show version and exit")] = False,
+) -> None:
     """Run the PyCodium IDE."""
+    if show_version:
+        print(__version__)
+        return
     logger.info(f"Opening IDE with path: {path}")
     # TODO: run the frontend in dev mode when the package is installed in editable mode
     run_app_with_pywebview()

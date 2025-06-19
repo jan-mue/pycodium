@@ -12,8 +12,8 @@ from pycodium.state import EditorState
 
 def index() -> rx.Component:
     """Main page of the PyCodium IDE."""
-    return rx.box(
-        rx.box(
+    return rx.el.div(
+        rx.el.div(
             activity_bar(),
             group(
                 rx.cond(
@@ -32,7 +32,7 @@ def index() -> rx.Component:
                     ),
                 ),
                 panel(
-                    rx.box(
+                    rx.el.div(
                         group(
                             panel(
                                 editor_area(),

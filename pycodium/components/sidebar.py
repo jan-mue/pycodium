@@ -12,31 +12,22 @@ def sidebar() -> rx.Component:
     Returns:
         The sidebar component.
     """
-    return rx.box(
+    return rx.el.div(
         rx.cond(
             EditorState.active_sidebar_tab == "explorer",
             explorer(),
             rx.cond(
                 EditorState.active_sidebar_tab == "search",
-                rx.box(
-                    rx.text("Search functionality would be here", class_name="p-4 text-sm"),
-                ),
+                rx.el.div("Search functionality would be here", class_name="p-4 text-sm"),
                 rx.cond(
                     EditorState.active_sidebar_tab == "source_control",
-                    rx.box(
-                        rx.text("Source control functionality would be here", class_name="p-4 text-sm"),
-                    ),
+                    rx.el.div("Source control functionality would be here", class_name="p-4 text-sm"),
                     rx.cond(
                         EditorState.active_sidebar_tab == "debug",
-                        rx.box(
-                            rx.text("Debugging tools would be here", class_name="p-4 text-sm"),
-                        ),
+                        rx.el.div("Debugging tools would be here", class_name="p-4 text-sm"),
                         rx.cond(
                             EditorState.active_sidebar_tab == "extensions",
-                            rx.box(
-                                rx.text("Extensions marketplace would be here", class_name="p-4 text-sm"),
-                            ),
-                            rx.box(),
+                            rx.el.div("Extensions marketplace would be here", class_name="p-4 text-sm"),
                         ),
                     ),
                 ),

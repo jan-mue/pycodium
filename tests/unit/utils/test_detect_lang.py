@@ -1,13 +1,13 @@
-from pycodium.utils import detect_lang
+from pycodium.utils.detect_lang import detect_programming_language
 
 
 def test_detect_programming_language_python() -> None:
-    assert detect_lang.detect_programming_language("foo.py").lower() == "python"
+    assert detect_programming_language("foo.py").lower() == "python"
 
 
 def test_detect_programming_language_js() -> None:
-    assert detect_lang.detect_programming_language("foo.js").lower() == "javascript"
+    assert detect_programming_language("foo.js").lower() == "javascript"
 
 
 def test_detect_programming_language_unknown() -> None:
-    assert detect_lang.detect_programming_language("foo.unknown") == "undefined"
+    assert detect_programming_language("foo.unknown") == "undefined"

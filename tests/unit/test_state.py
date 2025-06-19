@@ -44,6 +44,8 @@ async def test_close_tab_switches_to_previous(state: EditorState) -> None:
     await state.close_tab("2")
     assert state.active_tab_id == "1"
     assert all(tab.id != "2" for tab in state.tabs)
+    assert tab2.on_not_active.is_set(), "on_not_active should be set for the closed tab"
+    assert not tab1.on_not_active.is_set(), "on_not_active should be cleared for the new active tab"
 
 
 async def test_close_tab_no_previous(state: EditorState) -> None:
@@ -56,6 +58,7 @@ async def test_close_tab_no_previous(state: EditorState) -> None:
     await state.close_tab("1")
     assert state.active_tab_id is None
     assert not state.tabs
+    assert tab1.on_not_active.is_set(), "on_not_active should be set for the closed tab"
 
 
 def test_active_tab(state: EditorState) -> None:

@@ -14,7 +14,9 @@ def index() -> rx.Component:
     """Main page of the PyCodium IDE. Test."""
     return rx.el.div(
         GlobalHotkeyWatcher.create(
-            on_key_down=lambda key, key_info: rx.cond(key_info.meta_key, EditorState.on_key_down(key, key_info), None)
+            on_key_down=lambda key, key_info: rx.cond(
+                key_info.meta_key, EditorState.on_key_down(key, key_info).prevent_default, None
+            )
         ),
         rx.el.div(
             activity_bar(),

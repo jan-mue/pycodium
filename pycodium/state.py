@@ -264,8 +264,8 @@ class EditorState(rx.State):
     async def on_key_down(self, key: str, key_info: KeyInputInfo) -> None:
         """Handle global key down events."""
         logger.info(f"Key pressed: {key}, Key Info: {key_info}")
+        # TODO: make this work in pywebview
         if key_info["meta_key"] and key.lower() == "s":
-            # TODO: prevent default browser save action
             await self._save_current_file()
         elif key_info["meta_key"] and key.lower() == "w" and self.active_tab_id:
             await self.close_tab(self.active_tab_id)

@@ -2,13 +2,14 @@
 
 import logging
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
 import aiofiles
 import reflex as rx
+from reflex.event import KeyInputInfo, key_event
 from reflex.utils import imports
+from typing_extensions import override
 
 from pycodium.models.files import FilePath
 from pycodium.models.tabs import EditorTab
@@ -99,6 +100,18 @@ class EditorState(rx.State):
             self.active_tab_history.append(self.active_tab_id)
 
         self.active_tab_id = tab.id
+
+    async def _save_current_file(self) -> None:
+        """Save the content of the currently active tab to its file."""
+        active_tab = self.active_tab
+        if not active_tab:
+            logger.warning("No active tab to save")
+            return
+
+        logger.info(f"Saving content of tab {active_tab.id} to {active_tab.path}")
+        async with aiofiles.open(self.project_root.parent / active_tab.path, "w", encoding=active_tab.encoding) as f:
+            await f.write(active_tab.content)
+        logger.info(f"Content of tab {active_tab.id} saved successfully")
 
     @rx.event
     async def close_tab(self, tab_id: str) -> None:
@@ -248,33 +261,14 @@ class EditorState(rx.State):
         await self.set_active_tab(settings_tab.id)
 
     @rx.event
-    async def on_key_down(self, key: str) -> None:
-        """Handle global key down events.
-
-        Args:
-            key: The key that was pressed.
-        """
-        logger.info(f"Key pressed: {key}")
-
-
-@dataclass
-class KeyEvent:
-    """Interface of Javascript KeyboardEvent.
-
-    Copied from https://reflex.dev/docs/api-reference/browser-javascript/#using-react-hooks
-    """
-
-    key: str = ""
-
-
-def key_event_spec(
-    ev: rx.Var[KeyEvent],
-) -> tuple[rx.Var[str]]:
-    """Takes the event object and returns the key pressed to send to the state.
-
-    Copied from https://reflex.dev/docs/api-reference/browser-javascript/#using-react-hooks
-    """
-    return (ev.key,)
+    async def on_key_down(self, key: str, key_info: KeyInputInfo) -> None:
+        """Handle global key down events."""
+        logger.info(f"Key pressed: {key}, Key Info: {key_info}")
+        if key_info["meta_key"] and key.lower() == "s":
+            # TODO: prevent default browser save action
+            await self._save_current_file()
+        elif key_info["meta_key"] and key.lower() == "w" and self.active_tab_id:
+            await self.close_tab(self.active_tab_id)
 
 
 class GlobalHotkeyWatcher(rx.Fragment):
@@ -283,16 +277,17 @@ class GlobalHotkeyWatcher(rx.Fragment):
     Copied from https://reflex.dev/docs/api-reference/browser-javascript/#using-react-hooks
     """
 
-    # The event handler that will be called
-    on_key_down: rx.EventHandler[key_event_spec]
+    on_key_down: rx.EventHandler[key_event]
 
+    @override
     def add_imports(self) -> imports.ImportDict:
         """Add the imports for the component."""
         return {
             "react": [imports.ImportVar(tag="useEffect")],
         }
 
-    def add_hooks(self) -> list[str | rx.Var]:
+    @override
+    def add_hooks(self) -> list[str | rx.Var[str]]:
         """Add the hooks for the component."""
         return [
             """

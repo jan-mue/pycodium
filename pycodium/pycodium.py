@@ -11,9 +11,11 @@ from pycodium.state import EditorState, GlobalHotkeyWatcher
 
 
 def index() -> rx.Component:
-    """Main page of the PyCodium IDE."""
+    """Main page of the PyCodium IDE. Test."""
     return rx.el.div(
-        GlobalHotkeyWatcher.create(on_key_down=EditorState.on_key_down),
+        GlobalHotkeyWatcher.create(
+            on_key_down=lambda key, key_info: rx.cond(key_info.meta_key, EditorState.on_key_down(key, key_info), None)
+        ),
         rx.el.div(
             activity_bar(),
             group(

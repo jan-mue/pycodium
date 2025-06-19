@@ -51,7 +51,7 @@ def editor_content() -> rx.Component:
 def editor_area() -> rx.Component:
     """Build the editor area component, which includes the editor tabs and the editor content."""
     return rx.el.div(
-        editor_tabs(),
+        rx.cond(EditorState.tabs.length() > 0, editor_tabs()),  # type: ignore[attr-defined]
         editor_content(),
         class_name="flex flex-col h-full",
     )

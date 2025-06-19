@@ -25,7 +25,7 @@ class FileTree(rx.ComponentState):
             rx.el.div(
                 rx.el.div(
                     rx.cond(
-                        EditorState.expanded_folders.contains(current_path),  # type: ignore[reportAttributeAccessIssue]
+                        EditorState.expanded_folders.contains(current_path),  # type: ignore[attr-defined]
                         rx.icon(tag="chevron-down", size=16),
                         rx.icon(tag="chevron-right", size=16),
                     ),
@@ -34,7 +34,7 @@ class FileTree(rx.ComponentState):
                     on_click=lambda: EditorState.toggle_folder(current_path),
                 ),
                 rx.cond(
-                    EditorState.expanded_folders.contains(current_path),  # type: ignore[reportAttributeAccessIssue]
+                    EditorState.expanded_folders.contains(current_path),  # type: ignore[attr-defined]
                     rx.el.div(
                         rx.foreach(
                             sub_paths,

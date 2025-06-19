@@ -60,12 +60,10 @@
     color: var(--pycodium-text);
   }
 
-  /* Monaco editor specific styles */
   .monaco-editor .margin {
     background-color: var(--pycodium-editor-bg) !important;
   }
 
-  /* Custom scrollbar for VS Code look */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -86,7 +84,6 @@
 }
 
 @layer components {
-  /* Style for editor tabs */
   .editor-tab {
     @apply px-3 py-1 flex items-center gap-2 text-sm border-r border-pycodium-sidebar-bg transition-colors;
     color: var(--pycodium-text);
@@ -100,7 +97,6 @@
     @apply bg-pycodium-tab-inactive hover:bg-opacity-80;
   }
 
-  /* VS Code icon hover effects */
   .pycodium-icon {
     @apply p-2 transition-colors cursor-pointer;
     color: var(--pycodium-icon);

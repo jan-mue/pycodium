@@ -18,7 +18,6 @@ from pycodium.models.tabs import EditorTab
 from pycodium.utils.detect_encoding import decode
 from pycodium.utils.detect_lang import detect_programming_language
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 

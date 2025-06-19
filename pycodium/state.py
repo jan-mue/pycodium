@@ -10,7 +10,7 @@ import aiofiles
 import reflex as rx
 from reflex.event import EventCallback, KeyInputInfo, key_event
 from reflex.utils import imports
-from typing_extensions import override
+from typing_extensions import Unpack, override
 from watchfiles import Change, awatch
 
 from pycodium.models.files import FilePath
@@ -72,7 +72,7 @@ class EditorState(rx.State):
         active_tab.on_not_active.set()  # Signal to stop watching the file for changes
 
     @rx.event
-    async def open_file(self, file_path: str) -> rx.Component | EventCallback[()] | None:
+    async def open_file(self, file_path: str) -> rx.Component | EventCallback[Unpack[tuple[()]]] | None:
         """Open a file in the editor.
 
         Args:
@@ -148,7 +148,7 @@ class EditorState(rx.State):
             self.active_tab_id = None
 
     @rx.event
-    async def set_active_tab(self, tab_id: str) -> EventCallback[()] | None:
+    async def set_active_tab(self, tab_id: str) -> EventCallback[Unpack[tuple[()]]] | None:
         """Set the active tab by its ID.
 
         Args:

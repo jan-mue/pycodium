@@ -673,6 +673,7 @@ dependencies = [
     { name = "reflex" },
     { name = "typer" },
     { name = "typing-extensions" },
+    { name = "watchfiles" },
 ]
 
 [package.dev-dependencies]
@@ -696,6 +697,7 @@ requires-dist = [
     { name = "reflex", specifier = "==0.7.14" },
     { name = "typer", specifier = "==0.16.0" },
     { name = "typing-extensions", specifier = "==4.14.0" },
+    { name = "watchfiles", specifier = "==1.0.5" },
 ]
 
 [package.metadata.requires-dev]

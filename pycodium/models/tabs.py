@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio  # noqa: TC003
+
 import reflex as rx
 
 
@@ -19,5 +21,6 @@ class EditorTab(Tab):
     content: str
     encoding: str
     path: str
+    on_not_active: asyncio.Event
     is_special: bool = False
     special_component: str | None = None

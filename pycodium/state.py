@@ -1,22 +1,31 @@
 """State and event handlers for the IDE."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import aiofiles
+import jedi
 import reflex as rx
-from reflex.event import EventCallback, KeyInputInfo, key_event
-from reflex.utils import imports
-from typing_extensions import Unpack, override
+from typing_extensions import Unpack
 from watchfiles import Change, awatch
 
 from pycodium.models.files import FilePath
+from pycodium.models.monaco import CompletionItem  # noqa: TC001
 from pycodium.models.tabs import EditorTab
 from pycodium.utils.detect_encoding import decode
 from pycodium.utils.detect_lang import detect_programming_language
+
+if TYPE_CHECKING:
+    from jedi.api.classes import Completion
+    from reflex.event import EventCallback, KeyInputInfo
+
+    from pycodium.models.monaco import CompletionRequest, HoverRequest
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +42,7 @@ class EditorState(rx.State):
     tabs: list[EditorTab] = []
     active_tab_id: str | None = None
     active_tab_history: list[str] = []
+    completion_items: list[CompletionItem] = []
 
     # Explorer state
     project_root: Path = Path.cwd()
@@ -306,34 +316,144 @@ class EditorState(rx.State):
                     logger.debug(f"Updated content of tab {active_tab.id} from file {file_path}")
         logger.debug(f"Stopped watching tab {active_tab.id} for changes from file {file_path}")
 
+    @rx.event
+    def handle_completion_request(self, request: CompletionRequest) -> None:
+        """Handle completion requests from the editor using Jedi."""
+        text = request.get("text", "")
+        position = request.get("position", {})
+        line = position.get("line", 0)  # 0-based line number
+        column = position.get("column", 0)  # 0-based column number
+        file_path = request.get("file_path")
 
-class GlobalHotkeyWatcher(rx.Fragment):
-    """A component that listens for key events globally.
+        # Generate completions using Jedi
+        completions = self._generate_jedi_completions(text, line + 1, column, file_path)
 
-    Copied from https://reflex.dev/docs/api-reference/browser-javascript/#using-react-hooks
-    """
+        # Update the completion items state
+        self.completion_items = completions
 
-    on_key_down: rx.EventHandler[key_event]
+    def _generate_jedi_completions(
+        self, text: str, line: int, column: int, file_path: str | None = None
+    ) -> list[CompletionItem]:
+        """Generate completion items using Jedi."""
+        # Use Jedi to get completions
+        script = jedi.Script(
+            code=text,  # Changed from 'source' to 'code'
+            path=file_path,
+        )
 
-    @override
-    def add_imports(self) -> imports.ImportDict:
-        """Add the imports for the component."""
-        return {
-            "react": [imports.ImportVar(tag="useEffect")],
+        completions = script.complete(
+            line=line,  # Jedi uses 1-based line numbers
+            column=column,  # Jedi uses 0-based column numbers
+        )
+        completion_items = []
+
+        for completion in completions[:50]:  # Limit to 50 items for performance
+            # Map Jedi completion types to Monaco completion kinds
+            kind = self._jedi_type_to_monaco_kind(completion.type)
+
+            # Get docstring for documentation
+            docstring = completion.docstring() if hasattr(completion, "docstring") else ""
+            # Get full name for detail
+            full_name = completion.full_name if hasattr(completion, "full_name") else ""
+
+            # Determine insert text based on completion type
+            insert_text = self._get_insert_text(completion)
+
+            completion_item = {
+                "label": completion.name,
+                "kind": kind,
+                "insert_text": insert_text,
+                "documentation": docstring[:500] if docstring else f"{completion.type}: {completion.name}",
+                # Limit docstring length
+                "detail": full_name or f"{completion.type}",
+            }
+
+            completion_items.append(completion_item)
+
+        return completion_items
+
+    def _jedi_type_to_monaco_kind(self, jedi_type: str) -> int:
+        """Map Jedi completion types to Monaco completion kinds."""
+        # Monaco completion kinds mapping
+        type_mapping = {
+            "module": 9,  # Module
+            "class": 7,  # Class
+            "function": 3,  # Function
+            "method": 2,  # Method
+            "property": 10,  # Property
+            "variable": 6,  # Variable
+            "param": 6,  # Variable (for parameters)
+            "keyword": 14,  # Keyword
+            "statement": 14,  # Keyword
+            "import": 9,  # Module
+            "instance": 6,  # Variable
         }
+        return type_mapping.get(jedi_type, 1)  # Default to Text
 
-    @override
-    def add_hooks(self) -> list[str | rx.Var[str]]:
-        """Add the hooks for the component."""
-        return [
-            """
-            useEffect(() => {
-                const handle_key = %s;
-                document.addEventListener("keydown", handle_key, false);
-                return () => {
-                    document.removeEventListener("keydown", handle_key, false);
-                }
-            })
-            """  # noqa: UP031
-            % str(rx.Var.create(self.event_triggers["on_key_down"]))
-        ]
+    def _get_insert_text(self, completion: Completion) -> str:
+        """Generate appropriate insert text based on completion type."""
+        name = completion.name
+
+        # For functions and methods, add parentheses with placeholder
+        if completion.type in ("function", "method"):
+            # Try to get signature information
+            signatures = completion.get_signatures() if hasattr(completion, "get_signatures") else []
+            if signatures:
+                sig = signatures[0]
+                params = sig.params if hasattr(sig, "params") else []
+
+                # Filter out 'self' parameter for methods
+                if params and params[0].name == "self" and completion.type == "method":
+                    params = params[1:]
+
+                if params:
+                    # Create snippet with placeholders for parameters
+                    param_snippets = []
+                    for i, param in enumerate(params[:5], 1):  # Limit to 5 parameters
+                        param_name = param.name
+                        if param.name in ("self", "cls"):
+                            continue
+                        param_snippets.append(f"${{{i}:{param_name}}}")
+
+                    if param_snippets:
+                        return f"{name}({', '.join(param_snippets)})"
+                    else:
+                        return f"{name}(${{1}})"
+                else:
+                    return f"{name}()"
+            else:
+                return f"{name}(${{1}})"
+
+        # For classes, add parentheses for instantiation
+        elif completion.type == "class":
+            return f"{name}(${{1}})"
+
+        # For everything else, just return the name
+        return name
+
+    @rx.event
+    def handle_hover_request(self, request: HoverRequest) -> None:
+        """Handle hover requests from the editor using Jedi."""
+        text = request.get("text", "")
+        position = request.get("position", {})
+        line = position.get("line", 0)
+        column = position.get("column", 0)
+        file_path = request.get("file_path")
+
+        # Use Jedi to get hover information
+        script = jedi.Script(
+            code=text,  # Changed from 'source' to 'code'
+            path=file_path,
+        )
+
+        # Get definitions at the cursor position
+        definitions = script.help(
+            line=line + 1,  # Convert to 1-based for Jedi
+            column=column,
+        )
+
+        if definitions:
+            for definition in definitions[:1]:  # Use first definition
+                # You could store this in state and update hover display
+                # For now, we'll just log it
+                print(f"Hover info for '{definition.name}': {definition.docstring()}")

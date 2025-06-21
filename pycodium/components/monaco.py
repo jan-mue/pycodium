@@ -1,16 +1,17 @@
-"""Custom component for the Monaco editor with LSP support.
+"""Custom component for the Monaco editor.
 
 Props are documented here: https://github.com/suren-atoyan/monaco-react?tab=readme-ov-file#props
 """
 
 import reflex as rx
-from reflex.constants import Hooks
-from reflex.vars.base import Var, VarData
+from reflex.utils import imports
 from typing_extensions import override
+
+from pycodium.models.monaco import CompletionItem, CompletionRequest, HoverRequest
 
 
 class MonacoEditor(rx.Component):
-    """Monaco editor component with LSP support."""
+    """Monaco editor component."""
 
     library = "@monaco-editor/react@4.7.0"
     tag = "MonacoEditor"
@@ -47,121 +48,173 @@ class MonacoEditor(rx.Component):
     # The path to the default file to load in the editor.
     default_path: rx.Var[str]
 
+    # Completion items from state
+    completion_items: rx.Var[list[CompletionItem]] = rx.Var.create([])
+
     # Triggered when the editor value changes.
     on_change: rx.EventHandler[rx.event.passthrough_event_spec(str)]
 
     # Triggered when the content is validated. (limited to some languages)
     on_validate: rx.EventHandler[rx.event.passthrough_event_spec(str)]
 
-    # LSP server websocket URL
-    lsp_url: rx.Var[str] = rx.Var.create("ws://localhost:5000")
+    # Triggered when a completion request is made.
+    on_completion_request: rx.EventHandler[rx.event.passthrough_event_spec(CompletionRequest)]
+
+    # Triggered when a hover request is made.
+    on_hover_request: rx.EventHandler[rx.event.passthrough_event_spec(HoverRequest)]
 
     @override
-    def add_hooks(self) -> list[str | Var[str]]:
-        hooks = []
+    def add_imports(self) -> imports.ImportDict:
+        """Add the imports for the component."""
+        return {
+            "react": [imports.ImportVar(tag="useEffect"), imports.ImportVar(tag="useRef")],
+            "@monaco-editor/react": [imports.ImportVar(tag="useMonaco")],
+        }
 
-        # Import required dependencies
-        lsp_imports = Var(
-            "",
-            _var_data=VarData(
-                imports={
-                    "react": ["useEffect"],
-                    "@monaco-editor/react": ["useMonaco"],
-                    "monaco-languageclient": ["MonacoLanguageClient"],
-                    "monaco-languageclient/lib/services": ["MonacoServices"],
-                    "vscode-ws-jsonrpc": ["toSocket", "WebSocketMessageReader", "WebSocketMessageWriter"],
-                    "reconnecting-websocket": ["default as ReconnectingWebSocket"],
-                    "normalize-url": ["default as normalizeUrl"],
-                }
-            ),
-        )
-        hooks.append(lsp_imports)
-
-        # LSP connection hook
-        lsp_hook = Var(
+    @override
+    def add_hooks(self) -> list[str | rx.Var[str]]:
+        """Add hooks for LSP event handling with state-based completions."""
+        return [
             f"""
-            const monaco = useMonaco();
+                const monaco = useMonaco();
+                const completionProviderRef = useRef(null);
+                const hoverProviderRef = useRef(null);
+                const pendingCompletionRef = useRef(null);
 
-            // Language client creation function
-            const createLanguageClient = (transports) => {{
-                return new MonacoLanguageClient({{
-                    name: 'Python Language Client',
-                    clientOptions: {{
-                        documentSelector: ['python'],
-                        errorHandler: {{
-                            error: () => ({{ action: 1 }}), // ErrorAction.Continue
-                            closed: () => ({{ action: 1 }}) // CloseAction.DoNotRestart
+                // Setup Monaco when available
+                useEffect(() => {{
+                    if (monaco) {{
+                        // Register Python language if not already registered
+                        if (!monaco.languages.getLanguages().find(lang => lang.id === 'python')) {{
+                            monaco.languages.register({{
+                                id: 'python',
+                                extensions: ['.py'],
+                                aliases: ['PYTHON', 'python', 'py'],
+                            }});
                         }}
-                    }},
-                    connectionProvider: {{
-                        get: () => {{
-                            return Promise.resolve(transports);
+
+                        // Handle completion requests
+                        const handleCompletionRequest = {rx.Var.create(self.event_triggers["on_completion_request"])!s};
+
+                        // Handle hover requests
+                        const handleHoverRequest = {rx.Var.create(self.event_triggers["on_hover_request"])!s};
+
+                        // Register completion provider
+                        if (completionProviderRef.current) {{
+                            completionProviderRef.current.dispose();
                         }}
+
+                        completionProviderRef.current = monaco.languages.registerCompletionItemProvider('python', {{
+                            provideCompletionItems: async (model, position) => {{
+                                return new Promise((resolve) => {{
+                                    const text = model.getValue();
+                                    const completionData = {{
+                                        text: text,
+                                        position: {{
+                                            line: position.lineNumber - 1,  // Convert to 0-based
+                                            column: position.column - 1
+                                        }},
+                                        file_path: model.uri ? model.uri.toString() : null
+                                    }};
+
+                                    // Store the resolve function for later use
+                                    pendingCompletionRef.current = resolve;
+
+                                    // Trigger Python event handler
+                                    handleCompletionRequest(completionData);
+
+                                    // Set a timeout fallback in case state doesn't update
+                                    setTimeout(() => {{
+                                        if (pendingCompletionRef.current === resolve) {{
+                                            pendingCompletionRef.current = null;
+                                            resolve({{
+                                                suggestions: [
+                                                    {{
+                                                        label: 'print',
+                                                        kind: monaco.languages.CompletionItemKind.Function,
+                                                        insertText: 'print(${{1}})',
+                                                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                                        documentation: 'Print function'
+                                                    }}
+                                                ]
+                                            }});
+                                        }}
+                                    }}, 1000); // 1 second timeout
+                                }});
+                            }}
+                        }});
+
+                        // Register hover provider
+                        if (hoverProviderRef.current) {{
+                            hoverProviderRef.current.dispose();
+                        }}
+
+                        hoverProviderRef.current = monaco.languages.registerHoverProvider('python', {{
+                            provideHover: async (model, position) => {{
+                                const text = model.getValue();
+                                const hoverData = {{
+                                    text: text,
+                                    position: {{
+                                        line: position.lineNumber - 1,
+                                        column: position.column - 1
+                                    }},
+                                    file_path: model.uri ? model.uri.toString() : null
+                                }};
+
+                                // Trigger Python event handler
+                                handleHoverRequest(hoverData);
+
+                                // Return basic hover info
+                                const word = model.getWordAtPosition(position);
+                                if (word) {{
+                                    return {{
+                                        range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
+                                        contents: [{{
+                                            value: `**${{word.word}}**\\n\\nPython identifier`
+                                        }}]
+                                    }};
+                                }}
+                                return null;
+                            }}
+                        }});
                     }}
-                }});
-            }};
 
-            // Monaco setup
-            useEffect(() => {{
-                if (monaco) {{
-                    // Register Python language
-                    monaco.languages.register({{
-                        id: 'python',
-                        extensions: ['.py'],
-                        aliases: ['PYTHON', 'python', 'py'],
-                    }});
+                    // Cleanup on unmount
+                    return () => {{
+                        if (completionProviderRef.current) {{
+                            completionProviderRef.current.dispose();
+                        }}
+                        if (hoverProviderRef.current) {{
+                            hoverProviderRef.current.dispose();
+                        }}
+                        pendingCompletionRef.current = null;
+                    }};
+                }}, [monaco]);
 
-                    // Install Monaco services
-                    MonacoServices.install();
-                }}
-            }}, [monaco]);
+                // Watch for completion_items changes and resolve pending completion requests
+                useEffect(() => {{
+                    if (pendingCompletionRef.current && {self.completion_items!s}) {{
+                        const resolve = pendingCompletionRef.current;
+                        pendingCompletionRef.current = null;
 
-            // LSP WebSocket connection
-            useEffect(() => {{
-                if (!monaco) return;
+                        const suggestions = {self.completion_items!s}.map(item => ({{
+                            label: item.label,
+                            kind: item.kind || monaco?.languages?.CompletionItemKind?.Text || 1,
+                            insertText: item.insert_text || item.label,
+                            insertTextRules: item.insert_text && item.insert_text.includes('${{')
+                                ? monaco?.languages?.CompletionItemInsertTextRule?.InsertAsSnippet
+                                : undefined,
+                            documentation: item.documentation || '',
+                            detail: item.detail || ''
+                        }}));
 
-                console.log("Creating LSP websocket connection");
-
-                const url = normalizeUrl({self.lsp_url});
-                const socketOptions = {{
-                    maxReconnectionDelay: 10000,
-                    minReconnectionDelay: 1000,
-                    reconnectionDelayGrowFactor: 1.3,
-                    connectionTimeout: 10000,
-                    maxRetries: Infinity,
-                    debug: false
-                }};
-
-                const webSocket = new ReconnectingWebSocket(url, [], socketOptions);
-
-                webSocket.onopen = () => {{
-                    console.log("LSP WebSocket connected");
-                    const socket = toSocket(webSocket);
-                    const reader = new WebSocketMessageReader(socket);
-                    const writer = new WebSocketMessageWriter(socket);
-                    const languageClient = createLanguageClient({{
-                        reader,
-                        writer
-                    }});
-
-                    languageClient.start();
-                    reader.onClose(() => languageClient.stop());
-                }};
-
-                webSocket.onerror = (error) => {{
-                    console.error("LSP WebSocket error:", error);
-                }};
-
-                return () => {{
-                    console.log("Closing LSP WebSocket connection");
-                    webSocket.close();
-                }};
-            }}, [monaco, {self.lsp_url}]);
-            """,
-            _var_data=VarData(position=Hooks.HookPosition.PRE_TRIGGER),
-        )
-        hooks.append(lsp_hook)
-        return hooks
+                        resolve({{
+                            suggestions: suggestions
+                        }});
+                    }}
+                }}, [{self.completion_items!s}]);
+                """
+        ]
 
 
 monaco = MonacoEditor.create

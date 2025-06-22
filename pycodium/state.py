@@ -336,13 +336,14 @@ class EditorState(rx.State):
         """Generate completion items using Jedi."""
         # Use Jedi to get completions
         script = jedi.Script(
-            code=text,  # Changed from 'source' to 'code'
+            code=text,
             path=file_path,
         )
 
+        # TODO: fix completions
         completions = script.complete(
-            line=line,  # Jedi uses 1-based line numbers
-            column=column,  # Jedi uses 0-based column numbers
+            line=line + 1,
+            column=column,
         )
         completion_items = []
 
@@ -443,13 +444,13 @@ class EditorState(rx.State):
 
         # Use Jedi to get hover information
         script = jedi.Script(
-            code=text,  # Changed from 'source' to 'code'
+            code=text,
             path=file_path,
         )
 
         # Get definitions at the cursor position
         definitions = script.help(
-            line=line + 1,  # Convert to 1-based for Jedi
+            line=line + 1,
             column=column,
         )
 

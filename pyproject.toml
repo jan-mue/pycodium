@@ -123,6 +123,7 @@ lint.ignore = [
     "E501",    # Line too long, handled by formatter
     "PLR0913", # Too many arguments in function definition"
     "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar`
+    "S608",    # Possible SQL injection vector through string-based query construction
     "TC006",   # Add quotes to type expression in `typing.cast()`
 ]
 lint.per-file-ignores."__init__.py" = [ "D104", "F401" ]

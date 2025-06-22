@@ -6,23 +6,22 @@ import asyncio
 import logging
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import aiofiles
-import jedi
 import reflex as rx
 from typing_extensions import Unpack
 from watchfiles import Change, awatch
 
 from pycodium.models.files import FilePath
-from pycodium.models.monaco import CompletionItem  # noqa: TC001
+from pycodium.models.monaco import CompletionItem
 from pycodium.models.tabs import EditorTab
 from pycodium.utils.detect_encoding import decode
 from pycodium.utils.detect_lang import detect_programming_language
+from pycodium.utils.lsp_client import get_lsp_client
 
 if TYPE_CHECKING:
-    from jedi.api.classes import Completion
     from reflex.event import EventCallback, KeyInputInfo
 
     from pycodium.models.monaco import CompletionRequest, HoverRequest
@@ -116,6 +115,9 @@ class EditorState(rx.State):
             )
             self.tabs.append(tab)
             logger.debug(f"Created tab {tab.id}")
+            lsp_client = await get_lsp_client()
+            uri = f"file://{self.project_root.parent / file_path}"
+            await lsp_client.open_document(uri, decoded_file_content, language_id=tab.language)
 
         if self.active_tab_id:
             self.active_tab_history.append(self.active_tab_id)
@@ -157,6 +159,12 @@ class EditorState(rx.State):
         else:
             logger.debug("No previous tab to switch to, setting active tab to None")
             self.active_tab_id = None
+
+        tab = next((t for t in self.tabs if t.id == tab_id), None)
+        if tab:
+            lsp_client = await get_lsp_client()
+            uri = f"file://{self.project_root.parent / tab.path}"
+            await lsp_client.close_document(uri)
 
     @rx.event
     async def set_active_tab(self, tab_id: str) -> EventCallback[Unpack[tuple[()]]] | None:
@@ -319,148 +327,63 @@ class EditorState(rx.State):
         logger.debug(f"Stopped watching tab {active_tab.id} for changes from file {file_path}")
 
     @rx.event
-    def handle_completion_request(self, request: CompletionRequest) -> None:
-        """Handle completion requests from the editor using Jedi."""
-        text = request.get("text", "")
-        position = request.get("position", {})
-        line = position.get("line", 0)  # 0-based line number
-        column = position.get("column", 0)  # 0-based column number
-        file_path = request.get("file_path")
-
-        logger.debug(f"Received completion request for line {line + 1}, column {column} in file {file_path}")
-        self.completion_items = self._generate_jedi_completions(text, line + 1, column, file_path)
-
-    def _generate_jedi_completions(
-        self, text: str, line: int, column: int, file_path: str | None = None
-    ) -> list[CompletionItem]:
-        """Generate completion items using Jedi."""
-        # Use Jedi to get completions
-        script = jedi.Script(
-            code=text,
-            path=file_path,
-        )
-
-        # TODO: fix completions
-        completions = script.complete(
-            line=line + 1,
-            column=column,
-        )
-        completion_items = []
-
-        for completion in completions[:50]:  # Limit to 50 items for performance
-            # Map Jedi completion types to Monaco completion kinds
-            kind = self._jedi_type_to_monaco_kind(completion.type)
-
-            # Get docstring for documentation
-            docstring = completion.docstring() if hasattr(completion, "docstring") else ""
-            # Get full name for detail
-            full_name = completion.full_name if hasattr(completion, "full_name") else ""
-
-            # Determine insert text based on completion type
-            insert_text = self._get_insert_text(completion)
-
-            completion_item = {
-                "label": completion.name,
-                "kind": kind,
-                "insert_text": insert_text,
-                "documentation": docstring[:500] if docstring else f"{completion.type}: {completion.name}",
-                # Limit docstring length
-                "detail": full_name or f"{completion.type}",
-            }
-
-            completion_items.append(completion_item)
-
-        return completion_items
-
-    def _jedi_type_to_monaco_kind(self, jedi_type: str) -> int:
-        """Map Jedi completion types to Monaco completion kinds."""
-        # Monaco completion kinds mapping
-        type_mapping = {
-            "module": 9,  # Module
-            "class": 7,  # Class
-            "function": 3,  # Function
-            "method": 2,  # Method
-            "property": 10,  # Property
-            "variable": 6,  # Variable
-            "param": 6,  # Variable (for parameters)
-            "keyword": 14,  # Keyword
-            "statement": 14,  # Keyword
-            "import": 9,  # Module
-            "instance": 6,  # Variable
-        }
-        return type_mapping.get(jedi_type, 1)  # Default to Text
-
-    def _get_insert_text(self, completion: Completion) -> str:
-        """Generate appropriate insert text based on completion type."""
-        name = completion.name
-
-        # For functions and methods, add parentheses with placeholder
-        if completion.type in ("function", "method"):
-            # Try to get signature information
-            signatures = completion.get_signatures() if hasattr(completion, "get_signatures") else []
-            if signatures:
-                sig = signatures[0]
-                params = sig.params if hasattr(sig, "params") else []
-
-                # Filter out 'self' parameter for methods
-                if params and params[0].name == "self" and completion.type == "method":
-                    params = params[1:]
-
-                if params:
-                    # Create snippet with placeholders for parameters
-                    param_snippets = []
-                    for i, param in enumerate(params[:5], 1):  # Limit to 5 parameters
-                        param_name = param.name
-                        if param.name in ("self", "cls"):
-                            continue
-                        param_snippets.append(f"${{{i}:{param_name}}}")
-
-                    if param_snippets:
-                        return f"{name}({', '.join(param_snippets)})"
-                    else:
-                        return f"{name}(${{1}})"
-                else:
-                    return f"{name}()"
-            else:
-                return f"{name}(${{1}})"
-
-        # For classes, add parentheses for instantiation
-        elif completion.type == "class":
-            return f"{name}(${{1}})"
-
-        # For everything else, just return the name
-        return name
-
-    @rx.event
-    def handle_hover_request(self, request: HoverRequest) -> None:
-        """Handle hover requests from the editor using Jedi."""
+    async def handle_completion_request(self, request: CompletionRequest) -> None:
+        """Handle completion requests from the editor using the ty LSP server."""
         text = request.get("text", "")
         position = request.get("position", {})
         line = position.get("line", 0)
         column = position.get("column", 0)
         file_path = request.get("file_path")
+        if not file_path:
+            raise ValueError("File path is required for completion requests")
+        lsp_client = await get_lsp_client()
+        uri = f"file://{self.project_root.parent / file_path}"
+        await lsp_client.open_document(uri, text)
+        completions = await lsp_client.get_completions(uri, line, column)
 
-        logger.debug(f"Received hover request for line {line + 1}, column {column} in file {file_path}")
+        def lsp_to_monaco(item: dict[str, Any]) -> CompletionItem:
+            return CompletionItem(
+                label=item.get("label", ""),
+                kind=item.get("kind", 1),
+                insert_text=item.get("insertText", item.get("label", "")),
+                documentation=item.get("documentation", ""),
+                detail=item.get("detail", ""),
+            )
 
-        # Use Jedi to get hover information
-        script = jedi.Script(
-            code=text,
-            path=file_path,
-        )
+        self.completion_items = [lsp_to_monaco(item) for item in completions]
 
-        # Get definitions at the cursor position
-        definitions = script.help(
-            line=line + 1,
-            column=column,
-        )
+    @rx.event
+    async def handle_hover_request(self, request: HoverRequest) -> None:
+        """Handle hover requests from the editor using the ty LSP server."""
+        text = request.get("text", "")
+        position = request.get("position", {})
+        line = position.get("line", 0)
+        column = position.get("column", 0)
+        file_path = request.get("file_path")
+        if not file_path:
+            raise ValueError("File path is required for hover requests")
+        lsp_client = await get_lsp_client()
+        uri = f"file://{self.project_root.parent / file_path}"
+        await lsp_client.open_document(uri, text)
+        hover = await lsp_client.get_hover_info(uri, line, column)
 
-        hover_content = ""
-        if definitions:
-            definition = definitions[0]
-            logger.debug(f"Hover info for '{definition.name}': {definition.docstring()}")
-            hover_content = definition.docstring() or definition.name
-        self.hover_info = {
-            "contents": hover_content,
-            "line": str(position.get("line", "")),
-            "column": str(position.get("column", "")),
-        }
+        # TODO: refactor this
+        contents = ""
+        if hover:
+            hover_contents = hover.get("contents")
+            if isinstance(hover_contents, dict):
+                contents = hover_contents.get("value", str(hover_contents))
+            elif isinstance(hover_contents, list):
+                # Join all values if list of dicts/strings
+                values = []
+                for item in hover_contents:
+                    if isinstance(item, dict):
+                        values.append(item.get("value", str(item)))
+                    else:
+                        values.append(str(item))
+                contents = "\n".join(values)
+            elif isinstance(hover_contents, str):
+                contents = hover_contents
+            else:
+                contents = str(hover_contents)
+        self.hover_info = {"contents": contents} if contents else {}

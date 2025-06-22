@@ -32,8 +32,6 @@ dependencies = [
     "charset-normalizer==3.4.2",
     # Running the Reflex backend
     "granian==2.3.4",
-    # Python autocomplete
-    "jedi==0.19.2",
     # To manage the backend process
     "psutil==7.0.0",
     # To detect programming languages
@@ -42,6 +40,8 @@ dependencies = [
     "pywebview==5.4",
     # Web framework used for the GUI
     "reflex==0.7.14",
+    # Python LSP server
+    "ty==0.0.1a11",
     # CLI framework
     "typer==0.16.0",
     # Type checking backward compatibility

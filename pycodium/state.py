@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
     from pycodium.models.monaco import CompletionRequest, HoverRequest
 
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -43,6 +44,7 @@ class EditorState(rx.State):
     active_tab_id: str | None = None
     active_tab_history: list[str] = []
     completion_items: list[CompletionItem] = []
+    hover_info: dict[str, str] = {}
 
     # Explorer state
     project_root: Path = Path.cwd()
@@ -325,11 +327,8 @@ class EditorState(rx.State):
         column = position.get("column", 0)  # 0-based column number
         file_path = request.get("file_path")
 
-        # Generate completions using Jedi
-        completions = self._generate_jedi_completions(text, line + 1, column, file_path)
-
-        # Update the completion items state
-        self.completion_items = completions
+        logger.debug(f"Received completion request for line {line + 1}, column {column} in file {file_path}")
+        self.completion_items = self._generate_jedi_completions(text, line + 1, column, file_path)
 
     def _generate_jedi_completions(
         self, text: str, line: int, column: int, file_path: str | None = None
@@ -440,6 +439,8 @@ class EditorState(rx.State):
         column = position.get("column", 0)
         file_path = request.get("file_path")
 
+        logger.debug(f"Received hover request for line {line + 1}, column {column} in file {file_path}")
+
         # Use Jedi to get hover information
         script = jedi.Script(
             code=text,  # Changed from 'source' to 'code'
@@ -452,8 +453,13 @@ class EditorState(rx.State):
             column=column,
         )
 
+        hover_content = ""
         if definitions:
-            for definition in definitions[:1]:  # Use first definition
-                # You could store this in state and update hover display
-                # For now, we'll just log it
-                print(f"Hover info for '{definition.name}': {definition.docstring()}")
+            definition = definitions[0]
+            logger.debug(f"Hover info for '{definition.name}': {definition.docstring()}")
+            hover_content = definition.docstring() or definition.name
+        self.hover_info = {
+            "contents": hover_content,
+            "line": str(position.get("line", "")),
+            "column": str(position.get("column", "")),
+        }

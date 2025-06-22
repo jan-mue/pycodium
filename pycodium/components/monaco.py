@@ -51,6 +51,9 @@ class MonacoEditor(rx.Component):
     # Completion items from state
     completion_items: rx.Var[list[CompletionItem]] = rx.Var.create([])
 
+    # Hover info from state
+    hover_info: rx.Var[dict[str, str]] = rx.Var.create({})
+
     # Triggered when the editor value changes.
     on_change: rx.EventHandler[rx.event.passthrough_event_spec(str)]
 
@@ -79,7 +82,6 @@ class MonacoEditor(rx.Component):
                 const monaco = useMonaco();
                 const completionProviderRef = useRef(null);
                 const hoverProviderRef = useRef(null);
-                const pendingCompletionRef = useRef(null);
 
                 // Setup Monaco when available
                 useEffect(() => {{
@@ -106,41 +108,33 @@ class MonacoEditor(rx.Component):
 
                         completionProviderRef.current = monaco.languages.registerCompletionItemProvider('python', {{
                             provideCompletionItems: async (model, position) => {{
-                                return new Promise((resolve) => {{
-                                    const text = model.getValue();
-                                    const completionData = {{
-                                        text: text,
-                                        position: {{
-                                            line: position.lineNumber - 1,  // Convert to 0-based
-                                            column: position.column - 1
-                                        }},
-                                        file_path: model.uri ? model.uri.toString() : null
-                                    }};
+                                const text = model.getValue();
+                                const completionData = {{
+                                    text: text,
+                                    position: {{
+                                        line: position.lineNumber - 1,  // Convert to 0-based
+                                        column: position.column - 1
+                                    }},
+                                    file_path: model.uri ? model.uri.toString() : null
+                                }};
 
-                                    // Store the resolve function for later use
-                                    pendingCompletionRef.current = resolve;
+                                // Trigger Python event handler
+                                handleCompletionRequest(completionData);
+                                console.log('Completion request sent:', completionData);
 
-                                    // Trigger Python event handler
-                                    handleCompletionRequest(completionData);
-
-                                    // Set a timeout fallback in case state doesn't update
-                                    setTimeout(() => {{
-                                        if (pendingCompletionRef.current === resolve) {{
-                                            pendingCompletionRef.current = null;
-                                            resolve({{
-                                                suggestions: [
-                                                    {{
-                                                        label: 'print',
-                                                        kind: monaco.languages.CompletionItemKind.Function,
-                                                        insertText: 'print(${{1}})',
-                                                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                                                        documentation: 'Print function'
-                                                    }}
-                                                ]
-                                            }});
-                                        }}
-                                    }}, 1000); // 1 second timeout
-                                }});
+                                const completionItems = {self.completion_items!s};
+                                const suggestions = completionItems.map(item => ({{
+                                    label: item.label,
+                                    kind: item.kind || monaco?.languages?.CompletionItemKind?.Text || 1,
+                                    insertText: item.insert_text || item.label,
+                                    insertTextRules: item.insert_text && item.insert_text.includes('${{{{')
+                                        ? monaco?.languages?.CompletionItemInsertTextRule?.InsertAsSnippet
+                                        : undefined,
+                                    documentation: item.documentation || '',
+                                    detail: item.detail || ''
+                                }}));
+                                console.log('Completion suggestions:', suggestions);
+                                return {{ suggestions }};
                             }}
                         }});
 
@@ -163,18 +157,15 @@ class MonacoEditor(rx.Component):
 
                                 // Trigger Python event handler
                                 handleHoverRequest(hoverData);
+                                console.log('Hover request sent:', hoverData);
 
-                                // Return basic hover info
-                                const word = model.getWordAtPosition(position);
-                                if (word) {{
-                                    return {{
-                                        range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
-                                        contents: [{{
-                                            value: `**${{word.word}}**\\n\\nPython identifier`
-                                        }}]
-                                    }};
-                                }}
-                                return null;
+                                // Use hover_info from state if available
+                                const hoverInfo = {self.hover_info!s};
+                                console.log('Hover info received:', hoverInfo);
+                                return {{
+                                    range: new monaco.Range(position.lineNumber, 1, position.lineNumber, model.getLineMaxColumn(position.lineNumber)),
+                                    contents: hoverInfo.contents ? [ {{ value: hoverInfo.contents }} ] : []
+                                }};
                             }}
                         }});
                     }}
@@ -187,33 +178,9 @@ class MonacoEditor(rx.Component):
                         if (hoverProviderRef.current) {{
                             hoverProviderRef.current.dispose();
                         }}
-                        pendingCompletionRef.current = null;
                     }};
                 }}, [monaco]);
-
-                // Watch for completion_items changes and resolve pending completion requests
-                useEffect(() => {{
-                    if (pendingCompletionRef.current && {self.completion_items!s}) {{
-                        const resolve = pendingCompletionRef.current;
-                        pendingCompletionRef.current = null;
-
-                        const suggestions = {self.completion_items!s}.map(item => ({{
-                            label: item.label,
-                            kind: item.kind || monaco?.languages?.CompletionItemKind?.Text || 1,
-                            insertText: item.insert_text || item.label,
-                            insertTextRules: item.insert_text && item.insert_text.includes('${{')
-                                ? monaco?.languages?.CompletionItemInsertTextRule?.InsertAsSnippet
-                                : undefined,
-                            documentation: item.documentation || '',
-                            detail: item.detail || ''
-                        }}));
-
-                        resolve({{
-                            suggestions: suggestions
-                        }});
-                    }}
-                }}, [{self.completion_items!s}]);
-                """
+            """
         ]
 
 

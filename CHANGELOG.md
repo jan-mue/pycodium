@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/jan-mue/pycodium/compare/v0.2.0...v0.2.1) (2025-06-30)
+
+
+### Bug Fixes
+
+* **deps:** update dependency pygments to v2.19.2 ([#23](https://github.com/jan-mue/pycodium/issues/23)) ([1626c82](https://github.com/jan-mue/pycodium/commit/1626c8216fd58d0b617c33961973b801e707943b))
+
 ## [0.2.0](https://github.com/jan-mue/pycodium/compare/v0.1.2...v0.2.0) (2025-06-19)
 
 

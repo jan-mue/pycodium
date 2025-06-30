@@ -35,7 +35,7 @@ dependencies = [
     # To manage the backend process
     "psutil==7.0.0",
     # To detect programming languages
-    "pygments==2.19.1",
+    "pygments==2.19.2",
     # Displays the web UI in a native window
     "pywebview==5.4",
     # Web framework used for the GUI

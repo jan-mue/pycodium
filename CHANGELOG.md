@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.1](https://github.com/jan-mue/pycodium/compare/v0.2.0...v0.2.1) (2025-07-05)
+
+
+### Bug Fixes
+
+* **deps:** update dependency granian to v2.4.0 ([#35](https://github.com/jan-mue/pycodium/issues/35)) ([950f642](https://github.com/jan-mue/pycodium/commit/950f6422cf2c21ca815068edcf0a02446a39e8ae))
+* **deps:** update dependency pygments to v2.19.2 ([#23](https://github.com/jan-mue/pycodium/issues/23)) ([1626c82](https://github.com/jan-mue/pycodium/commit/1626c8216fd58d0b617c33961973b801e707943b))
+* **deps:** update dependency watchfiles to v1.1.0 ([#27](https://github.com/jan-mue/pycodium/issues/27)) ([159ad40](https://github.com/jan-mue/pycodium/commit/159ad40d32d73a9a992421964e51d97e3ae2a00d))
+
 ## [0.2.0](https://github.com/jan-mue/pycodium/compare/v0.1.2...v0.2.0) (2025-06-19)
 
 

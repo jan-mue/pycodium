@@ -13,7 +13,7 @@ wheels = [
 
 [[package]]
 name = "alembic"
-version = "1.16.1"
+version = "1.16.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "mako" },
@@ -21,9 +21,9 @@ dependencies = [
     { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/89/bfb4fe86e3fc3972d35431af7bedbc60fa606e8b17196704a1747f7aa4c3/alembic-1.16.1.tar.gz", hash = "sha256:43d37ba24b3d17bc1eb1024fe0f51cd1dc95aeb5464594a02c6bb9ca9864bfa4", size = 1955006, upload-time = "2025-05-21T23:11:05.991Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9c/35/116797ff14635e496bbda0c168987f5326a6555b09312e9b817e360d1f56/alembic-1.16.2.tar.gz", hash = "sha256:e53c38ff88dadb92eb22f8b150708367db731d58ad7e9d417c9168ab516cbed8", size = 1963563, upload-time = "2025-06-16T18:05:08.566Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/31/59/565286efff3692c5716c212202af61466480f6357c4ae3089d4453bff1f3/alembic-1.16.1-py3-none-any.whl", hash = "sha256:0cdd48acada30d93aa1035767d67dff25702f8de74d7c3919f2e8492c8db2e67", size = 242488, upload-time = "2025-05-21T23:11:07.783Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/e2/88e425adac5ad887a087c38d04fe2030010572a3e0e627f8a6e8c33eeda8/alembic-1.16.2-py3-none-any.whl", hash = "sha256:5f42e9bd0afdbd1d5e3ad856c01754530367debdebf21ed6894e34af52b3bb03", size = 242717, upload-time = "2025-06-16T18:05:10.27Z" },
 ]
 
 [[package]]
@@ -304,16 +304,16 @@ wheels = [
 
 [[package]]
 name = "fastapi"
-version = "0.115.12"
+version = "0.115.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "starlette" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f4/55/ae499352d82338331ca1e28c7f4a63bfd09479b16395dce38cf50a39e2c2/fastapi-0.115.12.tar.gz", hash = "sha256:1e2c2a2646905f9e83d32f04a3f86aff4a286669c6c950ca95b5fd68c2602681", size = 295236, upload-time = "2025-03-23T22:55:43.822Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ca/53/8c38a874844a8b0fa10dd8adf3836ac154082cf88d3f22b544e9ceea0a15/fastapi-0.115.14.tar.gz", hash = "sha256:b1de15cdc1c499a4da47914db35d0e4ef8f1ce62b624e94e0e5824421df99739", size = 296263, upload-time = "2025-06-26T15:29:08.21Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/50/b3/b51f09c2ba432a576fe63758bddc81f78f0c6309d9e5c10d194313bf021e/fastapi-0.115.12-py3-none-any.whl", hash = "sha256:e94613d6c05e27be7ffebdd6ea5f388112e5e430c8f7d6494a9d1d88d43e814d", size = 95164, upload-time = "2025-03-23T22:55:42.101Z" },
+    { url = "https://files.pythonhosted.org/packages/53/50/b1222562c6d270fea83e9c9075b8e8600b8479150a18e4516a6138b980d1/fastapi-0.115.14-py3-none-any.whl", hash = "sha256:6c0c8bf9420bd58f565e585036d971872472b4f7d3f6c73b698e10cffdefb3ca", size = 95514, upload-time = "2025-06-26T15:29:06.49Z" },
 ]
 
 [[package]]
@@ -1213,7 +1213,7 @@ wheels = [
 
 [[package]]
 name = "reflex-hosting-cli"
-version = "0.1.50"
+version = "0.1.51"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -1224,9 +1224,9 @@ dependencies = [
     { name = "rich" },
     { name = "tabulate" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b4/81/305748b296140110d5cdd6441eaddc6058dc8906d4a8b13f9fa97d02bac0/reflex_hosting_cli-0.1.50.tar.gz", hash = "sha256:d594d3734f4fff4ad33618aab0d0c1d9130b7148cab75ac85adb9f6a49055a48", size = 32280, upload-time = "2025-06-07T22:46:46.327Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/f8/6a189fd75966d2929ff3c072b051d7aebcd7b8e2cb4f7c0b81f201abf143/reflex_hosting_cli-0.1.51.tar.gz", hash = "sha256:48d53a57ce340293072a573584cbfe92560d40bb703ebd1bfb414398170d2299", size = 32785, upload-time = "2025-06-26T22:16:17.504Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/17/b9/e1802ceffc9dc026cad2c8de180789b72f5f3aa7be7d4da33645cbc2a75e/reflex_hosting_cli-0.1.50-py3-none-any.whl", hash = "sha256:5285f9eaf80858e6c5dca6cd705c0f5924a243697f58814938a73f1083cab143", size = 41226, upload-time = "2025-06-07T22:46:44.951Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/a8/ad2ddfb5e5f99c449f0962dfdb8a001df483338b9f4965604c0cab0fe671/reflex_hosting_cli-0.1.51-py3-none-any.whl", hash = "sha256:c1f3ad1ca56dcfb1a17976a4ab9f3f55d2c6737d55e46b4c58cf0cd28033f039", size = 41953, upload-time = "2025-06-26T22:16:16.629Z" },
 ]
 
 [[package]]

@@ -1,13 +1,16 @@
 """Custom component for the Monaco editor.
 
 Props are documented here: https://github.com/suren-atoyan/monaco-react?tab=readme-ov-file#props
+LSP client based on https://github.com/microsoft/vscode-languageserver-node/tree/main/client
 """
+
+from typing import Any
 
 import reflex as rx
 from reflex.utils import imports
 from typing_extensions import override
 
-from pycodium.models.monaco import CompletionItem, CompletionRequest, HoverRequest
+from pycodium.models.monaco import CompletionItem, CompletionRequest, DeclarationRequest, HoverRequest
 
 
 class MonacoEditor(rx.Component):
@@ -54,6 +57,12 @@ class MonacoEditor(rx.Component):
     # Hover info from state
     hover_info: rx.Var[dict[str, str]] = rx.Var.create({})
 
+    # Reference response from state
+    reference_response: rx.Var[dict[str, list[dict[str, Any]]]] = rx.Var.create({})
+
+    # Declaration response from state
+    declaration_response: rx.Var[dict[str, Any]] = rx.Var.create({})
+
     # Triggered when the editor value changes.
     on_change: rx.EventHandler[rx.event.passthrough_event_spec(str)]
 
@@ -65,6 +74,9 @@ class MonacoEditor(rx.Component):
 
     # Triggered when a hover request is made.
     on_hover_request: rx.EventHandler[rx.event.passthrough_event_spec(HoverRequest)]
+
+    # Triggered when a declaration request is made.
+    on_declaration_request: rx.EventHandler[rx.event.passthrough_event_spec(DeclarationRequest)]
 
     @override
     def add_imports(self) -> imports.ImportDict:
@@ -82,10 +94,13 @@ class MonacoEditor(rx.Component):
                 const monaco = useMonaco();
                 const completionProviderRef = useRef(null);
                 const hoverProviderRef = useRef(null);
+                const declarationProviderRef = useRef(null);
                 const pendingCompletionRef = useRef(null);
                 const pendingHoverRef = useRef(null);
+                const pendingDeclarationRef = useRef(null);
                 const lastCompletionItemsRef = useRef([]);
                 const lastHoverInfoRef = useRef({{}});
+                const lastDeclarationInfoRef = useRef([]);
 
                 // Update refs when state changes
                 useEffect(() => {{
@@ -125,6 +140,18 @@ class MonacoEditor(rx.Component):
                     }}
                 }}, [{self.hover_info!s}]);
 
+                useEffect(() => {{
+                    const declarationResponse = {self.declaration_response!s};
+                    if (JSON.stringify(declarationResponse) !== JSON.stringify(lastDeclarationInfoRef.current)) {{
+                        lastDeclarationInfoRef.current = declarationResponse;
+                        if (pendingDeclarationRef.current) {{
+                            console.log('Resolving declaration info:', declarationResponse);
+                            pendingDeclarationRef.current(declarationResponse.items || []);
+                            pendingDeclarationRef.current = null;
+                        }}
+                    }}
+                }}, [{self.declaration_response!s}]);
+
                 // Setup Monaco when available
                 useEffect(() => {{
                     if (monaco) {{
@@ -139,9 +166,10 @@ class MonacoEditor(rx.Component):
 
                         // Handle completion requests
                         const handleCompletionRequest = {rx.Var.create(self.event_triggers["on_completion_request"])!s};
-
                         // Handle hover requests
                         const handleHoverRequest = {rx.Var.create(self.event_triggers["on_hover_request"])!s};
+                        // Handle go to declaration requests
+                        const handleDeclarationRequest = {rx.Var.create(self.event_triggers["on_declaration_request"])!s};
 
                         // Register completion provider
                         if (completionProviderRef.current) {{
@@ -221,6 +249,36 @@ class MonacoEditor(rx.Component):
                                 }});
                             }}
                         }});
+
+                        // Register declaration provider
+                        if (declarationProviderRef.current) {{
+                            declarationProviderRef.current.dispose();
+                        }}
+                        declarationProviderRef.current = monaco.languages.registerDeclarationProvider('python', {{
+                            provideDeclaration: async (model, position, token) => {{
+                                return new Promise((resolve) => {{
+                                    const text = model.getValue();
+                                    const declarationData = {{
+                                        text: text,
+                                        position: {{
+                                            line: position.lineNumber - 1,
+                                            column: position.column - 1
+                                        }},
+                                        file_path: model.uri ? model.uri.toString() : null
+                                    }};
+                                    pendingDeclarationRef.current = resolve;
+                                    handleDeclarationRequest(declarationData);
+                                    console.log('Declaration request sent:', declarationData);
+                                    setTimeout(() => {{
+                                        if (pendingDeclarationRef.current === resolve) {{
+                                            pendingDeclarationRef.current = null;
+                                            console.log('Declaration request timed out, returning empty definition');
+                                            resolve([]);
+                                        }}
+                                    }}, 10000);
+                                }});
+                            }}
+                        }});
                     }}
 
                     // Cleanup on unmount
@@ -231,9 +289,13 @@ class MonacoEditor(rx.Component):
                         if (hoverProviderRef.current) {{
                             hoverProviderRef.current.dispose();
                         }}
+                        if (declarationProviderRef.current) {{
+                            declarationProviderRef.current.dispose();
+                        }}
                         // Clear any pending promises
                         pendingCompletionRef.current = null;
                         pendingHoverRef.current = null;
+                        pendingDeclarationRef.current = null;
                     }};
                 }}, [monaco]);
             """

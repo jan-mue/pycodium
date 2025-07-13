@@ -27,10 +27,21 @@ class HoverRequest(TypedDict):
 
 
 class CompletionItem(TypedDict):
-    """Completion item structure."""
+    """Completion item structure.
+
+    Monaco definition: https://microsoft.github.io/monaco-editor/typedoc/interfaces/languages.CompletionItem.html
+    """
 
     label: str
     kind: int
     insert_text: str
     documentation: str
     detail: str | None
+
+
+class DeclarationRequest(TypedDict):
+    """Declaration request data."""
+
+    text: str
+    position: dict[str, int]
+    file_path: str

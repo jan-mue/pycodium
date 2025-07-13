@@ -15,7 +15,7 @@ from typing_extensions import Unpack
 from watchfiles import Change, awatch
 
 from pycodium.models.files import FilePath
-from pycodium.models.monaco import CompletionItem
+from pycodium.models.monaco import CompletionItem, CompletionRequest, DeclarationRequest, HoverRequest
 from pycodium.models.tabs import EditorTab
 from pycodium.utils.detect_encoding import decode
 from pycodium.utils.detect_lang import detect_programming_language
@@ -23,8 +23,6 @@ from pycodium.utils.lsp_client import get_lsp_client
 
 if TYPE_CHECKING:
     from reflex.event import EventCallback, KeyInputInfo
-
-    from pycodium.models.monaco import CompletionRequest, HoverRequest
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -44,6 +42,7 @@ class EditorState(rx.State):
     active_tab_history: list[str] = []
     completion_response: dict[str, list[CompletionItem]] = {}
     hover_info: dict[str, str] = {}
+    declaration_response: dict[str, Any] = {}
 
     # Explorer state
     project_root: Path = Path.cwd()
@@ -353,6 +352,7 @@ class EditorState(rx.State):
 
         completion_items = [lsp_to_monaco(item) for item in completions]
         self.completion_response = {"items": completion_items}
+        logger.debug(f"Updated completion response for file {file_path}, line {line}, column {column}")
 
     @rx.event
     async def handle_hover_request(self, request: HoverRequest) -> None:
@@ -390,3 +390,31 @@ class EditorState(rx.State):
             else:
                 contents = str(hover_contents)
         self.hover_info = {"contents": contents} if contents else {}
+        logger.debug(f"Updated hover info for file {file_path}, line {line}, column {column}")
+
+    @rx.event
+    async def handle_declaration_request(self, request: DeclarationRequest) -> None:
+        """Handle declaration requests from the editor using the ty LSP server."""
+        text = request.get("text", "")
+        position = request.get("position", {})
+        line = position.get("line", 0)
+        column = position.get("column", 0)
+        file_path = request.get("file_path")
+        logger.debug(f"Received declaration request for file {file_path}, line {line}, column {column}")
+        if not file_path:
+            raise ValueError("File path is required for declaration requests")
+        lsp_client = await get_lsp_client()
+        uri = f"file://{self.project_root.parent / file_path}"
+        await lsp_client.open_document(uri, text)
+        declaration = await lsp_client.get_declaration(uri, line, column)
+
+        def lsp_to_monaco_location(item: dict[str, Any]) -> dict[str, Any]:
+            return {"uri": item.get("uri", uri), "range": item.get("range", {})}
+
+        locations = []
+        if isinstance(declaration, list):
+            locations = [lsp_to_monaco_location(item) for item in declaration if isinstance(item, dict)]
+        elif isinstance(declaration, dict):
+            locations = [lsp_to_monaco_location(declaration)]
+        self.declaration_response = {"items": locations}
+        logger.debug(f"Updated declaration response for file {file_path}, line {line}, column {column}")

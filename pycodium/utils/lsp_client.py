@@ -84,6 +84,26 @@ class TyLSPClient:
         params = {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}}
         return await self._send_request("textDocument/hover", params)
 
+    async def get_references(
+        self, uri: str, line: int, character: int, include_declaration: bool = True
+    ) -> list[dict[str, Any]]:
+        """Get all references to the symbol at the specified position."""
+        params = {
+            "textDocument": {"uri": uri},
+            "position": {"line": line, "character": character},
+            "context": {"includeDeclaration": include_declaration},
+        }
+        response = await self._send_request("textDocument/references", params)
+        if isinstance(response, list):
+            return response
+        return []
+
+    async def get_declaration(self, uri: str, line: int, character: int) -> dict[str, Any] | None:
+        """Get the declaration of the symbol at the specified position."""
+        params = {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}}
+        response = await self._send_request("textDocument/declaration", params)
+        return response
+
     async def open_document(self, uri: str, content: str, language_id: str = "python") -> None:
         """Open a document in the server."""
         params = {"textDocument": {"uri": uri, "languageId": language_id, "version": 1, "text": content}}
@@ -105,6 +125,8 @@ class TyLSPClient:
                         "completionItem": {"snippetSupport": True, "documentationFormat": ["markdown", "plaintext"]}
                     },
                     "hover": {"contentFormat": ["markdown", "plaintext"]},
+                    "references": {"dynamicRegistration": False},
+                    "declaration": {"dynamicRegistration": False, "linkSupport": True},
                 }
             },
             "workspaceFolders": None,

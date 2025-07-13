@@ -45,6 +45,7 @@ def editor_content() -> rx.Component:
                     hover_info=EditorState.hover_info,
                     on_completion_request=EditorState.handle_completion_request,
                     on_hover_request=EditorState.handle_hover_request,
+                    on_declaration_request=EditorState.handle_declaration_request,
                 ),
             ),
             class_name="flex-1",

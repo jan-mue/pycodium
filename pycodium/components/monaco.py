@@ -48,8 +48,8 @@ class MonacoEditor(rx.Component):
     # The path to the default file to load in the editor.
     default_path: rx.Var[str]
 
-    # Completion items from state
-    completion_items: rx.Var[list[CompletionItem]] = rx.Var.create([])
+    # Completion response from state
+    completion_response: rx.Var[dict[str, list[CompletionItem]]] = rx.Var.create({})
 
     # Hover info from state
     hover_info: rx.Var[dict[str, str]] = rx.Var.create({})
@@ -89,7 +89,8 @@ class MonacoEditor(rx.Component):
 
                 // Update refs when state changes
                 useEffect(() => {{
-                    const completionItems = {self.completion_items!s};
+                    const completionResponse = {self.completion_response!s};
+                    const completionItems = completionResponse.items || [];
                     if (JSON.stringify(completionItems) !== JSON.stringify(lastCompletionItemsRef.current)) {{
                         lastCompletionItemsRef.current = completionItems;
                         if (pendingCompletionRef.current) {{
@@ -108,7 +109,7 @@ class MonacoEditor(rx.Component):
                             pendingCompletionRef.current = null;
                         }}
                     }}
-                }}, [{self.completion_items!s}]);
+                }}, [{self.completion_response!s}]);
 
                 useEffect(() => {{
                     const hoverInfo = {self.hover_info!s};

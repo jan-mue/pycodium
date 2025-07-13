@@ -41,7 +41,7 @@ def editor_content() -> rx.Component:
                     theme="vs-dark",
                     options=default_monaco_options,
                     on_change=lambda content: EditorState.update_tab_content(active_tab.id, content),
-                    comletion_items=EditorState.completion_items,
+                    completion_response=EditorState.completion_response,
                     hover_info=EditorState.hover_info,
                     on_completion_request=EditorState.handle_completion_request,
                     on_hover_request=EditorState.handle_hover_request,

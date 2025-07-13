@@ -42,7 +42,7 @@ class EditorState(rx.State):
     tabs: list[EditorTab] = []
     active_tab_id: str | None = None
     active_tab_history: list[str] = []
-    completion_items: list[CompletionItem] = []
+    completion_response: dict[str, list[CompletionItem]] = {}
     hover_info: dict[str, str] = {}
 
     # Explorer state
@@ -334,6 +334,7 @@ class EditorState(rx.State):
         line = position.get("line", 0)
         column = position.get("column", 0)
         file_path = request.get("file_path")
+        logger.debug(f"Received completion request for file {file_path}, line {line}, column {column}")
         if not file_path:
             raise ValueError("File path is required for completion requests")
         lsp_client = await get_lsp_client()
@@ -350,7 +351,8 @@ class EditorState(rx.State):
                 detail=item.get("detail", ""),
             )
 
-        self.completion_items = [lsp_to_monaco(item) for item in completions]
+        completion_items = [lsp_to_monaco(item) for item in completions]
+        self.completion_response = {"items": completion_items}
 
     @rx.event
     async def handle_hover_request(self, request: HoverRequest) -> None:
@@ -360,6 +362,7 @@ class EditorState(rx.State):
         line = position.get("line", 0)
         column = position.get("column", 0)
         file_path = request.get("file_path")
+        logger.debug(f"Received hover request for file {file_path}, line {line}, column {column}")
         if not file_path:
             raise ValueError("File path is required for hover requests")
         lsp_client = await get_lsp_client()

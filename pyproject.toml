@@ -31,11 +31,11 @@ dependencies = [
     # To detect file encodings
     "charset-normalizer==3.4.2",
     # Running the Reflex backend
-    "granian==2.3.4",
+    "granian==2.4.1",
     # To manage the backend process
     "psutil==7.0.0",
     # To detect programming languages
-    "pygments==2.19.1",
+    "pygments==2.19.2",
     # Displays the web UI in a native window
     "pywebview==5.4",
     # Web framework used for the GUI
@@ -45,9 +45,9 @@ dependencies = [
     # CLI framework
     "typer==0.16.0",
     # Type checking backward compatibility
-    "typing-extensions==4.14.0",
+    "typing-extensions==4.14.1",
     # Update editor content when files change
-    "watchfiles==1.0.5",
+    "watchfiles==1.1.0",
 ]
 
 urls.Changelog = "https://github.com/jan-mue/pycodium/releases"
@@ -59,15 +59,15 @@ scripts.pycodium = "pycodium.main:app"
 
 [dependency-groups]
 dev = [
-    "coverage==7.9.1",
+    "coverage==7.9.2",
     "hatchling==1.27.0",
     "httpx==0.28.1",
     "inline-snapshot[dirty-equals]==0.23.2",
     "pyright==1.1.402",
-    "pytest==8.4.0",
+    "pytest==8.4.1",
     "pytest-asyncio==1.0.0",
     "pytest-mock==3.14.1",
-    "uvicorn==0.34.3",
+    "uvicorn==0.35.0",
 ]
 
 [tool.hatch.build]

@@ -70,7 +70,7 @@ dev = [
 
 [tool.hatch.build]
 include = [
-    ".web/_static",
+    ".web/build/client",
     "assets",
     "pycodium",
     "build_hook.py",

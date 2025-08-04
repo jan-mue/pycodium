@@ -24,6 +24,13 @@ class EditorState(rx.State):
     panel_visible: bool = True
     active_sidebar_tab: str = "explorer"
 
+    # Editor state variables (for direct access in tests)
+    tabs: list[EditorTab] = []
+    active_tab_id: str | None = None
+    active_tab_history: list[str] = []
+    expanded_folders: set[str] = set()
+    file_tree: FilePath | None = None
+
     # Editor state - delegated to controller
     _controller: EditorController | None = None
 
@@ -32,58 +39,13 @@ class EditorState(rx.State):
         """Get the editor controller instance."""
         if self._controller is None:
             self._controller = EditorController(self.project_root)
+            # Sync state with controller
+            self._controller.tabs = self.tabs
+            self._controller.active_tab_id = self.active_tab_id
+            self._controller.active_tab_history = self.active_tab_history
+            self._controller.expanded_folders = self.expanded_folders
+            self._controller.file_tree = self.file_tree
         return self._controller
-
-    # Properties that delegate to controller
-    @property
-    def tabs(self) -> list[EditorTab]:
-        """Get the list of open tabs."""
-        return self.controller.tabs
-
-    @tabs.setter
-    def tabs(self, value: list[EditorTab]) -> None:
-        """Set the list of open tabs."""
-        self.controller.tabs = value
-
-    @property
-    def active_tab_id(self) -> str | None:
-        """Get the active tab ID."""
-        return self.controller.active_tab_id
-
-    @active_tab_id.setter
-    def active_tab_id(self, value: str | None) -> None:
-        """Set the active tab ID."""
-        self.controller.active_tab_id = value
-
-    @property
-    def active_tab_history(self) -> list[str]:
-        """Get the active tab history."""
-        return self.controller.active_tab_history
-
-    @active_tab_history.setter
-    def active_tab_history(self, value: list[str]) -> None:
-        """Set the active tab history."""
-        self.controller.active_tab_history = value
-
-    @property
-    def expanded_folders(self) -> set[str]:
-        """Get the expanded folders."""
-        return self.controller.expanded_folders
-
-    @expanded_folders.setter
-    def expanded_folders(self, value: set[str]) -> None:
-        """Set the expanded folders."""
-        self.controller.expanded_folders = value
-
-    @property
-    def file_tree(self) -> FilePath | None:
-        """Get the file tree."""
-        return self.controller.file_tree
-
-    @file_tree.setter
-    def file_tree(self, value: FilePath | None) -> None:
-        """Set the file tree."""
-        self.controller.file_tree = value
 
     # Explorer state
     project_root: Path = Path.cwd()
@@ -108,6 +70,8 @@ class EditorState(rx.State):
             folder_path: The path of the folder to toggle.
         """
         await self.controller.toggle_folder(folder_path)
+        # Sync state back from controller
+        self.expanded_folders = self.controller.expanded_folders
 
     @rx.event
     async def open_file(self, file_path: str) -> EventCallback[Unpack[tuple[()]]] | None:
@@ -118,6 +82,10 @@ class EditorState(rx.State):
         """
         tab = await self.controller.open_file(file_path)
         if tab:
+            # Sync state back from controller
+            self.tabs = self.controller.tabs
+            self.active_tab_id = self.controller.active_tab_id
+            self.active_tab_history = self.controller.active_tab_history
             return EditorState.keep_active_tab_content_updated
         return None
 
@@ -129,6 +97,10 @@ class EditorState(rx.State):
             tab_id: The ID of the tab to close.
         """
         await self.controller.close_tab(tab_id)
+        # Sync state back from controller
+        self.tabs = self.controller.tabs
+        self.active_tab_id = self.controller.active_tab_id
+        self.active_tab_history = self.controller.active_tab_history
 
     @rx.event
     async def set_active_tab(self, tab_id: str) -> EventCallback[Unpack[tuple[()]]] | None:
@@ -139,6 +111,9 @@ class EditorState(rx.State):
         """
         success = await self.controller.set_active_tab(tab_id)
         if success:
+            # Sync state back from controller
+            self.active_tab_id = self.controller.active_tab_id
+            self.active_tab_history = self.controller.active_tab_history
             return EditorState.keep_active_tab_content_updated
         return None
 
@@ -151,11 +126,20 @@ class EditorState(rx.State):
             content: The new content for the tab.
         """
         await self.controller.update_tab_content(tab_id, content)
+        # Sync state back from controller
+        self.tabs = self.controller.tabs
 
     @rx.event
     def open_project(self) -> None:
         """Open a project in the editor."""
-        asyncio.create_task(self.controller.open_project(self.project_root))
+        asyncio.create_task(self._open_project_async())
+
+    async def _open_project_async(self) -> None:
+        """Async helper to open a project."""
+        await self.controller.open_project(self.project_root)
+        # Sync state back from controller
+        self.file_tree = self.controller.file_tree
+        self.expanded_folders = self.controller.expanded_folders
 
     # Properties that delegate to controller
     @rx.var

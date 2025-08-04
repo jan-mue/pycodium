@@ -107,11 +107,11 @@ async def test_update_tab_content(state: EditorState) -> None:
     assert tab.content == "def"
 
 
-def test_open_project(tmp_path: Path, state: EditorState) -> None:
+async def test_open_project(tmp_path: Path, state: EditorState) -> None:
     (tmp_path / "dir").mkdir()
     (tmp_path / "file.txt").write_text("hi")
     state.project_root = tmp_path
-    state.open_project()
+    await state._open_project_async()
     assert state.file_tree is not None
     assert tmp_path.name in state.expanded_folders
 
@@ -170,7 +170,7 @@ async def test_on_key_down_save_and_close(state: EditorState, mocker: MockerFixt
     state.tabs = [tab]
     state.active_tab_id = "1"
     key_info: KeyInputInfo = {"meta_key": True, "alt_key": False, "ctrl_key": False, "shift_key": False}
-    save_mock = mocker.patch.object(EditorState, "_save_current_file", new=mocker.AsyncMock())
+    save_mock = mocker.patch.object(state.controller, "save_current_file", new=mocker.AsyncMock(return_value=True))
     await state.on_key_down("s", key_info)
     save_mock.assert_awaited_once()
     # Test close (Cmd+W):

@@ -4,13 +4,13 @@
 import asyncio
 import threading
 from pathlib import Path
-
+from typing import Any, Coroutine
 
 import webview
 import webview.menu as wm
 
 
-def _run_async(coro):
+def _run_async(coro: Coroutine[Any, Any, Any]) -> None:
     """Run an async coroutine in a thread-safe way."""
     try:
         # Try to get the current event loop
@@ -27,7 +27,7 @@ def _run_async(coro):
                 asyncio.run_coroutine_threadsafe(coro, main_loop)
             else:
                 # Main loop not running, run in new thread with new loop
-                def run_in_thread():
+                def run_in_thread() -> None:
                     new_loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(new_loop)
                     try:
@@ -38,7 +38,7 @@ def _run_async(coro):
                 threading.Thread(target=run_in_thread, daemon=True).start()
         except RuntimeError:
             # No event loop available, run in new thread
-            def run_in_thread():
+            def run_in_thread() -> None:
                 new_loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(new_loop)
                 try:
@@ -119,12 +119,12 @@ def exit_application():
         active_window.destroy()
 
 
-async def _open_files_async(file_paths: list[str]):
+async def _open_files_async(file_paths: list[str]) -> None:
     """Async helper to open multiple files."""
     try:
         from pycodium.state import EditorState
         
-        state = await EditorState.get_state()
+        state = EditorState()
         controller = state.controller
         for file_path in file_paths:
             await controller.open_file(file_path)
@@ -132,49 +132,47 @@ async def _open_files_async(file_paths: list[str]):
         print(f"Error opening files: {e}")
 
 
-async def _open_folder_async(folder_path: str):
+async def _open_folder_async(folder_path: str) -> None:
     """Async helper to open a folder."""
     try:
         from pycodium.state import EditorState
         
-        state = await EditorState.get_state()
+        state = EditorState()
         state.project_root = Path(folder_path)
         await state.controller.open_project(Path(folder_path))
     except Exception as e:
         print(f"Error opening folder: {e}")
 
 
-async def _save_current_file_async():
+async def _save_current_file_async() -> None:
     """Async helper to save the current file."""
     try:
         from pycodium.state import EditorState
         
-        state = await EditorState.get_state()
+        state = EditorState()
         await state.controller.save_current_file()
     except Exception as e:
         print(f"Error saving file: {e}")
 
 
-async def _save_file_as_async(file_path: str):
+async def _save_file_as_async(file_path: str) -> None:
     """Async helper to save file with new name."""
     try:
         from pycodium.state import EditorState
         
-        state = await EditorState.get_state()
-        if state:
-            await state.controller.save_file_as(file_path)
+        state = EditorState()
+        await state.controller.save_file_as(file_path)
     except Exception as e:
         print(f"Error saving file as: {e}")
 
 
-async def _new_file_async():
+async def _new_file_async() -> None:
     """Async helper to create a new file."""
     try:
         from pycodium.state import EditorState
         
-        state = await EditorState.get_state()
-        if state:
-            await state.controller.new_file()
+        state = EditorState()
+        await state.controller.new_file()
     except Exception as e:
         print(f"Error creating new file: {e}")
 

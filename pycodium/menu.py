@@ -2,6 +2,7 @@
 """Menu system for PyCodium IDE using Pywebview."""
 
 import asyncio
+import threading
 import uuid
 from pathlib import Path
 
@@ -9,6 +10,45 @@ import webview
 import webview.menu as wm
 
 from pycodium.models.tabs import EditorTab
+
+
+def _run_async(coro):
+    """Run an async coroutine in a thread-safe way."""
+    try:
+        # Try to get the current event loop
+        loop = asyncio.get_running_loop()
+        # We're in an async context, create task directly
+        loop.create_task(coro)
+    except RuntimeError:
+        # No event loop in current thread, use thread-safe method
+        try:
+            # Try to get the main thread's event loop
+            main_loop = asyncio.get_event_loop_policy().get_event_loop()
+            if main_loop.is_running():
+                # Schedule on the main event loop
+                asyncio.run_coroutine_threadsafe(coro, main_loop)
+            else:
+                # Main loop not running, run in new thread with new loop
+                def run_in_thread():
+                    new_loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(new_loop)
+                    try:
+                        new_loop.run_until_complete(coro)
+                    finally:
+                        new_loop.close()
+
+                threading.Thread(target=run_in_thread, daemon=True).start()
+        except RuntimeError:
+            # No event loop available, run in new thread
+            def run_in_thread():
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                try:
+                    new_loop.run_until_complete(coro)
+                finally:
+                    new_loop.close()
+
+            threading.Thread(target=run_in_thread, daemon=True).start()
 
 
 def open_file_dialog():
@@ -29,7 +69,7 @@ def open_file_dialog():
             # Convert to string paths
             file_paths = [str(Path(f)) for f in result]
             # Use async task to open files
-            asyncio.create_task(_open_files_async(file_paths))
+            _run_async(_open_files_async(file_paths))
 
 
 def open_folder_dialog():
@@ -42,14 +82,14 @@ def open_folder_dialog():
         if result and len(result) > 0:
             folder_path = str(Path(result[0]))
             # Use async task to open folder
-            asyncio.create_task(_open_folder_async(folder_path))
+            _run_async(_open_folder_async(folder_path))
 
 
 def save_file_dialog():
     """Open a save file dialog to save the current file."""
     active_window = webview.active_window()
     if active_window:
-        asyncio.create_task(_save_current_file_async())
+        _run_async(_save_current_file_async())
 
 
 def save_as_dialog():
@@ -63,12 +103,12 @@ def save_as_dialog():
         )
         if result:
             file_path = str(Path(result))
-            asyncio.create_task(_save_file_as_async(file_path))
+            _run_async(_save_file_as_async(file_path))
 
 
 def new_file():
     """Create a new empty file."""
-    asyncio.create_task(_new_file_async())
+    _run_async(_new_file_async())
 
 
 def exit_application():

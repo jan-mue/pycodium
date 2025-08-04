@@ -3,13 +3,11 @@
 
 import asyncio
 import threading
-import uuid
 from pathlib import Path
+
 
 import webview
 import webview.menu as wm
-
-from pycodium.models.tabs import EditorTab
 
 
 def _run_async(coro):
@@ -101,8 +99,11 @@ def save_as_dialog():
             directory='/',
             save_filename='untitled.py'
         )
-        if result:
+        if result and isinstance(result, str):
             file_path = str(Path(result))
+            _run_async(_save_file_as_async(file_path))
+        elif result and isinstance(result, (list, tuple)) and len(result) > 0:
+            file_path = str(Path(result[0]))
             _run_async(_save_file_as_async(file_path))
 
 
@@ -124,8 +125,9 @@ async def _open_files_async(file_paths: list[str]):
         from pycodium.state import EditorState
         
         state = await EditorState.get_state()
+        controller = state.controller
         for file_path in file_paths:
-            await state.open_file(file_path)
+            await controller.open_file(file_path)
     except Exception as e:
         print(f"Error opening files: {e}")
 
@@ -137,7 +139,7 @@ async def _open_folder_async(folder_path: str):
         
         state = await EditorState.get_state()
         state.project_root = Path(folder_path)
-        state.open_project()
+        await state.controller.open_project(Path(folder_path))
     except Exception as e:
         print(f"Error opening folder: {e}")
 
@@ -148,7 +150,7 @@ async def _save_current_file_async():
         from pycodium.state import EditorState
         
         state = await EditorState.get_state()
-        await state._save_current_file()
+        await state.controller.save_current_file()
     except Exception as e:
         print(f"Error saving file: {e}")
 
@@ -159,11 +161,8 @@ async def _save_file_as_async(file_path: str):
         from pycodium.state import EditorState
         
         state = await EditorState.get_state()
-        active_tab = state.active_tab
-        if active_tab:
-            active_tab.path = file_path
-            active_tab.title = Path(file_path).name
-            await state._save_current_file()
+        if state:
+            await state.controller.save_file_as(file_path)
     except Exception as e:
         print(f"Error saving file as: {e}")
 
@@ -174,17 +173,8 @@ async def _new_file_async():
         from pycodium.state import EditorState
         
         state = await EditorState.get_state()
-        new_tab = EditorTab(
-            id=str(uuid.uuid4()),
-            title="untitled.py",
-            language="python",
-            content="",
-            encoding="utf-8",
-            path="untitled.py",
-            on_not_active=asyncio.Event(),
-        )
-        state.tabs.append(new_tab)
-        state.active_tab_id = new_tab.id
+        if state:
+            await state.controller.new_file()
     except Exception as e:
         print(f"Error creating new file: {e}")
 

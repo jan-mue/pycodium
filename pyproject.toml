@@ -60,7 +60,7 @@ dev = [
     "coverage==7.10.1",
     "hatchling==1.27.0",
     "httpx==0.28.1",
-    "inline-snapshot[dirty-equals]==0.25.3",
+    "inline-snapshot[dirty-equals]==0.26.0",
     "pyright==1.1.403",
     "pytest==8.4.1",
     "pytest-asyncio==1.1.0",

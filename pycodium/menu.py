@@ -122,12 +122,13 @@ def exit_application():
 async def _open_files_async(file_paths: list[str]) -> None:
     """Async helper to open multiple files."""
     try:
+        import reflex as rx
         from pycodium.state import EditorState
         
-        state = EditorState()
-        controller = state.controller
+        # Get the current state instance from Reflex
+        state = await EditorState.get_state()
         for file_path in file_paths:
-            await controller.open_file(file_path)
+            await state.open_file(file_path)
     except Exception as e:
         print(f"Error opening files: {e}")
 
@@ -135,11 +136,14 @@ async def _open_files_async(file_paths: list[str]) -> None:
 async def _open_folder_async(folder_path: str) -> None:
     """Async helper to open a folder."""
     try:
+        from pathlib import Path
+        import reflex as rx
         from pycodium.state import EditorState
         
-        state = EditorState()
+        # Get the current state instance from Reflex
+        state = await EditorState.get_state()
         state.project_root = Path(folder_path)
-        await state.controller.open_project(Path(folder_path))
+        await state._open_project_async()
     except Exception as e:
         print(f"Error opening folder: {e}")
 
@@ -147,9 +151,11 @@ async def _open_folder_async(folder_path: str) -> None:
 async def _save_current_file_async() -> None:
     """Async helper to save the current file."""
     try:
+        import reflex as rx
         from pycodium.state import EditorState
         
-        state = EditorState()
+        # Get the current state instance from Reflex
+        state = await EditorState.get_state()
         await state.controller.save_current_file()
     except Exception as e:
         print(f"Error saving file: {e}")
@@ -158,9 +164,11 @@ async def _save_current_file_async() -> None:
 async def _save_file_as_async(file_path: str) -> None:
     """Async helper to save file with new name."""
     try:
+        import reflex as rx
         from pycodium.state import EditorState
         
-        state = EditorState()
+        # Get the current state instance from Reflex
+        state = await EditorState.get_state()
         await state.controller.save_file_as(file_path)
     except Exception as e:
         print(f"Error saving file as: {e}")
@@ -169,9 +177,11 @@ async def _save_file_as_async(file_path: str) -> None:
 async def _new_file_async() -> None:
     """Async helper to create a new file."""
     try:
+        import reflex as rx
         from pycodium.state import EditorState
         
-        state = EditorState()
+        # Get the current state instance from Reflex
+        state = await EditorState.get_state()
         await state.controller.new_file()
     except Exception as e:
         print(f"Error creating new file: {e}")

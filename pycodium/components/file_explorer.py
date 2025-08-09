@@ -96,7 +96,15 @@ def explorer() -> rx.Component:
             class_name="p-2 text-xs uppercase font-bold flex justify-between items-center",
         ),
         rx.el.div(
-            file_tree_view(name=EditorState.file_tree.name, sub_paths=EditorState.file_tree.sub_paths, is_dir=True),  # type: ignore[reportOptionalMemberAccess]
+            rx.cond(
+                EditorState.file_tree.is_not_none,
+                file_tree_view(
+                    name=EditorState.file_tree.name,  # type: ignore[reportOptionalMemberAccess]
+                    sub_paths=EditorState.file_tree.sub_paths,  # type: ignore[reportOptionalMemberAccess]
+                    is_dir=True
+                ),
+                rx.el.div("No project opened", class_name="p-4 text-sm text-gray-400")
+            ),
             class_name="mt-2",
         ),
         class_name="w-full h-full overflow-auto",

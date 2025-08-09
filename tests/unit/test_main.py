@@ -10,7 +10,8 @@ from reflex.utils import exec  # noqa: A004
 
 from pycodium import __version__
 from pycodium.constants import PROJECT_ROOT_DIR
-from pycodium.main import app, terminate_or_kill_process_on_port, wait_for_port
+from pycodium.main import app
+from pycodium.utils.processes import terminate_or_kill_process_on_port, wait_for_port
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -49,9 +50,8 @@ def test_cli_starts_ide(runner: CliRunner, mocker: MockerFixture) -> None:
 
 
 def test_terminate_or_kill_process_on_port(mocker: MockerFixture) -> None:
-    mock_processes = mocker.patch("pycodium.main.processes")
     mock_proc = mocker.Mock()
-    mock_processes.get_process_on_port.return_value = mock_proc
+    mocker.patch("pycodium.main.get_process_on_port", return_value=mock_proc)
     mock_proc.wait.return_value = None
 
     terminate_or_kill_process_on_port(9999, timeout=1)
@@ -61,9 +61,8 @@ def test_terminate_or_kill_process_on_port(mocker: MockerFixture) -> None:
 
 
 def test_terminate_or_kill_process_on_port_no_proc(mocker: MockerFixture) -> None:
-    mock_processes = mocker.patch("pycodium.main.processes")
     mock_logger = mocker.patch("pycodium.main.logger")
-    mock_processes.get_process_on_port.return_value = None
+    mocker.patch("pycodium.main.get_process_on_port", return_value=None)
 
     terminate_or_kill_process_on_port(8888, timeout=1)
 
@@ -71,13 +70,13 @@ def test_terminate_or_kill_process_on_port_no_proc(mocker: MockerFixture) -> Non
 
 
 def test_wait_for_port_success(mocker: MockerFixture) -> None:
-    mock_is_process_on_port = mocker.patch("pycodium.main.processes.is_process_on_port", return_value=True)
+    mock_get_process_on_port = mocker.patch("pycodium.main.get_process_on_port")
     wait_for_port(12345, timeout=1)
-    mock_is_process_on_port.assert_called_with(12345)
+    mock_get_process_on_port.assert_called_with(12345)
 
 
 def test_wait_for_port_timeout(mocker: MockerFixture) -> None:
-    mocker.patch("pycodium.main.processes.is_process_on_port", return_value=False)
+    mocker.patch("pycodium.main.get_process_on_port", return_value=None)
     start = time.time()
     with pytest.raises(TimeoutError):
         wait_for_port(54321, timeout=1)

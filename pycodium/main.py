@@ -2,11 +2,9 @@
 
 import logging
 import os
-import time
 from pathlib import Path
 from typing import Annotated
 
-import psutil
 import typer
 import webview
 from reflex import constants
@@ -16,6 +14,7 @@ from reflex.utils import exec, processes  # noqa: A004
 
 from pycodium import __version__
 from pycodium.constants import PROJECT_ROOT_DIR
+from pycodium.utils.processes import terminate_or_kill_process_on_port, wait_for_port
 
 # TODO: configure logging
 logger = logging.getLogger(__name__)
@@ -41,7 +40,7 @@ def run_app_with_pywebview(
     window_title: str = "PyCodium IDE",
     window_width: int = 1300,
     window_height: int = 800,
-    frontend_path: Path = PROJECT_ROOT_DIR / ".web" / "_static" / "index.html",
+    frontend_path: Path = PROJECT_ROOT_DIR / constants.Dirs.WEB / constants.Dirs.STATIC / "index.html",
     backend_port: int | None = None,
     backend_host: str | None = None,
 ) -> None:
@@ -97,34 +96,6 @@ def run_app_with_pywebview(
         webview.start()
 
     logger.info("Application shutdown complete.")
-
-
-def wait_for_port(port: int, timeout: int = 5) -> None:
-    """Wait for a specific port to become available."""
-    logger.info(f"Waiting for port {port} to become available...")
-    start_time = time.time()
-    while True:
-        if processes.is_process_on_port(port):
-            logger.info(f"Port {port} is now available.")
-            return
-        if time.time() - start_time > timeout:
-            raise TimeoutError(f"Port {port} did not become available within {timeout} seconds.")
-        time.sleep(0.1)
-
-
-def terminate_or_kill_process_on_port(port: int, timeout: int = 1) -> None:
-    """Terminate or kill the process running on a specific port."""
-    proc = processes.get_process_on_port(port)
-    if proc is None:
-        logger.warning(f"No process found on port {port}.")
-        return
-    proc.terminate()  # Send SIGTERM (terminate)
-    try:
-        proc.wait(timeout=timeout)
-    except psutil.TimeoutExpired:
-        logger.warning(f"Process {proc.pid} on port {port} did not terminate in time, sending SIGKILL.")
-        proc.kill()  # If still alive, send SIGKILL (kill)
-        proc.wait()  # Wait for process to actually terminate
 
 
 if __name__ == "__main__":

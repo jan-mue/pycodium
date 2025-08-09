@@ -1,9 +1,10 @@
 """Configuration for the Reflex application."""
 
 import reflex as rx
+from reflex.plugins.shared_tailwind import TailwindConfig
 
-tailwind_config = {
-    "darkMode": ["class"],
+tailwind_config: TailwindConfig = {
+    "darkMode": "class",
     "prefix": "",
     "theme": {
         "container": {"center": True, "padding": "2rem", "screens": {"2xl": "1400px"}},
@@ -67,6 +68,6 @@ config = rx.Config(
     app_name="pycodium",
     telemetry_enabled=False,
     show_built_with_reflex=False,
-    plugins=[rx.plugins.TailwindV3Plugin()],  # type: ignore[reportPrivateImportUsage]
-    tailwind=tailwind_config,
+    plugins=[rx.plugins.TailwindV3Plugin(tailwind_config)],
+    disable_plugins=["reflex.plugins.sitemap.SitemapPlugin"],
 )

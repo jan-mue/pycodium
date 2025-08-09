@@ -1,4 +1,4 @@
-"""Define a component that listens for key events globally."""
+"""A component that listens for key events globally."""
 
 import reflex as rx
 from reflex.event import key_event
@@ -25,14 +25,13 @@ class GlobalHotkeyWatcher(rx.Fragment):
     def add_hooks(self) -> list[str | rx.Var[str]]:
         """Add the hooks for the component."""
         return [
-            """
-            useEffect(() => {
-                const handle_key = %s;
+            f"""
+            useEffect(() => {{
+                const handle_key = {rx.Var.create(self.event_triggers["on_key_down"])!s};
                 document.addEventListener("keydown", handle_key, false);
-                return () => {
+                return () => {{
                     document.removeEventListener("keydown", handle_key, false);
-                }
-            })
-            """  # noqa: UP031
-            % str(rx.Var.create(self.event_triggers["on_key_down"]))
+                }}
+            }})
+            """
         ]

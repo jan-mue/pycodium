@@ -236,6 +236,7 @@ jobs:
             --max-iterations ${{ env.MAX_ITERATIONS }} \
             --comment-id ${{ env.COMMENT_ID }} \
             --is-experimental ${{ steps.install_openhands.outputs.isExperimental }} \
+            --repo-instruction-file "${{ github.workspace }}/.github/copilot-instructions.md" \
             --base-container-image python:${{ steps.setup-python.outputs.python-version }}-slim
 
       - name: Check resolution result

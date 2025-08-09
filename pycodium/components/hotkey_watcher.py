@@ -1,10 +1,9 @@
 """A component that listens for key events globally."""
 
-from typing import override
-
 import reflex as rx
 from reflex.event import key_event
 from reflex.utils import imports
+from typing_extensions import override
 
 
 class GlobalHotkeyWatcher(rx.Fragment):

@@ -1,11 +1,12 @@
 """Utility functions for managing processes."""
 
 import contextlib
+import logging
 import time
 
 import psutil
 
-from pycodium.main import logger
+logger = logging.getLogger(__name__)
 
 
 def wait_for_port(port: int, timeout: int = 5) -> None:

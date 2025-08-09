@@ -16,6 +16,7 @@ from reflex.utils import exec, processes  # noqa: A004
 
 from pycodium import __version__
 from pycodium.constants import PROJECT_ROOT_DIR
+from pycodium.menu import get_menu_items
 
 # TODO: configure logging
 logger = logging.getLogger(__name__)
@@ -94,7 +95,7 @@ def run_app_with_pywebview(
             title=window_title, url=str(frontend_path), width=window_width, height=window_height
         )
         window.events.closing += on_closing
-        webview.start()
+        webview.start(menu=get_menu_items())
 
     logger.info("Application shutdown complete.")
 

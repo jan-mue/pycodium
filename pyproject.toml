@@ -37,7 +37,7 @@ dependencies = [
     # To detect programming languages
     "pygments==2.19.2",
     # Displays the web UI in a native window
-    "pywebview==5.4",
+    "pywebview==6.0",
     # Web framework used for the GUI
     "reflex==0.7.14",
     # CLI framework

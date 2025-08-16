@@ -58,6 +58,7 @@ scripts.pycodium = "pycodium.main:app"
 [dependency-groups]
 dev = [
     "coverage==7.10.2",
+    "deptry==0.23.1",
     "hatchling==1.27.0",
     "httpx==0.28.1",
     "inline-snapshot[dirty-equals]==0.27.1",
@@ -132,6 +133,14 @@ lint.pydocstyle.convention = "google"
 
 [tool.codespell]
 ignore-words-list = "nin"
+
+[tool.deptry.per_rule_ignores]
+DEP004 = [
+    "hatchling", # not required at runtime as it is only used to build the package
+]
+DEP002 = [
+    "granian", # used to run the Reflex backend
+]
 
 [tool.pyproject-fmt]
 indent = 4

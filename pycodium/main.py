@@ -92,7 +92,7 @@ def run_app_with_pywebview(
         window = webview.create_window(
             title=window_title, url=str(frontend_path), width=window_width, height=window_height
         )
-        window.events.closing += on_closing
+        window.events.closing += on_closing  # type: ignore[reportOptionalMemberAccess]
         webview.start()
 
     logger.info("Application shutdown complete.")

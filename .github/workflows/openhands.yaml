@@ -97,7 +97,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@e92bafb6253dcd438e0484186d7669ea7a8ca1cc # v6.4.3
         with:
-          version: "0.8.4"
+          version: "0.8.8"
           enable-cache: true
           cache-dependency-glob: ".github/requirements-openhands.txt"
           cache-suffix: "openhands"
@@ -227,6 +227,8 @@ jobs:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
           LLM_API_VERSION: ${{ inputs.LLM_API_VERSION }}
+          LLM_MAX_INPUT_TOKENS: 66000
+          LLM_MAX_OUTPUT_TOKENS: 16384
           PYTHONPATH: ""
         run: |
           cd /tmp && python -m openhands.resolver.resolve_issue \
@@ -237,7 +239,7 @@ jobs:
             --comment-id ${{ env.COMMENT_ID }} \
             --is-experimental ${{ steps.install_openhands.outputs.isExperimental }} \
             --repo-instruction-file "${{ github.workspace }}/.github/copilot-instructions.md" \
-            --base-container-image python:${{ steps.setup-python.outputs.python-version }}-slim
+            --base-container-image python:${{ steps.setup-python.outputs.python-version }}-slim-bookworm
 
       - name: Check resolution result
         id: check_result

@@ -39,7 +39,7 @@ def test_cli_starts_ide(runner: CliRunner, mocker: MockerFixture) -> None:
     mock_wait_for_port.assert_called_with(8000)
     mock_create_window.assert_called_with(
         title=snapshot("PyCodium IDE"),
-        url=snapshot(str(PROJECT_ROOT_DIR / ".web" / "_static" / "index.html")),
+        url=snapshot(str(PROJECT_ROOT_DIR / ".web" / "build/client" / "index.html")),
         width=snapshot(1300),
         height=snapshot(800),
     )

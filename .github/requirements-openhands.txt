@@ -2189,9 +2189,9 @@ openhands-aci==0.3.1 \
     --hash=sha256:125c4773b3fd2729ec0c74d005095dad21aa0f7a1e8733e5f33f3f71466f6df9 \
     --hash=sha256:d1d9d5379388bc0119c6722b8dacf63f7c747788ac5b6c26263601b2001d11c3
     # via openhands-ai
-openhands-ai==0.52.1 \
-    --hash=sha256:65809b43a2a5aa6d41e297f43387743bdde4833912ed89a4f5dbddb02c0722a7 \
-    --hash=sha256:bbc2932e52e8add90658eaef364c16079d76ec27c73f37a8d6213a769e62ca26
+openhands-ai==0.53.0 \
+    --hash=sha256:83412a27cbc4fa6418bb635f66e0c55fddc501f94413bdb832be8bd41e5381cf \
+    --hash=sha256:df22ffbe7111f9dfbeced2e64e42a637640617b3e4fdcc5b810179d7220be4dd
     # via -r requirements-openhands.in
 openpyxl==3.1.5 \
     --hash=sha256:5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2 \

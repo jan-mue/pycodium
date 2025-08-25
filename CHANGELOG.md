@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.1](https://github.com/jan-mue/pycodium/compare/v0.2.0...v0.2.1) (2025-08-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency charset-normalizer to v3.4.3 ([#95](https://github.com/jan-mue/pycodium/issues/95)) ([88d1052](https://github.com/jan-mue/pycodium/commit/88d10522d33376b77ffa97621823c5d9a8bd12b4))
+* **deps:** update dependency granian to v2.4.0 ([#35](https://github.com/jan-mue/pycodium/issues/35)) ([950f642](https://github.com/jan-mue/pycodium/commit/950f6422cf2c21ca815068edcf0a02446a39e8ae))
+* **deps:** update dependency granian to v2.4.1 ([#41](https://github.com/jan-mue/pycodium/issues/41)) ([f7b9b92](https://github.com/jan-mue/pycodium/commit/f7b9b92b82fb02e96aefb6bc320c9328f16c033d))
+* **deps:** update dependency granian to v2.4.2 ([#54](https://github.com/jan-mue/pycodium/issues/54)) ([ed23e1d](https://github.com/jan-mue/pycodium/commit/ed23e1df1aad9e5d960123e9f877ecaa37e6b971))
+* **deps:** update dependency granian to v2.5.0 ([#79](https://github.com/jan-mue/pycodium/issues/79)) ([2e945aa](https://github.com/jan-mue/pycodium/commit/2e945aafc1ad58a9a70fb48828a22276d3a3aabe))
+* **deps:** update dependency pygments to v2.19.2 ([#23](https://github.com/jan-mue/pycodium/issues/23)) ([1626c82](https://github.com/jan-mue/pycodium/commit/1626c8216fd58d0b617c33961973b801e707943b))
+* **deps:** update dependency pywebview to v6 ([#92](https://github.com/jan-mue/pycodium/issues/92)) ([17a3376](https://github.com/jan-mue/pycodium/commit/17a3376cb6b4d12c7c5eaa7d301ee4d9f24aad7f))
+* **deps:** update dependency typing-extensions to v4.14.1 ([#46](https://github.com/jan-mue/pycodium/issues/46)) ([a1a99d7](https://github.com/jan-mue/pycodium/commit/a1a99d73f1478a666888103c29db9e50403c4f81))
+* **deps:** update dependency watchfiles to v1.1.0 ([#27](https://github.com/jan-mue/pycodium/issues/27)) ([159ad40](https://github.com/jan-mue/pycodium/commit/159ad40d32d73a9a992421964e51d97e3ae2a00d))
+
 ## [0.2.0](https://github.com/jan-mue/pycodium/compare/v0.1.2...v0.2.0) (2025-06-19)
 
 

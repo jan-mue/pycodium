@@ -2163,10 +2163,12 @@ oauthlib==3.3.1 \
     # via
     #   kubernetes
     #   requests-oauthlib
-openai==1.99.5 \
-    --hash=sha256:4e870f9501b7c36132e2be13313ce3c4d6915a837e7a299c483aab6a6d4412e9 \
-    --hash=sha256:aa97ac3326cac7949c5e4ac0274c454c1d19c939760107ae0d3948fc26a924ca
-    # via litellm
+openai==1.99.9 \
+    --hash=sha256:9dbcdb425553bae1ac5d947147bebbd630d91bbfc7788394d4c4f3a35682ab3a \
+    --hash=sha256:f2082d155b1ad22e83247c3de3958eb4255b20ccf4a1de2e6681b6957b554e92
+    # via
+    #   litellm
+    #   openhands-ai
 openapi-core==0.19.5 \
     --hash=sha256:421e753da56c391704454e66afe4803a290108590ac8fa6f4a4487f4ec11f2d3 \
     --hash=sha256:ef7210e83a59394f46ce282639d8d26ad6fc8094aa904c9c16eb1bac8908911f
@@ -2189,9 +2191,9 @@ openhands-aci==0.3.1 \
     --hash=sha256:125c4773b3fd2729ec0c74d005095dad21aa0f7a1e8733e5f33f3f71466f6df9 \
     --hash=sha256:d1d9d5379388bc0119c6722b8dacf63f7c747788ac5b6c26263601b2001d11c3
     # via openhands-ai
-openhands-ai==0.53.0 \
-    --hash=sha256:83412a27cbc4fa6418bb635f66e0c55fddc501f94413bdb832be8bd41e5381cf \
-    --hash=sha256:df22ffbe7111f9dfbeced2e64e42a637640617b3e4fdcc5b810179d7220be4dd
+openhands-ai==0.54.0 \
+    --hash=sha256:0bcaee09de30112e7c929df99ba8c1f52bf018e11711dfcad1929de41f1a9212 \
+    --hash=sha256:3b72b27200384a123f8b831b56ac9bacd92e0aa9005ff8180071d9882dac3cf8
     # via -r requirements-openhands.in
 openpyxl==3.1.5 \
     --hash=sha256:5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2 \

@@ -17,27 +17,7 @@
   "pre-commit": {
     "enabled": true
   },
-  "pip_requirements": {
-    "enabled": false
-  },
-  "pip-compile": {
-    "managerFilePatterns": ["/\\.github\\/requirements-openhands\\.txt$/"]
-  },
   "lockFileMaintenance": {
     "enabled": true
-  },
-  "customManagers": [
-    {
-      "customType": "regex",
-      "description": "Update uv version in setup-uv action",
-      "managerFilePatterns": [
-        "/\\.github/workflows/.+\\.ya?ml$/"
-      ],
-      "matchStrings": [
-        "uses: astral-sh/setup-uv@[^\\s]+(?:\\s+#[^\\n]*)?[\\s\\S]*?version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "astral-sh/uv"
-    }
-  ]
+  }
 }

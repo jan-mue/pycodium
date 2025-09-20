@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import aiofiles
 import reflex as rx
-from reflex.event import EventCallback, KeyInputInfo
+from reflex.event import EventCallback, EventSpec, KeyInputInfo
 from typing_extensions import Unpack
 from watchfiles import Change, awatch
 
@@ -70,7 +70,7 @@ class EditorState(rx.State):
         active_tab.on_not_active.set()  # Signal to stop watching the file for changes
 
     @rx.event
-    async def open_file(self, file_path: str) -> rx.Component | EventCallback[Unpack[tuple[()]]] | None:
+    async def open_file(self, file_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
         """Open a file in the editor.
 
         Args:

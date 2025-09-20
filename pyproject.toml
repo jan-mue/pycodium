@@ -39,7 +39,7 @@ dependencies = [
     # Displays the web UI in a native window
     "pywebview==6.0",
     # Web framework used for the GUI
-    "reflex==0.8.6",
+    "reflex==0.8.11",
     # CLI framework
     "typer==0.17.4",
     # Type checking backward compatibility

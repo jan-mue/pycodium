@@ -31,7 +31,7 @@ dependencies = [
     # To detect file encodings
     "charset-normalizer==3.4.3",
     # Running the Reflex backend
-    "granian==2.5.3",
+    "granian==2.5.4",
     # To manage the backend process
     "psutil==7.1.0",
     # To detect programming languages

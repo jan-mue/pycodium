@@ -57,7 +57,7 @@ scripts.pycodium = "pycodium.main:app"
 
 [dependency-groups]
 dev = [
-    "coverage==7.10.6",
+    "coverage==7.10.7",
     "deptry==0.23.1",
     "hatchling==1.27.0",
     "httpx==0.28.1",

@@ -27,7 +27,7 @@ classifiers = [
 dynamic = [ "version" ]
 dependencies = [
     # For asynchronous file operations
-    "aiofiles==24.1.0",
+    "aiofiles==25.1.0",
     # To detect file encodings
     "charset-normalizer==3.4.3",
     # Running the Reflex backend

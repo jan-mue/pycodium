@@ -29,7 +29,7 @@ dependencies = [
     # For asynchronous file operations
     "aiofiles==25.1.0",
     # To detect file encodings
-    "charset-normalizer==3.4.3",
+    "charset-normalizer==3.4.4",
     # Running the Reflex backend
     "granian==2.5.5",
     # To manage the backend process

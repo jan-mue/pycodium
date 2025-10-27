@@ -659,7 +659,7 @@ wheels = [
 
 [[package]]
 name = "inline-snapshot"
-version = "0.30.0"
+version = "0.30.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asttokens" },
@@ -668,9 +668,9 @@ dependencies = [
     { name = "rich" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4c/3a/7e4123d2bee5f411aca373a4c5e5a33db6bebae8ae016635c0a2c67f2ed2/inline_snapshot-0.30.0.tar.gz", hash = "sha256:486e996ef133d4d91bacf78c8b712f76668709e7ffde6d9d925148d36c7c8fbd", size = 2598970, upload-time = "2025-10-15T06:01:33.784Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/89/125e7411ded6fda4c3881674dd815aaa175cd3f822a1e215edab491024b9/inline_snapshot-0.30.1.tar.gz", hash = "sha256:77c2e94a40f2da02909b39e3386c9fc23f532c92af45558e2d7bbabb5fd0cbc1", size = 2599126, upload-time = "2025-10-20T11:02:58.845Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/28/9fb09b1872d3628768ab1408e2afa03ba0051dcdd13db88ac154cc1c2171/inline_snapshot-0.30.0-py3-none-any.whl", hash = "sha256:1d790c4c3469d5de52fc2f02a53ab070ebb346798012de1340dea9091f21028c", size = 71258, upload-time = "2025-10-15T06:01:31.648Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/d8/1c4a926d1201be6a453c1efa795d6ca58735783b017e4ef78536879e82e9/inline_snapshot-0.30.1-py3-none-any.whl", hash = "sha256:4e65fe9d6d266d5dcbab9a75aef65ade386ba257238e30e11ce4cebf9a4312c8", size = 71265, upload-time = "2025-10-20T11:02:57.063Z" },
 ]
 
 [package.optional-dependencies]
@@ -925,7 +925,7 @@ dev = [
     { name = "deptry", specifier = "==0.23.1" },
     { name = "hatchling", specifier = "==1.27.0" },
     { name = "httpx", specifier = "==0.28.1" },
-    { name = "inline-snapshot", extras = ["dirty-equals"], specifier = "==0.30.0" },
+    { name = "inline-snapshot", extras = ["dirty-equals"], specifier = "==0.30.1" },
     { name = "pyright", specifier = "==1.1.406" },
     { name = "pytest", specifier = "==8.4.2" },
     { name = "pytest-asyncio", specifier = "==1.2.0" },

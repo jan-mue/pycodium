@@ -912,7 +912,7 @@ requires-dist = [
     { name = "granian", specifier = "==2.5.5" },
     { name = "psutil", specifier = "==7.1.1" },
     { name = "pygments", specifier = "==2.19.2" },
-    { name = "pywebview", specifier = "==6.0" },
+    { name = "pywebview", specifier = "==6.1" },
     { name = "reflex", specifier = "==0.7.14" },
     { name = "typer", specifier = "==0.20.0" },
     { name = "typing-extensions", specifier = "==4.15.0" },
@@ -1152,6 +1152,19 @@ wheels = [
 ]
 
 [[package]]
+name = "pyobjc-framework-uniformtypeidentifiers"
+version = "12.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyobjc-core" },
+    { name = "pyobjc-framework-cocoa" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/63/8d/45e8290134b06e73fb1cdce72aea71bddf7d8dee820165a549379d32837e/pyobjc_framework_uniformtypeidentifiers-12.0.tar.gz", hash = "sha256:f7fe17832de25098b9ad7718af536f6f4597985418d9869946cee104e2782b8a", size = 17064, upload-time = "2025-10-21T08:41:33.528Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5f/04/2b000e6e55572854c20eea7e0f4ba94597a6c8fb22a1fca9f1d2952a1ab6/pyobjc_framework_uniformtypeidentifiers-12.0-py2.py3-none-any.whl", hash = "sha256:b2c406e34306ef55ceb9c8cb16a4a9e37e7fc2ed4c8e7948f05bf3d51dea2a91", size = 4913, upload-time = "2025-10-21T08:23:26.31Z" },
+]
+
+[[package]]
 name = "pyobjc-framework-webkit"
 version = "12.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1275,7 +1288,7 @@ wheels = [
 
 [[package]]
 name = "pywebview"
-version = "6.0"
+version = "6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bottle" },
@@ -1284,14 +1297,15 @@ dependencies = [
     { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
     { name = "pyobjc-framework-quartz", marker = "sys_platform == 'darwin'" },
     { name = "pyobjc-framework-security", marker = "sys_platform == 'darwin'" },
+    { name = "pyobjc-framework-uniformtypeidentifiers", marker = "sys_platform == 'darwin'" },
     { name = "pyobjc-framework-webkit", marker = "sys_platform == 'darwin'" },
     { name = "pythonnet", marker = "sys_platform == 'win32'" },
     { name = "qtpy", marker = "sys_platform == 'openbsd6'" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a8/2a/0279e9da655481cef5dd0cdb1f9b8bfbe8fdf81d0062731f8e1e6668898d/pywebview-6.0.tar.gz", hash = "sha256:05c339ace3ee1c11391aa9ae8c4645c67239e769c91228f63196d8d120a9feb8", size = 493594, upload-time = "2025-08-08T09:25:21.113Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/09/75cf92c4db19350ddb084d841e352ce30e89668815d0494d1dd595c85469/pywebview-6.1.tar.gz", hash = "sha256:f0b95047860caf3d921581f9e16b4edb1a125b23e2ce691c4da2968f8b160ff2", size = 496270, upload-time = "2025-10-21T18:02:44.323Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2c/74/611f560a08c5d62fe5a528f784f71aefa4753a52b448489be92f310a3748/pywebview-6.0-py3-none-any.whl", hash = "sha256:6164b2a3debc416eeba15f3a48b1febd0b9483a6674c933c7c9b59fb4b11f474", size = 508599, upload-time = "2025-08-08T09:25:19.018Z" },
+    { url = "https://files.pythonhosted.org/packages/74/12/ce9006cdcc1834378826b5c0d4b554d899cd25ac9c665569d060f220b0e1/pywebview-6.1-py3-none-any.whl", hash = "sha256:2b552a340557e76a740b045a25937f72dae751e0985d5f5d9556f697ba622ec5", size = 511255, upload-time = "2025-10-21T18:02:42.377Z" },
 ]
 
 [[package]]

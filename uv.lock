@@ -1152,14 +1152,14 @@ wheels = [
 
 [[package]]
 name = "python-engineio"
-version = "4.12.3"
+version = "4.13.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "simple-websocket" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c9/d8/63e5535ab21dc4998ba1cfe13690ccf122883a38f025dca24d6e56c05eba/python_engineio-4.12.3.tar.gz", hash = "sha256:35633e55ec30915e7fc8f7e34ca8d73ee0c080cec8a8cd04faf2d7396f0a7a7a", size = 91910, upload-time = "2025-09-28T06:31:36.765Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/42/5a/349caac055e03ef9e56ed29fa304846063b1771ee54ab8132bf98b29491e/python_engineio-4.13.0.tar.gz", hash = "sha256:f9c51a8754d2742ba832c24b46ed425fdd3064356914edd5a1e8ffde76ab7709", size = 92194, upload-time = "2025-12-24T22:38:05.111Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d8/f0/c5aa0a69fd9326f013110653543f36ece4913c17921f3e1dbd78e1b423ee/python_engineio-4.12.3-py3-none-any.whl", hash = "sha256:7c099abb2a27ea7ab429c04da86ab2d82698cdd6c52406cb73766fe454feb7e1", size = 59637, upload-time = "2025-09-28T06:31:35.354Z" },
+    { url = "https://files.pythonhosted.org/packages/50/74/c655a6eda0fd188d490c14142a0f0380655ac7099604e1fbf8fa1a97f0a1/python_engineio-4.13.0-py3-none-any.whl", hash = "sha256:57b94eac094fa07b050c6da59f48b12250ab1cd920765f4849963e3d89ad9de3", size = 59676, upload-time = "2025-12-24T22:38:03.56Z" },
 ]
 
 [[package]]
@@ -1173,15 +1173,15 @@ wheels = [
 
 [[package]]
 name = "python-socketio"
-version = "5.15.1"
+version = "5.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bidict" },
     { name = "python-engineio" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5c/b5/56d070ade9ae60ed90ce2cdb41da927791cdae31f1059aab4b6b60d223b3/python_socketio-5.15.1.tar.gz", hash = "sha256:54fe3e5580ea06a1b29b541e8ef32fe956846c99a76059e343e43aada754efdd", size = 127172, upload-time = "2025-12-16T23:48:40.577Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/55/5d8af5884283b58e4405580bcd84af1d898c457173c708736e065f10ca4a/python_socketio-5.16.0.tar.gz", hash = "sha256:f79403c7f1ba8b84460aa8fe4c671414c8145b21a501b46b676f3740286356fd", size = 127120, upload-time = "2025-12-24T23:51:48.826Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/47/45a805fc1e4c3104df1193a78aeb98734497e32931efd1dfe9897c19188b/python_socketio-5.15.1-py3-none-any.whl", hash = "sha256:abc3528803563ed9a2010bc76829afe21d7a308a1e5651171fdb582d12e2ace0", size = 79561, upload-time = "2025-12-16T23:48:39.164Z" },
+    { url = "https://files.pythonhosted.org/packages/28/d2/2ccc2b69a187b80fda3152745670cfba936704f296a9fa54c6c8ac694d12/python_socketio-5.16.0-py3-none-any.whl", hash = "sha256:d95802961e15c7bd54ecf884c6e7644f81be8460f0a02ee66b473df58088ee8a", size = 79607, upload-time = "2025-12-24T23:51:47.2Z" },
 ]
 
 [[package]]
@@ -1273,7 +1273,7 @@ wheels = [
 
 [[package]]
 name = "reflex-hosting-cli"
-version = "0.1.60"
+version = "0.1.61"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -1282,9 +1282,9 @@ dependencies = [
     { name = "platformdirs" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/64/eff9f89e813ef7b8506a943807bce577b6e7fdfdc96d60cc39a09c771e7a/reflex_hosting_cli-0.1.60.tar.gz", hash = "sha256:cabb03e5a5e034393c9c3ce12088fadafc49ad933efe1555bb9cb93afd9a819f", size = 35718, upload-time = "2025-12-16T20:23:46.44Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2f/8e/10d095093ac7f08f5a0c286b5be289bfee978ebe51f66884cae6df080b7c/reflex_hosting_cli-0.1.61.tar.gz", hash = "sha256:064520951559e7382777bb28bc03b95e0418fd97c0f69751a2f00920453b82d8", size = 35774, upload-time = "2025-12-23T23:50:47.94Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7d/45/8e06fb70e2d6b29efc49ad7210624706056046163be8d3e20112b79aaf00/reflex_hosting_cli-0.1.60-py3-none-any.whl", hash = "sha256:26b340ea1cc4ee007c21d1ef7df200265f7e1d4551a826825f1f76ac04fe0c29", size = 45291, upload-time = "2025-12-16T20:23:45.448Z" },
+    { url = "https://files.pythonhosted.org/packages/96/97/2b058a398a9ebaa75b5220801c0d0c997b0e743bc3d2045de0fb19580d10/reflex_hosting_cli-0.1.61-py3-none-any.whl", hash = "sha256:e4cc91aaef63027c0ec175aeb54e6c6d25eb7b79214039d3fc2790c3fdb8c3d4", size = 45339, upload-time = "2025-12-23T23:50:46.617Z" },
 ]
 
 [[package]]
@@ -1384,15 +1384,15 @@ wheels = [
 
 [[package]]
 name = "sqlmodel"
-version = "0.0.27"
+version = "0.0.30"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "sqlalchemy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/90/5a/693d90866233e837d182da76082a6d4c2303f54d3aaaa5c78e1238c5d863/sqlmodel-0.0.27.tar.gz", hash = "sha256:ad1227f2014a03905aef32e21428640848ac09ff793047744a73dfdd077ff620", size = 118053, upload-time = "2025-10-08T16:39:11.938Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/bc/162873c9b2466bb6bda1531b6023b5d8ecda4daffaaae54e6fec53e2c0a7/sqlmodel-0.0.30.tar.gz", hash = "sha256:076076976aac683bae3e10c791d9e2ec5fead57ab25f7e476dea36cdfe9505e1", size = 97581, upload-time = "2025-12-26T11:45:55.002Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/92/c35e036151fe53822893979f8a13e6f235ae8191f4164a79ae60a95d66aa/sqlmodel-0.0.27-py3-none-any.whl", hash = "sha256:667fe10aa8ff5438134668228dc7d7a08306f4c5c4c7e6ad3ad68defa0e7aa49", size = 29131, upload-time = "2025-10-08T16:39:10.917Z" },
+    { url = "https://files.pythonhosted.org/packages/35/f3/247bad31f13066a8186f2d4d1a43c75a441ed9f889d629d69d9820116dfc/sqlmodel-0.0.30-py3-none-any.whl", hash = "sha256:1b7f992170ff3145d98a72d41271335c8bb51d579c7254a1626f82bde4ec64ed", size = 29362, upload-time = "2025-12-26T11:45:53.298Z" },
 ]
 
 [[package]]

@@ -1,15 +1,6 @@
 # Changelog
 
-## 0.1.0 (2025-12-30)
-
-
-### Features
-
-* Add boilerplate code and CI/CD ([#1](https://github.com/jan-mue/pycodium/issues/1)) ([6708f2a](https://github.com/jan-mue/pycodium/commit/6708f2afe68583ba14e3227ee516c8df997a0304))
-* Add CLI option to show version ([#14](https://github.com/jan-mue/pycodium/issues/14)) ([433768c](https://github.com/jan-mue/pycodium/commit/433768cf3c3fa8cae591151415df3108aaa231f0))
-* Add keyboard shortcuts (cmd+s, cmd+w) ([#15](https://github.com/jan-mue/pycodium/issues/15)) ([74e2057](https://github.com/jan-mue/pycodium/commit/74e2057fbf9d1d5c5d23844f51e5cf5d10ad27d2))
-* Implement basic editor features ([#3](https://github.com/jan-mue/pycodium/issues/3)) ([e3db51c](https://github.com/jan-mue/pycodium/commit/e3db51ccd564a260b5f1ec20f93cfaf9502c2e73))
-* Update editor content when files change ([#16](https://github.com/jan-mue/pycodium/issues/16)) ([325997e](https://github.com/jan-mue/pycodium/commit/325997e3ed97a272251c38f2a9fb5931dd886c9e))
+## 0.2.1 (2025-12-30)
 
 
 ### Bug Fixes
@@ -50,10 +41,7 @@
 * **deps:** update dependency watchfiles to v1.1.0 ([#27](https://github.com/jan-mue/pycodium/issues/27)) ([159ad40](https://github.com/jan-mue/pycodium/commit/159ad40d32d73a9a992421964e51d97e3ae2a00d))
 * **deps:** update dependency watchfiles to v1.1.1 ([#203](https://github.com/jan-mue/pycodium/issues/203)) ([0b92425](https://github.com/jan-mue/pycodium/commit/0b924257ec7e45e676c5083d22f2d9ee3ddb0799))
 * Downgrade Pydantic to fix build ([#292](https://github.com/jan-mue/pycodium/issues/292)) ([c0bc82a](https://github.com/jan-mue/pycodium/commit/c0bc82a8f2a9ced3e192ad5bc4e613bddc11ed33))
-* Hide tab bar when no tabs are open ([#11](https://github.com/jan-mue/pycodium/issues/11)) ([0b5495b](https://github.com/jan-mue/pycodium/commit/0b5495bbfe3a8aaecfb601fae2361ce4ee48bbce))
 * Limit Python version to &lt;3.14 ([#295](https://github.com/jan-mue/pycodium/issues/295)) ([de79851](https://github.com/jan-mue/pycodium/commit/de79851e54a0329ccec5e1c9cb9cb4696efe751d))
-* Make sure the stand-alone package can start ([#6](https://github.com/jan-mue/pycodium/issues/6)) ([3cd74c8](https://github.com/jan-mue/pycodium/commit/3cd74c8508ed87050d2389f011ef59e167736d4a))
-* Not found error when running with uvx ([#8](https://github.com/jan-mue/pycodium/issues/8)) ([ab5a526](https://github.com/jan-mue/pycodium/commit/ab5a526d2431a3e1052cdb07d1d9ce77e4774205))
 
 ## [0.2.0](https://github.com/jan-mue/pycodium/compare/v0.1.2...v0.2.0) (2025-06-19)
 

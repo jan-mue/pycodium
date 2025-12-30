@@ -34,14 +34,12 @@ dependencies = [
     "granian==2.6.0",
     # To manage the backend process
     "psutil==7.1.3",
-    # TODO: Upgrade to Pydantic v2
-    "pydantic==1.10.26",
     # To detect programming languages
     "pygments==2.19.2",
-    # Displays the web UI in a native window
-    "pywebview==6.1",
+    # Displays the web UI in a native Tauri window
+    "pytauri-wheel==0.8.0",
     # Web framework used for the GUI
-    "reflex==0.7.14",
+    "reflex==0.8.15",
     # CLI framework
     "typer==0.20.1",
     # Type checking backward compatibility
@@ -73,11 +71,12 @@ dev = [
 
 [tool.hatch.build]
 include = [
-    ".web/_static",
+    ".web/build/client",
     "assets",
     "pycodium",
     "build_hook.py",
     "rxconfig.py",
+    "tauri.conf.json",
 ]
 ignore-vcs = true
 
@@ -141,9 +140,11 @@ DEP004 = [
     "hatchling", # not required at runtime as it is only used to build the package
 ]
 DEP002 = [
-    "granian",  # used to run the Reflex backend
-    "pydantic", # TODO: remove after upgrading to Pydantic v2
+    "granian", # used to run the Reflex backend
 ]
+
+[tool.deptry.package_module_name_map]
+pytauri-wheel = "pytauri"
 
 [tool.pyproject-fmt]
 indent = 4

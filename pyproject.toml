@@ -35,7 +35,7 @@ dependencies = [
     # To manage the backend process
     "psutil==7.2.0",
     # TODO: Upgrade to Pydantic v2
-    "pydantic==1.10.26",
+    "pydantic==2.12.5",
     # To detect programming languages
     "pygments==2.19.2",
     # Displays the web UI in a native window

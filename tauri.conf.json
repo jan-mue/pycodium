@@ -15,6 +15,12 @@
                 "visible": false,
                 "label": "main"
             }
-        ]
+        ],
+        "security": {
+            "csp": null
+        }
+    },
+    "plugins": {
+        "dialog": {}
     }
 }

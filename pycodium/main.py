@@ -4,17 +4,22 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 from pytauri import AppHandle, Manager, builder_factory, context_factory
+from pytauri_plugins.dialog import init as init_dialog_plugin
 from reflex import constants
+
+if TYPE_CHECKING:
+    from pytauri.webview import WebviewWindow
 from reflex.config import environment, get_config
 from reflex.state import reset_disk_state_manager
 from reflex.utils import exec, processes  # noqa: A004
 
 from pycodium import __version__
 from pycodium.constants import PROJECT_ROOT_DIR
+from pycodium.menu import init_menu
 from pycodium.utils.processes import terminate_or_kill_process_on_port, wait_for_port
 
 # TODO: configure logging
@@ -81,9 +86,13 @@ def run_app_with_tauri(
 
         def app_setup(app_handle: AppHandle) -> None:
             """Setup hook for Tauri application."""
-            window = Manager.get_webview_window(app_handle, "main")
+            # Register the dialog plugin for native file/folder dialogs
+            app_handle.plugin(init_dialog_plugin())
+
+            window: WebviewWindow | None = Manager.get_webview_window(app_handle, "main")
             wait_for_port(backend_port)
             if window:
+                init_menu(app_handle, window)
                 window.set_title(window_title)
                 window.show()
                 window.set_focus()

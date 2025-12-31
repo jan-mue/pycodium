@@ -2,11 +2,12 @@
 
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Annotated
 
 import typer
-from pytauri import AppHandle, Manager, RunEvent, builder_factory, context_factory
+from pytauri import AppHandle, Manager, builder_factory, context_factory
 from reflex import constants
 from reflex.config import environment, get_config
 from reflex.state import reset_disk_state_manager
@@ -14,7 +15,7 @@ from reflex.utils import exec, processes  # noqa: A004
 
 from pycodium import __version__
 from pycodium.constants import PROJECT_ROOT_DIR
-from pycodium.utils.processes import wait_for_port
+from pycodium.utils.processes import terminate_or_kill_process_on_port, wait_for_port
 
 # TODO: configure logging
 logger = logging.getLogger(__name__)
@@ -77,11 +78,11 @@ def run_app_with_tauri(
     logger.info(f"Starting Reflex app on port {backend_port}")
     commands = [(exec.run_backend_prod, backend_host, backend_port, config.loglevel.subprocess_level(), True)]
     with processes.run_concurrently_context(*commands):  # type: ignore[reportArgumentType]
-        wait_for_port(backend_port)
 
         def app_setup(app_handle: AppHandle) -> None:
             """Setup hook for Tauri application."""
             window = Manager.get_webview_window(app_handle, "main")
+            wait_for_port(backend_port)
             if window:
                 window.set_title(window_title)
                 window.show()
@@ -89,24 +90,17 @@ def run_app_with_tauri(
             else:
                 logger.error("Could not find main window")
 
-        # Build and run the Tauri application
-        # context_factory() loads tauri.conf.json
         tauri_app = builder_factory().build(
-            context_factory(str(PROJECT_ROOT_DIR)),
+            context_factory(PROJECT_ROOT_DIR),
             invoke_handler=None,
             setup=app_setup,
         )
-
         logger.info("Tauri app running...")
-
-        def handle_run_event(app_handle: AppHandle, event: RunEvent) -> None:
-            # You can handle global events here if needed
-            pass
-
-        # Run the application loop - this blocks until the application exits
-        tauri_app.run(handle_run_event)
-        # TODO: shut down backend server gracefully
-
+        exit_code = tauri_app.run_return()  # blocks until the application exits
+        terminate_or_kill_process_on_port(backend_port)
+        if exit_code != 0:
+            logger.error(f"Tauri app exited with code {exit_code}")
+            sys.exit(exit_code)
     logger.info("Application shutdown complete.")
 
 

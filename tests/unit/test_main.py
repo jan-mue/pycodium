@@ -7,10 +7,12 @@ from reflex.constants import LogLevel
 from reflex.utils import exec  # noqa: A004
 
 from pycodium import __version__
-from pycodium.constants import PROJECT_ROOT_DIR
 from pycodium.main import app
 
 if TYPE_CHECKING:
+    from typing import Unpack
+
+    from pytauri import App, BuilderArgs, Context
     from pytest_mock import MockerFixture
     from typer.testing import CliRunner
 
@@ -26,8 +28,29 @@ def test_cli_starts_ide(runner: CliRunner, mocker: MockerFixture) -> None:
     mock_reset = mocker.patch("pycodium.main.reset_disk_state_manager")
     mock_run_concurrent = mocker.patch("pycodium.main.processes.run_concurrently_context")
     mock_wait_for_port = mocker.patch("pycodium.main.wait_for_port")
-    mock_create_window = mocker.patch("pycodium.main.webview.create_window")
-    mock_start = mocker.patch("pycodium.main.webview.start")
+    mocker.patch("pycodium.main.context_factory")
+    mock_builder_factory = mocker.patch("pycodium.main.builder_factory")
+    mock_manager_get_window = mocker.patch("pycodium.main.Manager.get_webview_window")
+    mock_window = mocker.MagicMock()
+    mock_manager_get_window.return_value = mock_window
+
+    # Create a mock for the builder that will call the setup function
+    mock_builder = mocker.MagicMock()
+
+    def mock_build(context: Context, **kwargs: Unpack[BuilderArgs]) -> App:  # noqa: ARG001
+        mock_app_handle = mocker.MagicMock()
+        assert "setup" in kwargs
+        setup = kwargs["setup"]
+        setup(mock_app_handle)
+
+        mock_tauri_app = mocker.MagicMock()
+        mock_tauri_app.run_return.return_value = 0
+        return mock_tauri_app
+
+    mock_builder.build = mock_build
+    mock_builder_factory.return_value = mock_builder
+
+    mock_terminate = mocker.patch("pycodium.main.terminate_or_kill_process_on_port")
 
     # when
     result = runner.invoke(app)
@@ -37,10 +60,8 @@ def test_cli_starts_ide(runner: CliRunner, mocker: MockerFixture) -> None:
     mock_reset.assert_called_once()
     mock_run_concurrent.assert_called_once_with((exec.run_backend_prod, "0.0.0.0", 8000, LogLevel.WARNING, True))
     mock_wait_for_port.assert_called_with(8000)
-    mock_create_window.assert_called_with(
-        title=snapshot("PyCodium IDE"),
-        url=snapshot(str(PROJECT_ROOT_DIR / ".web" / "_static" / "index.html")),
-        width=snapshot(1300),
-        height=snapshot(800),
-    )
-    mock_start.assert_called_once()
+    mock_manager_get_window.assert_called_once()
+    mock_window.set_title.assert_called_once_with(snapshot("PyCodium IDE"))
+    mock_window.show.assert_called_once()
+    mock_window.set_focus.assert_called_once()
+    mock_terminate.assert_called_once_with(8000)

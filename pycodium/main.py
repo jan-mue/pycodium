@@ -2,11 +2,12 @@
 
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import Annotated
 
 import typer
-import webview
+from pytauri import AppHandle, Manager, builder_factory, context_factory
 from reflex import constants
 from reflex.config import environment, get_config
 from reflex.state import reset_disk_state_manager
@@ -32,25 +33,19 @@ def run(
         return
     logger.info(f"Opening IDE with path: {path}")
     # TODO: run the frontend in dev mode when the package is installed in editable mode
-    run_app_with_pywebview()
+    run_app_with_tauri()
     # TODO: actually open path in editor
 
 
-def run_app_with_pywebview(
+def run_app_with_tauri(
     window_title: str = "PyCodium IDE",
-    window_width: int = 1300,
-    window_height: int = 800,
-    frontend_path: Path = PROJECT_ROOT_DIR / constants.Dirs.WEB / constants.Dirs.STATIC / "index.html",
     backend_port: int | None = None,
     backend_host: str | None = None,
 ) -> None:
-    """Run the Reflex app in a PyWebView window assuming the frontend is already exported.
+    """Run the Reflex app in a Tauri window assuming the frontend is already exported.
 
     Args:
-        window_title: The title of the PyWebView window
-        window_width: The width of the PyWebView window
-        window_height: The height of the PyWebView window
-        frontend_path: The path to the exported frontend
+        window_title: The title of the Tauri window
         backend_port: The port for the backend server
         backend_host: The host for the backend server
     """
@@ -83,18 +78,29 @@ def run_app_with_pywebview(
     logger.info(f"Starting Reflex app on port {backend_port}")
     commands = [(exec.run_backend_prod, backend_host, backend_port, config.loglevel.subprocess_level(), True)]
     with processes.run_concurrently_context(*commands):  # type: ignore[reportArgumentType]
-        wait_for_port(backend_port)
 
-        def on_closing():
-            logger.info("Window closing: shutting down backend...")
-            terminate_or_kill_process_on_port(backend_port)
+        def app_setup(app_handle: AppHandle) -> None:
+            """Setup hook for Tauri application."""
+            window = Manager.get_webview_window(app_handle, "main")
+            wait_for_port(backend_port)
+            if window:
+                window.set_title(window_title)
+                window.show()
+                window.set_focus()
+            else:
+                logger.error("Could not find main window")
 
-        window = webview.create_window(
-            title=window_title, url=str(frontend_path), width=window_width, height=window_height
+        tauri_app = builder_factory().build(
+            context_factory(PROJECT_ROOT_DIR),
+            invoke_handler=None,
+            setup=app_setup,
         )
-        window.events.closing += on_closing  # type: ignore[reportOptionalMemberAccess]
-        webview.start()
-
+        logger.info("Tauri app running...")
+        exit_code = tauri_app.run_return()  # blocks until the application exits
+        terminate_or_kill_process_on_port(backend_port)
+        if exit_code != 0:
+            logger.error(f"Tauri app exited with code {exit_code}")
+            sys.exit(exit_code)
     logger.info("Application shutdown complete.")
 
 

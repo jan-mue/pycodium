@@ -39,7 +39,7 @@ dependencies = [
     # Displays the web UI in a native Tauri window
     "pytauri-wheel==0.8.0",
     # Web framework used for the GUI
-    "reflex==0.8.15",
+    "reflex==0.8.24.post1",
     # CLI framework
     "typer==0.20.1",
     # Type checking backward compatibility

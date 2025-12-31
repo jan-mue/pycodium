@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Unpack
+from typing import TYPE_CHECKING
 
 from inline_snapshot import snapshot
 from reflex.constants import LogLevel
@@ -10,6 +10,8 @@ from pycodium import __version__
 from pycodium.main import app
 
 if TYPE_CHECKING:
+    from typing import Unpack
+
     from pytauri import App, BuilderArgs, Context
     from pytest_mock import MockerFixture
     from typer.testing import CliRunner

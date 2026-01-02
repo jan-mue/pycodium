@@ -32,15 +32,13 @@ jobs:
           version: "0.9.18"
           enable-cache: true
 
-      - name: Install Tauri dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y --no-install-recommends libwebkit2gtk-4.1-dev libayatana-appindicator3-dev
+      - name: Install Python dependencies
+        run: uv sync --locked
 
-      - name: Run unit tests with pytest
+      - name: Run unit tests
         run: |
-          uv run coverage run -m pytest tests/unit
-          uv run coverage xml
+          uv run --no-sync coverage run -m pytest tests/unit
+          uv run --no-sync coverage xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2

@@ -90,7 +90,8 @@ def init_menu(app_handle: AppHandle, webview_window: WebviewWindow) -> None:
         ),
     )
 
-    # Set the menu on the window
+    # Set the menu on the app (for macOS) and window (for Windows/Linux)
+    app_handle.set_menu(menu)
     webview_window.set_menu(menu)
 
     def on_menu_event(_window: WebviewWindow, menu_event: MenuEvent) -> None:

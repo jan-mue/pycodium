@@ -127,7 +127,7 @@ lint.ignore = [
     "TC006",   # Add quotes to type expression in `typing.cast()`
 ]
 lint.per-file-ignores."__init__.py" = [ "D104", "F401" ]
-lint.per-file-ignores."tests/**" = [ "D", "PLR2004", "S" ]
+lint.per-file-ignores."tests/**" = [ "ARG001", "D", "PLR2004", "S" ]
 lint.unfixable = [  ]
 lint.flake8-tidy-imports.ban-relative-imports = "all"
 lint.isort.known-first-party = [ "pycodium" ]
@@ -137,9 +137,6 @@ lint.pydocstyle.convention = "google"
 ignore-words-list = "nin"
 
 [tool.deptry.per_rule_ignores]
-DEP003 = [
-    "pytauri_plugins", # provided by pytauri-wheel
-]
 DEP004 = [
     "hatchling", # not required at runtime as it is only used to build the package
 ]
@@ -158,9 +155,6 @@ keep_full_version = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-markers = [
-    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
-]
 
 [tool.coverage.report]
 exclude_also = [

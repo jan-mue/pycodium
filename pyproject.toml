@@ -73,10 +73,11 @@ dev = [
 include = [
     ".web/build/client",
     "assets",
+    "capabilities",
     "pycodium",
     "build_hook.py",
     "rxconfig.py",
-    "tauri.conf.json",
+    "Tauri.toml",
 ]
 ignore-vcs = true
 

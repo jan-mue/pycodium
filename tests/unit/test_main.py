@@ -41,7 +41,7 @@ def test_cli_starts_ide(runner: CliRunner, mocker: MockerFixture) -> None:
     # Create a mock for the builder that will call the setup function
     mock_builder = mocker.MagicMock()
 
-    def mock_build(context: Context, **kwargs: Unpack[BuilderArgs]) -> App:
+    def mock_build(context: Context, **kwargs: Unpack[BuilderArgs]) -> App:  # noqa: ARG001
         mock_app_handle = mocker.MagicMock()
         assert "setup" in kwargs
         setup = kwargs["setup"]

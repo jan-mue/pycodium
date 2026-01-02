@@ -32,6 +32,11 @@ jobs:
           version: "0.9.18"
           enable-cache: true
 
+      - name: Install Tauri dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends libwebkit2gtk-4.1-dev libayatana-appindicator3-dev
+
       - name: Install Python dependencies
         run: uv sync --locked
 

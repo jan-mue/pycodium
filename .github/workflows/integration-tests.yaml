@@ -32,10 +32,7 @@ jobs:
       - name: Install Tauri dependencies
         run: |
           sudo apt update
-          sudo apt install -y --no-install-recommends \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            webkit2gtk-driver
+          sudo apt install -y --no-install-recommends libwebkit2gtk-4.1-dev libayatana-appindicator3-dev
 
       - name: Install Python dependencies
         run: uv sync --locked

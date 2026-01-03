@@ -4,15 +4,12 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 import typer
 from pytauri import AppHandle, Manager, builder_factory, context_factory
 from pytauri_plugins.dialog import init as init_dialog_plugin
 from reflex import constants
-
-if TYPE_CHECKING:
-    from pytauri.webview import WebviewWindow
 from reflex.config import environment, get_config
 from reflex.state import reset_disk_state_manager
 from reflex.utils import exec, processes  # noqa: A004
@@ -89,7 +86,7 @@ def run_app_with_tauri(
             # Register the dialog plugin for native file/folder dialogs
             app_handle.plugin(init_dialog_plugin())
 
-            window: WebviewWindow | None = Manager.get_webview_window(app_handle, "main")
+            window = Manager.get_webview_window(app_handle, "main")
             wait_for_port(backend_port)
             if window:
                 init_menu(app_handle, window)

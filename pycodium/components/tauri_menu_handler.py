@@ -5,13 +5,37 @@ When menu items are clicked, the Python backend evaluates JavaScript that calls
 window.__PYCODIUM_MENU__, which triggers the appropriate action (opening dialogs, etc.).
 """
 
+import dataclasses
 from typing import Any
 
 import reflex as rx
-from reflex.constants.compiler import Hooks
 from reflex.utils import imports
-from reflex.vars.base import Var, VarData
+from reflex.vars.base import Var
 from typing_extensions import override
+
+
+@dataclasses.dataclass
+class MenuAction:
+    """Configuration for a menu action."""
+
+    event_trigger_name: str
+    dialog_config: dict[str, Any] | None = None
+
+
+# Define action configurations in Python
+MENU_ACTIONS: dict[str, MenuAction] = {
+    "open_file": MenuAction(
+        event_trigger_name="on_file_selected",
+        dialog_config={"multiple": False, "directory": False, "title": "Open File"},
+    ),
+    "open_folder": MenuAction(
+        event_trigger_name="on_folder_selected",
+        dialog_config={"multiple": False, "directory": True, "title": "Open Folder"},
+    ),
+    "save": MenuAction(event_trigger_name="on_save"),
+    "save_as": MenuAction(event_trigger_name="on_save_as"),
+    "close_tab": MenuAction(event_trigger_name="on_close_tab"),
+}
 
 
 class TauriMenuHandler(rx.Fragment):
@@ -23,119 +47,103 @@ class TauriMenuHandler(rx.Fragment):
     3. Calls back to Reflex event handlers with the selected paths
     """
 
-    # Add the Tauri dialog plugin as a dependency (without using library= which conflicts with Fragment)
     lib_dependencies: list[str] = ["@tauri-apps/plugin-dialog@2"]
 
-    # Event handler called when a file is selected from the Open File dialog
     on_file_selected: rx.EventHandler[rx.event.passthrough_event_spec(str)]
-
-    # Event handler called when a folder is selected from the Open Folder dialog
     on_folder_selected: rx.EventHandler[rx.event.passthrough_event_spec(str)]
-
-    # Event handler called when save action is triggered
     on_save: rx.EventHandler[rx.event.no_args_event_spec]
-
-    # Event handler called when save as action is triggered
     on_save_as: rx.EventHandler[rx.event.no_args_event_spec]
-
-    # Event handler called when close tab action is triggered
     on_close_tab: rx.EventHandler[rx.event.no_args_event_spec]
 
     @override
+    def _exclude_props(self) -> list[str]:
+        """Exclude event handler props from being passed to Fragment.
+
+        Returns:
+            List of prop names to exclude from the Fragment.
+        """
+        return [*super()._exclude_props(), *self.event_triggers.keys()]
+
+    @override
     def add_imports(self) -> imports.ImportDict:
-        """Add the imports for the component."""
+        """Add the imports for the component.
+
+        Returns:
+            The imports for the component.
+        """
         return {
             "react": [imports.ImportVar(tag="useEffect")],
             "@tauri-apps/plugin-dialog": [imports.ImportVar(tag="open", alias="openDialog")],
         }
 
+    def _build_action_config_js(self) -> str:
+        """Build the JavaScript action configuration object.
+
+        Returns:
+            JavaScript object literal defining action configurations.
+        """
+        entries = []
+        for action_name, config in MENU_ACTIONS.items():
+            trigger = self.event_triggers.get(config.event_trigger_name)
+            if trigger is None:
+                continue
+
+            # Convert the event trigger to a Var that uses addEvents/queueEvents
+            callback_var = Var.create(trigger)
+
+            dialog_config = config.dialog_config
+            if dialog_config is not None:
+                dialog_js = (
+                    f"{{ multiple: {str(dialog_config['multiple']).lower()}, "
+                    f"directory: {str(dialog_config['directory']).lower()}, "
+                    f'title: "{dialog_config["title"]}" }}'
+                )
+                entry = f"{action_name}: {{ dialog: {dialog_js}, callback: {callback_var!s} }}"
+            else:
+                entry = f"{action_name}: {{ callback: {callback_var!s} }}"
+
+            entries.append(entry)
+
+        return "{\n            " + ",\n            ".join(entries) + "\n        }"
+
     @override
-    def add_hooks(self) -> list[str | Var[Any]]:
+    def add_hooks(self) -> list[str | rx.Var[Any]]:
         """Add hooks to set up the Tauri menu handler.
 
         Returns:
             The hooks to add to the component.
         """
-        hooks: list[str | Var[Any]] = []
+        action_config = self._build_action_config_js()
 
-        # Build handler map from event triggers using Var.create
-        action_handlers: dict[str, tuple[Var[Any], bool]] = {}
-
-        if "on_file_selected" in self.event_triggers:
-            action_handlers["open_file"] = (
-                Var.create(self.event_triggers["on_file_selected"]),
-                True,  # needs dialog
-            )
-
-        if "on_folder_selected" in self.event_triggers:
-            action_handlers["open_folder"] = (
-                Var.create(self.event_triggers["on_folder_selected"]),
-                True,  # needs dialog
-            )
-
-        if "on_save" in self.event_triggers:
-            action_handlers["save"] = (
-                Var.create(self.event_triggers["on_save"]),
-                False,  # no dialog
-            )
-
-        if "on_save_as" in self.event_triggers:
-            action_handlers["save_as"] = (
-                Var.create(self.event_triggers["on_save_as"]),
-                False,  # no dialog
-            )
-
-        if "on_close_tab" in self.event_triggers:
-            action_handlers["close_tab"] = (
-                Var.create(self.event_triggers["on_close_tab"]),
-                False,  # no dialog
-            )
-
-        # Build switch cases
-        cases = []
-        for action, (handler_var, needs_dialog) in action_handlers.items():
-            if needs_dialog:
-                is_directory = "true" if action == "open_folder" else "false"
-                title = "Open Folder" if action == "open_folder" else "Open File"
-                case = f"""
-                    case "{action}":
-                        try {{
-                            const path = await openDialog({{
-                                multiple: false,
-                                directory: {is_directory},
-                                title: "{title}"
-                            }});
-                            if (path) {{
-                                ({handler_var!s})(path);
-                            }}
-                        }} catch (err) {{
-                            console.error("Failed to open dialog:", err);
-                        }}
-                        break;
-"""
-            else:
-                case = f"""
-                    case "{action}":
-                        try {{
-                            ({handler_var!s})();
-                        }} catch (err) {{
-                            console.error("Failed to handle {action}:", err);
-                        }}
-                        break;
-"""
-            cases.append(case)
-
-        switch_body = "".join(cases)
-
-        hook_expr = f"""
+        return [
+            f"""
 useEffect(() => {{
-    if (typeof window === 'undefined' || window.__TAURI__ === undefined) return;
+    if (typeof window === 'undefined' || window.__TAURI__ === undefined) {{
+        return;
+    }}
+
+    const actionConfig = {action_config};
 
     window.__PYCODIUM_MENU__ = async (payload) => {{
         const {{ action }} = payload;
-        switch (action) {{{switch_body}
-            default:
-                console.warn("Unknown menu action:", action);
+        const config = actionConfig[action];
+
+        if (!config) {{
+            console.warn("Unknown menu action:", action);
+            return;
+        }}
+
+        try {{
+            if (config.dialog) {{
+                const path = await openDialog(config.dialog);
+                if (path) {{
+                    config.callback(path);
+                }}
+            }} else {{
+                config.callback();
+            }}
+        }} catch (err) {{
+            console.error(`Failed to handle ${{action}}:`, err);
         }}
     }};
 
@@ -144,15 +152,7 @@ useEffect(() => {{
     }};
 }}, []);
 """
-
-        hooks.append(
-            Var(
-                hook_expr,
-                _var_data=VarData(position=Hooks.HookPosition.POST_TRIGGER),
-            )
-        )
-
-        return hooks
+        ]
 
 
 tauri_menu_handler = TauriMenuHandler.create

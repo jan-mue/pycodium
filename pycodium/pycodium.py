@@ -5,10 +5,10 @@ import reflex as rx
 from pycodium.components.activity_bar import activity_bar
 from pycodium.components.editor_area import editor_area
 from pycodium.components.hotkey_watcher import GlobalHotkeyWatcher
+from pycodium.components.menu_events import tauri_menu_handler
 from pycodium.components.resizable_panels import group, handle, panel
 from pycodium.components.sidebar import sidebar
 from pycodium.components.status_bar import status_bar
-from pycodium.components.tauri_menu_handler import tauri_menu_handler
 from pycodium.state import EditorState
 
 

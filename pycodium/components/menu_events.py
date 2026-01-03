@@ -22,7 +22,6 @@ class MenuAction:
     dialog_config: dict[str, Any] | None = None
 
 
-# Define action configurations in Python
 MENU_ACTIONS: dict[str, MenuAction] = {
     "open_file": MenuAction(
         event_trigger_name="on_file_selected",
@@ -38,7 +37,7 @@ MENU_ACTIONS: dict[str, MenuAction] = {
 }
 
 
-class TauriMenuHandler(rx.Fragment):
+class MenuEventHandler(rx.Fragment):
     """A component that listens for Tauri menu events and handles file/folder dialogs.
 
     This component:
@@ -155,4 +154,4 @@ useEffect(() => {{
         ]
 
 
-tauri_menu_handler = TauriMenuHandler.create
+tauri_menu_handler = MenuEventHandler.create

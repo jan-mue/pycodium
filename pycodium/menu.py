@@ -26,7 +26,6 @@ def init_menu(app_handle: AppHandle, webview_window: WebviewWindow) -> None:
         app_handle: The Tauri application handle.
         webview_window: The main webview window.
     """
-    # Create File submenu
     file_submenu = Submenu.with_items(
         app_handle,
         "File",
@@ -43,8 +42,6 @@ def init_menu(app_handle: AppHandle, webview_window: WebviewWindow) -> None:
             PredefinedMenuItem.close_window(app_handle, "Close Window"),
         ),
     )
-
-    # Create Edit submenu with standard editing commands
     edit_submenu = Submenu.with_items(
         app_handle,
         "Edit",
@@ -59,16 +56,12 @@ def init_menu(app_handle: AppHandle, webview_window: WebviewWindow) -> None:
             PredefinedMenuItem.select_all(app_handle, "Select All"),
         ),
     )
-
-    # Create View submenu
     view_submenu = Submenu.with_items(
         app_handle,
         "View",
         True,
         (PredefinedMenuItem.fullscreen(app_handle, "Toggle Full Screen"),),
     )
-
-    # Create Window submenu
     window_submenu = Submenu.with_items(
         app_handle,
         "Window",
@@ -78,8 +71,6 @@ def init_menu(app_handle: AppHandle, webview_window: WebviewWindow) -> None:
             PredefinedMenuItem.maximize(app_handle, "Maximize"),
         ),
     )
-
-    # Create the main menu
     menu = Menu.with_items(
         app_handle,
         (
@@ -103,7 +94,6 @@ def init_menu(app_handle: AppHandle, webview_window: WebviewWindow) -> None:
         """
         logger.debug(f"Menu event received: {menu_event}")
 
-        # Map menu IDs to actions
         action_map = {
             MENU_OPEN_FILE: "open_file",
             MENU_OPEN_FOLDER: "open_folder",
@@ -114,7 +104,6 @@ def init_menu(app_handle: AppHandle, webview_window: WebviewWindow) -> None:
 
         action = action_map.get(menu_event)
         if action:
-            # Emit the event to the frontend by evaluating JavaScript
             payload = json.dumps({"action": action})
             js_code = f"window.__PYCODIUM_MENU__ && window.__PYCODIUM_MENU__({payload})"
             try:
@@ -123,6 +112,5 @@ def init_menu(app_handle: AppHandle, webview_window: WebviewWindow) -> None:
             except Exception:
                 logger.exception(f"Failed to emit menu action: {action}")
 
-    # Register the menu event handler on the window
     webview_window.on_menu_event(on_menu_event)
     logger.info("Application menu initialized")

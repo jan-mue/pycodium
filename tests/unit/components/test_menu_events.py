@@ -8,9 +8,9 @@ import pytest
 import reflex as rx
 from reflex.utils.imports import ImportVar
 
-from pycodium.components.tauri_menu_handler import (
+from pycodium.components.menu_events import (
     MENU_ACTIONS,
-    TauriMenuHandler,
+    MenuEventHandler,
     tauri_menu_handler,
 )
 
@@ -70,7 +70,7 @@ def component() -> Component:
     Returns:
         A TauriMenuHandler component instance.
     """
-    return TauriMenuHandler.create(
+    return MenuEventHandler.create(
         on_file_selected=MenuHandlerTestState.on_file_selected,
         on_folder_selected=MenuHandlerTestState.on_folder_selected,
         on_save=MenuHandlerTestState.on_save,
@@ -86,7 +86,7 @@ def partial_component() -> Component:
     Returns:
         A TauriMenuHandler component instance with partial handlers.
     """
-    return TauriMenuHandler.create(
+    return MenuEventHandler.create(
         on_file_selected=MenuHandlerTestState.on_file_selected,
         on_save=MenuHandlerTestState.on_save,
     )
@@ -97,7 +97,7 @@ class TestTauriMenuHandlerCreate:
 
     def test_create_with_all_handlers(self, component: Component) -> None:
         """Test that the component can be created with all event handlers."""
-        assert isinstance(component, TauriMenuHandler)
+        assert isinstance(component, MenuEventHandler)
 
     def test_create_with_factory_function(self) -> None:
         """Test that the factory function works correctly."""
@@ -105,12 +105,12 @@ class TestTauriMenuHandlerCreate:
             on_file_selected=MenuHandlerTestState.on_file_selected,
             on_save=MenuHandlerTestState.on_save,
         )
-        assert isinstance(comp, TauriMenuHandler)
+        assert isinstance(comp, MenuEventHandler)
 
     def test_create_without_handlers(self) -> None:
         """Test that component can be created without any handlers."""
-        comp = TauriMenuHandler.create()
-        assert isinstance(comp, TauriMenuHandler)
+        comp = MenuEventHandler.create()
+        assert isinstance(comp, MenuEventHandler)
 
 
 class TestTauriMenuHandlerEventTriggers:
@@ -317,4 +317,4 @@ class TestTauriMenuHandlerLibDependencies:
 
     def test_lib_dependencies_includes_tauri_dialog(self) -> None:
         """Test that lib_dependencies includes the Tauri dialog plugin."""
-        assert "@tauri-apps/plugin-dialog@2" in TauriMenuHandler.lib_dependencies
+        assert "@tauri-apps/plugin-dialog@2" in MenuEventHandler.lib_dependencies

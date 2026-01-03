@@ -1,5 +1,6 @@
 from codecs import BOM_UTF8, BOM_UTF16, BOM_UTF32
-from unittest.mock import patch
+
+from pytest_mock import MockerFixture
 
 from pycodium.utils.detect_encoding import decode, get_encoding
 
@@ -126,26 +127,26 @@ def test_decode_binary_content_fallback() -> None:
     assert encoding is not None
 
 
-def test_decode_lookup_error_fallback_to_utf8_guessed() -> None:
+def test_decode_lookup_error_fallback_to_utf8_guessed(mocker: MockerFixture) -> None:
     """Test that LookupError from invalid encoding falls back to utf-8-guessed."""
-    with patch("pycodium.utils.detect_encoding.get_encoding", return_value="not-a-real-encoding"):
-        decoded, encoding = decode(b"hello world")
-        assert decoded == "hello world"
-        assert encoding == "utf-8-guessed"
+    mocker.patch("pycodium.utils.detect_encoding.get_encoding", return_value="not-a-real-encoding")
+    decoded, encoding = decode(b"hello world")
+    assert decoded == "hello world"
+    assert encoding == "utf-8-guessed"
 
 
-def test_decode_unicode_error_fallback_to_utf8_guessed() -> None:
+def test_decode_unicode_error_fallback_to_utf8_guessed(mocker: MockerFixture) -> None:
     """Test that UnicodeError falls back to utf-8-guessed when detected encoding fails."""
-    with patch("pycodium.utils.detect_encoding.get_encoding", return_value="utf-16"):
-        decoded, encoding = decode(b"abc")
-        assert decoded == "abc"
-        assert encoding == "utf-8-guessed"
+    mocker.patch("pycodium.utils.detect_encoding.get_encoding", return_value="utf-16")
+    decoded, encoding = decode(b"abc")
+    assert decoded == "abc"
+    assert encoding == "utf-8-guessed"
 
 
-def test_decode_fallback_to_latin1_guessed() -> None:
+def test_decode_fallback_to_latin1_guessed(mocker: MockerFixture) -> None:
     """Test fallback to latin-1-guessed when both detected encoding and utf-8 fail."""
     invalid_utf8 = b"\x80\x81\x82\x83"
-    with patch("pycodium.utils.detect_encoding.get_encoding", return_value="not-a-real-encoding"):
-        decoded, encoding = decode(invalid_utf8)
-        assert encoding == "latin-1-guessed"
-        assert decoded is not None
+    mocker.patch("pycodium.utils.detect_encoding.get_encoding", return_value="not-a-real-encoding")
+    decoded, encoding = decode(invalid_utf8)
+    assert encoding == "latin-1-guessed"
+    assert decoded is not None

@@ -5,8 +5,12 @@ When menu items are clicked, the Python backend evaluates JavaScript that calls
 window.__PYCODIUM_MENU__, which triggers the appropriate action (opening dialogs, etc.).
 """
 
+from typing import Any
+
 import reflex as rx
+from reflex.constants.compiler import Hooks
 from reflex.utils import imports
+from reflex.vars.base import Var, VarData
 from typing_extensions import override
 
 
@@ -46,113 +50,109 @@ class TauriMenuHandler(rx.Fragment):
         }
 
     @override
-    def add_hooks(self) -> list[str | rx.Var[str]]:
-        """Add the hooks for the component."""
-        on_file_selected = rx.Var.create(self.event_triggers["on_file_selected"])
-        on_folder_selected = rx.Var.create(self.event_triggers["on_folder_selected"])
-        on_save = rx.Var.create(self.event_triggers["on_save"])
-        on_save_as = rx.Var.create(self.event_triggers["on_save_as"])
-        on_close_tab = rx.Var.create(self.event_triggers["on_close_tab"])
+    def add_hooks(self) -> list[str | Var[Any]]:
+        """Add hooks to set up the Tauri menu handler.
 
-        return [
-            f"""
-            useEffect(() => {{
-                // Check if we're running in Tauri
-                const isTauri = window.__TAURI__ !== undefined;
+        Returns:
+            The hooks to add to the component.
+        """
+        hooks: list[str | Var[Any]] = []
 
-                if (!isTauri) {{
-                    console.log("Not running in Tauri, menu handler disabled");
-                    return;
-                }}
+        # Build handler map from event triggers using Var.create
+        action_handlers: dict[str, tuple[Var[Any], bool]] = {}
 
-                // Set up the global menu handler function
-                const setupMenuHandler = () => {{
-                    try {{
-                        // Set up the global menu handler function
-                        window.__PYCODIUM_MENU__ = async (payload) => {{
-                            const {{ action }} = payload;
-                            console.log("Menu action received:", action);
+        if "on_file_selected" in self.event_triggers:
+            action_handlers["open_file"] = (
+                Var.create(self.event_triggers["on_file_selected"]),
+                True,  # needs dialog
+            )
 
-                            switch (action) {{
-                                case "open_file":
-                                    try {{
-                                        const filePath = await openDialog({{
-                                            multiple: false,
-                                            directory: false,
-                                            title: "Open File"
-                                        }});
-                                        if (filePath) {{
-                                            const handler = {on_file_selected!s};
-                                            handler(filePath);
-                                        }}
-                                    }} catch (err) {{
-                                        console.error("Failed to open file dialog:", err);
-                                    }}
-                                    break;
+        if "on_folder_selected" in self.event_triggers:
+            action_handlers["open_folder"] = (
+                Var.create(self.event_triggers["on_folder_selected"]),
+                True,  # needs dialog
+            )
 
-                                case "open_folder":
-                                    try {{
-                                        const folderPath = await openDialog({{
-                                            multiple: false,
-                                            directory: true,
-                                            title: "Open Folder"
-                                        }});
-                                        if (folderPath) {{
-                                            const handler = {on_folder_selected!s};
-                                            handler(folderPath);
-                                        }}
-                                    }} catch (err) {{
-                                        console.error("Failed to open folder dialog:", err);
-                                    }}
-                                    break;
+        if "on_save" in self.event_triggers:
+            action_handlers["save"] = (
+                Var.create(self.event_triggers["on_save"]),
+                False,  # no dialog
+            )
 
-                                case "save":
-                                    try {{
-                                        const handler = {on_save!s};
-                                        handler();
-                                    }} catch (err) {{
-                                        console.error("Failed to handle save:", err);
-                                    }}
-                                    break;
+        if "on_save_as" in self.event_triggers:
+            action_handlers["save_as"] = (
+                Var.create(self.event_triggers["on_save_as"]),
+                False,  # no dialog
+            )
 
-                                case "save_as":
-                                    try {{
-                                        const handler = {on_save_as!s};
-                                        handler();
-                                    }} catch (err) {{
-                                        console.error("Failed to handle save as:", err);
-                                    }}
-                                    break;
+        if "on_close_tab" in self.event_triggers:
+            action_handlers["close_tab"] = (
+                Var.create(self.event_triggers["on_close_tab"]),
+                False,  # no dialog
+            )
 
-                                case "close_tab":
-                                    try {{
-                                        const handler = {on_close_tab!s};
-                                        handler();
-                                    }} catch (err) {{
-                                        console.error("Failed to handle close tab:", err);
-                                    }}
-                                    break;
-
-                                default:
-                                    console.warn("Unknown menu action:", action);
+        # Build switch cases
+        cases = []
+        for action, (handler_var, needs_dialog) in action_handlers.items():
+            if needs_dialog:
+                is_directory = "true" if action == "open_folder" else "false"
+                title = "Open Folder" if action == "open_folder" else "Open File"
+                case = f"""
+                    case "{action}":
+                        try {{
+                            const path = await openDialog({{
+                                multiple: false,
+                                directory: {is_directory},
+                                title: "{title}"
+                            }});
+                            if (path) {{
+                                ({handler_var!s})(path);
                             }}
-                        }};
+                        }} catch (err) {{
+                            console.error("Failed to open dialog:", err);
+                        }}
+                        break;
+"""
+            else:
+                case = f"""
+                    case "{action}":
+                        try {{
+                            ({handler_var!s})();
+                        }} catch (err) {{
+                            console.error("Failed to handle {action}:", err);
+                        }}
+                        break;
+"""
+            cases.append(case)
 
-                        console.log("Tauri menu handler initialized");
-                    }} catch (err) {{
-                        console.error("Failed to setup menu handler:", err);
-                    }}
-                }};
+        switch_body = "".join(cases)
 
-                setupMenuHandler();
+        hook_expr = f"""
+useEffect(() => {{
+    if (typeof window === 'undefined' || window.__TAURI__ === undefined) return;
 
-                // Cleanup
-                return () => {{
-                    delete window.__PYCODIUM_MENU__;
-                }};
-            }}, [])
-            """
-        ]
+    window.__PYCODIUM_MENU__ = async (payload) => {{
+        const {{ action }} = payload;
+        switch (action) {{{switch_body}
+            default:
+                console.warn("Unknown menu action:", action);
+        }}
+    }};
+
+    return () => {{
+        delete window.__PYCODIUM_MENU__;
+    }};
+}}, []);
+"""
+
+        hooks.append(
+            Var(
+                hook_expr,
+                _var_data=VarData(position=Hooks.HookPosition.POST_TRIGGER),
+            )
+        )
+
+        return hooks
 
 
 tauri_menu_handler = TauriMenuHandler.create

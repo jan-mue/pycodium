@@ -173,7 +173,7 @@ class EditorState(rx.State):
         return EditorState.keep_active_tab_content_updated
 
     @rx.event
-    async def menu_open_folder(self, folder_path: str) -> None:
+    async def menu_open_folder(self, folder_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
         """Open a folder as the project root (triggered by native folder dialog).
 
         Args:
@@ -183,12 +183,10 @@ class EditorState(rx.State):
         path = Path(folder_path)
 
         if not path.exists():
-            rx.toast.error(f"Folder not found: {folder_path}")
-            return
+            return rx.toast.error(f"Folder not found: {folder_path}")
 
         if not path.is_dir():
-            rx.toast.error(f"Not a folder: {folder_path}")
-            return
+            return rx.toast.error(f"Not a folder: {folder_path}")
 
         # Update the project root
         self.project_root = path

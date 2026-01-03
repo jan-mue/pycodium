@@ -26,6 +26,22 @@ def init_menu(app_handle: AppHandle, webview_window: WebviewWindow) -> None:
         app_handle: The Tauri application handle.
         webview_window: The main webview window.
     """
+    app_submenu = Submenu.with_items(
+        app_handle,
+        "PyCodium",
+        True,
+        (
+            PredefinedMenuItem.about(app_handle, "About PyCodium", None),
+            PredefinedMenuItem.separator(app_handle),
+            PredefinedMenuItem.services(app_handle, "Services"),
+            PredefinedMenuItem.separator(app_handle),
+            PredefinedMenuItem.hide(app_handle, "Hide PyCodium"),
+            PredefinedMenuItem.hide_others(app_handle, "Hide Others"),
+            PredefinedMenuItem.show_all(app_handle, "Show All"),
+            PredefinedMenuItem.separator(app_handle),
+            PredefinedMenuItem.quit(app_handle, "Quit PyCodium"),
+        ),
+    )
     file_submenu = Submenu.with_items(
         app_handle,
         "File",
@@ -74,6 +90,7 @@ def init_menu(app_handle: AppHandle, webview_window: WebviewWindow) -> None:
     menu = Menu.with_items(
         app_handle,
         (
+            app_submenu,
             file_submenu,
             edit_submenu,
             view_submenu,

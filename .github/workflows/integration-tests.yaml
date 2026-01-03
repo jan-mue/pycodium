@@ -37,5 +37,8 @@ jobs:
       - name: Install Python dependencies
         run: uv sync --locked
 
+      - name: Install Playwright browsers
+        run: uv run --no-sync playwright install chromium --with-deps
+
       - name: Run integration tests
         run: uv run --no-sync pytest tests/integration

@@ -124,6 +124,107 @@ class EditorState(rx.State):
         logger.debug(f"Content of tab {active_tab.id} saved successfully")
 
     @rx.event
+    async def menu_open_file(self, file_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+        """Open a file from an absolute path (triggered by native file dialog).
+
+        Args:
+            file_path: The absolute path to the file to open.
+        """
+        logger.debug(f"Opening file from menu: {file_path}")
+        path = Path(file_path)
+
+        if not path.exists():
+            return rx.toast.error(f"File not found: {file_path}")
+
+        if not path.is_file():
+            return rx.toast.error(f"Not a file: {file_path}")
+
+        # Check if file is already open
+        tab = next((tab for tab in self.tabs if tab.path == file_path), None)
+
+        if not tab:
+            async with aiofiles.open(path, "rb") as f:
+                file_content = await f.read()
+
+            # PEP3120 suggests using UTF-8 as the default encoding for Python source files
+            default_encoding = "utf-8" if file_path.endswith((".py", ".pyw", ".ipy", ".pyi")) else None
+            decoded_file_content, encoding = decode(file_content, default_encoding=default_encoding)
+            if encoding.endswith("-guessed"):
+                return rx.toast.error("The file is either binary or uses an unsupported text encoding.")
+            logger.debug(f"Detected encoding for {file_path}: {encoding}")
+
+            tab = EditorTab(
+                id=str(uuid4()),
+                title=path.name,
+                language=detect_programming_language(file_path).lower(),
+                content=decoded_file_content,
+                encoding=encoding,
+                path=file_path,
+                on_not_active=asyncio.Event(),
+            )
+            self.tabs.append(tab)
+            logger.debug(f"Created tab {tab.id} for {file_path}")
+
+        if self.active_tab_id:
+            self.active_tab_history.append(self.active_tab_id)
+            self._stop_updating_active_tab()
+
+        self.active_tab_id = tab.id
+        return EditorState.keep_active_tab_content_updated
+
+    @rx.event
+    async def menu_open_folder(self, folder_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+        """Open a folder as the project root (triggered by native folder dialog).
+
+        Args:
+            folder_path: The absolute path to the folder to open.
+        """
+        logger.debug(f"Opening folder from menu: {folder_path}")
+        path = Path(folder_path)
+
+        if not path.exists():
+            return rx.toast.error(f"Folder not found: {folder_path}")
+
+        if not path.is_dir():
+            return rx.toast.error(f"Not a folder: {folder_path}")
+
+        # Update the project root
+        self.project_root = path
+
+        # Clear existing state
+        self.expanded_folders.clear()
+        self.file_tree = None
+
+        # Rebuild the file tree
+        self.file_tree = self._build_file_tree(self.project_root)
+        self._sort_file_tree(self.file_tree)
+        self.expanded_folders.add(self.project_root.name)
+
+        logger.info(f"Project root changed to: {folder_path}")
+
+    @rx.event
+    async def menu_save(self) -> None:
+        """Save the current file (triggered by menu)."""
+        await self._save_current_file()
+
+    @rx.event
+    async def menu_save_as(self) -> None:
+        """Save the current file with a new name (triggered by menu).
+
+        Note: This currently just saves the file. A proper implementation
+        would need to open a save dialog, which requires additional
+        JavaScript integration.
+        """
+        # TODO: Implement save as with native dialog
+        await self._save_current_file()
+
+    @rx.event
+    async def menu_close_tab(self) -> None:
+        """Close the current tab (triggered by menu)."""
+        if self.active_tab_id:
+            await self.close_tab(self.active_tab_id)
+
+    @rx.event
     async def close_tab(self, tab_id: str) -> None:
         """Close a tab by its ID.
 

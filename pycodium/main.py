@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from pytauri import AppHandle, Manager, builder_factory, context_factory
+from pytauri import AppHandle, Manager, RunEvent, builder_factory, context_factory
+from pytauri.ffi.lib import RunEventType
+from pytauri_plugins.dialog import init as init_dialog_plugin
 from reflex import constants
 from reflex.config import environment, get_config
 from reflex.state import reset_disk_state_manager
@@ -15,6 +17,7 @@ from reflex.utils import exec, processes  # noqa: A004
 
 from pycodium import __version__
 from pycodium.constants import PROJECT_ROOT_DIR
+from pycodium.menu import init_menu
 from pycodium.utils.processes import terminate_or_kill_process_on_port, wait_for_port
 
 # TODO: configure logging
@@ -81,14 +84,30 @@ def run_app_with_tauri(
 
         def app_setup(app_handle: AppHandle) -> None:
             """Setup hook for Tauri application."""
+            # Register the dialog plugin for native file/folder dialogs
+            app_handle.plugin(init_dialog_plugin())
+
             window = Manager.get_webview_window(app_handle, "main")
             wait_for_port(backend_port)
             if window:
+                init_menu(app_handle, window)
                 window.set_title(window_title)
                 window.show()
                 window.set_focus()
             else:
                 logger.error("Could not find main window")
+
+        def on_run_event(_app_handle: AppHandle, event: RunEventType) -> None:
+            """Handle Tauri run events for cleanup on exit.
+
+            Note: This callback must not raise exceptions (undefined behavior in PyTauri).
+            """
+            if isinstance(event, RunEvent.Exit):
+                try:
+                    logger.info("Received Exit event, terminating backend...")
+                    terminate_or_kill_process_on_port(backend_port)
+                except Exception:
+                    logger.exception("Error during backend termination")
 
         tauri_app = builder_factory().build(
             context_factory(PROJECT_ROOT_DIR),
@@ -96,8 +115,7 @@ def run_app_with_tauri(
             setup=app_setup,
         )
         logger.info("Tauri app running...")
-        exit_code = tauri_app.run_return()  # blocks until the application exits
-        terminate_or_kill_process_on_port(backend_port)
+        exit_code = tauri_app.run_return(on_run_event)  # blocks until the application exits
         if exit_code != 0:
             logger.error(f"Tauri app exited with code {exit_code}")
             sys.exit(exit_code)

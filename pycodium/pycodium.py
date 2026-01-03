@@ -5,6 +5,7 @@ import reflex as rx
 from pycodium.components.activity_bar import activity_bar
 from pycodium.components.editor_area import editor_area
 from pycodium.components.hotkey_watcher import GlobalHotkeyWatcher
+from pycodium.components.menu_events import tauri_menu_handler
 from pycodium.components.resizable_panels import group, handle, panel
 from pycodium.components.sidebar import sidebar
 from pycodium.components.status_bar import status_bar
@@ -20,6 +21,13 @@ def index() -> rx.Component:
                 EditorState.on_key_down(key, key_info).prevent_default,
                 None,
             )
+        ),
+        tauri_menu_handler(
+            on_file_selected=EditorState.menu_open_file,
+            on_folder_selected=EditorState.menu_open_folder,
+            on_save=EditorState.menu_save,
+            on_save_as=EditorState.menu_save_as,
+            on_close_tab=EditorState.menu_close_tab,
         ),
         rx.el.div(
             activity_bar(),

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from inline_snapshot import snapshot
+from pytauri import AppHandle, RunEvent
 from reflex.constants import LogLevel
 from reflex.utils import exec  # noqa: A004
 
@@ -10,9 +11,11 @@ from pycodium import __version__
 from pycodium.main import app
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from typing import Unpack
 
     from pytauri import App, BuilderArgs, Context
+    from pytauri.ffi.lib import RunEventType
     from pytest_mock import MockerFixture
     from typer.testing import CliRunner
 
@@ -48,7 +51,14 @@ def test_cli_starts_ide(runner: CliRunner, mocker: MockerFixture) -> None:
         setup(mock_app_handle)
 
         mock_tauri_app = mocker.MagicMock()
-        mock_tauri_app.run_return.return_value = 0
+
+        def mock_run_return(callback: Callable[[AppHandle, RunEventType], None] | None = None) -> int:
+            # Simulate the Exit event to trigger backend termination
+            if callback is not None:
+                callback(mock_app_handle, RunEvent.Exit())
+            return 0
+
+        mock_tauri_app.run_return = mock_run_return
         return mock_tauri_app
 
     mock_builder.build = mock_build

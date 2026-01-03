@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from pytauri import AppHandle, Manager, builder_factory, context_factory
+from pytauri import AppHandle, Manager, RunEvent, builder_factory, context_factory
+from pytauri.ffi.lib import RunEventType
 from pytauri_plugins.dialog import init as init_dialog_plugin
 from reflex import constants
 from reflex.config import environment, get_config
@@ -96,14 +97,25 @@ def run_app_with_tauri(
             else:
                 logger.error("Could not find main window")
 
+        def on_run_event(_app_handle: AppHandle, event: RunEventType) -> None:
+            """Handle Tauri run events for cleanup on exit.
+
+            Note: This callback must not raise exceptions (undefined behavior in PyTauri).
+            """
+            if isinstance(event, RunEvent.Exit):
+                try:
+                    logger.info("Received Exit event, terminating backend...")
+                    terminate_or_kill_process_on_port(backend_port)
+                except Exception:
+                    logger.exception("Error during backend termination")
+
         tauri_app = builder_factory().build(
             context_factory(PROJECT_ROOT_DIR),
             invoke_handler=None,
             setup=app_setup,
         )
         logger.info("Tauri app running...")
-        exit_code = tauri_app.run_return()  # blocks until the application exits
-        terminate_or_kill_process_on_port(backend_port)
+        exit_code = tauri_app.run_return(on_run_event)  # blocks until the application exits
         if exit_code != 0:
             logger.error(f"Tauri app exited with code {exit_code}")
             sys.exit(exit_code)

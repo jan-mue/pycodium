@@ -19,8 +19,8 @@ if TYPE_CHECKING:
     from reflex.testing import AppHarness
 
 
-BENCHMARK_SUBFOLDER = "docs"
-BENCHMARK_CHILD_FILE = "language_names.yml"
+BENCHMARK_SUBFOLDER = "tests"
+BENCHMARK_CHILD_FILE = "test_ws_router.py"
 
 
 @pytest.mark.benchmark

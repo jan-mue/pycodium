@@ -29,9 +29,6 @@ def test_file_tree_initial_load_time(
     This test measures the time from page load to seeing the root folder
     in the explorer. Uses FastAPI repo (~1000+ files) as a real-world benchmark.
 
-    The initial path is set via the set_initial_path function before the
-    Reflex app starts, simulating the CLI argument behavior.
-
     Args:
         reflex_web_app: The running AppHarness instance.
         page: Playwright page fixture.
@@ -40,21 +37,14 @@ def test_file_tree_initial_load_time(
     assert reflex_web_app.frontend_url is not None
     folder_name = fastapi_repo.name
 
-    # Navigate to the app - the initial path is already set via conftest
     page.goto(reflex_web_app.frontend_url)
     page.wait_for_load_state("networkidle")
 
-    # Verify explorer is visible
     file_explorer = page.locator('[data-testid="file-explorer"]')
     expect(file_explorer).to_be_visible()
 
-    # Wait for the folder to appear in the file explorer
-    # The folder name should be visible as the root of the tree
-    # Use .first because there may be a subfolder also named "fastapi"
     folder_locator = page.locator(f'.folder-item:has-text("{folder_name}")').first
     folder_locator.wait_for(state="visible", timeout=30000)
-
-    # Verify the folder is visible
     expect(folder_locator).to_be_visible()
 
 
@@ -67,7 +57,6 @@ def test_subdirectory_lazy_load_time(
     """Benchmark the lazy loading time when expanding a subdirectory.
 
     This test measures the time from clicking a folder to seeing its contents.
-    Tests the lazy loading optimization.
 
     Args:
         reflex_web_app: The running AppHarness instance.
@@ -77,33 +66,19 @@ def test_subdirectory_lazy_load_time(
     assert reflex_web_app.frontend_url is not None
     folder_name = fastapi_repo.name
 
-    # Navigate to the app
     page.goto(reflex_web_app.frontend_url)
     page.wait_for_load_state("networkidle")
 
-    # Wait for root folder to appear
     root_folder = page.locator(f'.folder-item:has-text("{folder_name}")').first
     root_folder.wait_for(state="visible", timeout=30000)
 
-    # The root folder should already be expanded (it's in expanded_folders)
-    # Look for the "docs" subfolder which exists in FastAPI repo
-    # Using "docs" instead of "fastapi" to avoid collision with root folder name
     subfolder = page.locator('.folder-item:has-text("docs")').first
-
-    # Check if already expanded by looking for a child element
-    # If child files are visible, we need to collapse first then re-expand
     child_file = page.locator('.file-item:has-text(".md")').first
 
     if child_file.is_visible():
-        # Collapse the subfolder first
         subfolder.click()
         page.wait_for_timeout(500)
 
-    # Now expand the subfolder (this triggers lazy loading)
     subfolder.click()
-
-    # Wait for files to appear (markdown files in docs/ directory)
     child_file.wait_for(state="visible", timeout=10000)
-
-    # Verify expansion worked
     expect(child_file).to_be_visible()

@@ -127,7 +127,6 @@ def test_open_project(tmp_path: Path, state: EditorState) -> None:
 
 def test_open_project_shallow_loading(tmp_path: Path, state: EditorState) -> None:
     """Test that open_project only loads immediate children (shallow loading)."""
-    # Create a nested directory structure
     (tmp_path / "dir1").mkdir()
     (tmp_path / "dir1" / "subdir").mkdir()
     (tmp_path / "dir1" / "subdir" / "deep_file.txt").write_text("deep")
@@ -140,17 +139,15 @@ def test_open_project_shallow_loading(tmp_path: Path, state: EditorState) -> Non
     assert state.file_tree is not None
     assert state.file_tree.loaded is True
 
-    # Check that dir1 is in sub_paths but not loaded
     dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
     assert dir1 is not None
     assert dir1.is_dir is True
     assert dir1.loaded is False
-    assert dir1.sub_paths == []  # Not loaded yet
+    assert dir1.sub_paths == []
 
 
 async def test_toggle_folder_lazy_loads_contents(tmp_path: Path, state: EditorState) -> None:
     """Test that toggle_folder lazily loads directory contents."""
-    # Create a nested directory structure
     (tmp_path / "dir1").mkdir()
     (tmp_path / "dir1" / "subdir").mkdir()
     (tmp_path / "dir1" / "file_in_dir1.txt").write_text("content")
@@ -158,22 +155,17 @@ async def test_toggle_folder_lazy_loads_contents(tmp_path: Path, state: EditorSt
     set_initial_path(tmp_path)
     state.open_project()
 
-    # dir1 should not be loaded yet
     assert state.file_tree is not None
     dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
     assert dir1 is not None
     assert dir1.loaded is False
     assert dir1.sub_paths == []
 
-    # Expand dir1
     folder_path = f"{tmp_path.name}/dir1"
     await state.toggle_folder(folder_path)
 
-    # Now dir1 should be loaded
     assert dir1.loaded is True
-    assert len(dir1.sub_paths) == 2  # subdir and file_in_dir1.txt
-
-    # Check that contents are sorted (directories first)
+    assert len(dir1.sub_paths) == 2
     assert dir1.sub_paths[0].name == "subdir"
     assert dir1.sub_paths[0].is_dir is True
     assert dir1.sub_paths[1].name == "file_in_dir1.txt"
@@ -190,7 +182,6 @@ async def test_toggle_folder_does_not_reload_loaded_dir(tmp_path: Path, state: E
 
     folder_path = f"{tmp_path.name}/dir1"
 
-    # First toggle - loads the directory
     await state.toggle_folder(folder_path)
     assert state.file_tree is not None
     dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
@@ -198,14 +189,12 @@ async def test_toggle_folder_does_not_reload_loaded_dir(tmp_path: Path, state: E
     assert dir1.loaded is True
     original_len = len(dir1.sub_paths)
 
-    # Collapse the folder
     await state.toggle_folder(folder_path)
     assert folder_path not in state.expanded_folders
 
-    # Expand again - should not reload (loaded flag should prevent reload)
     await state.toggle_folder(folder_path)
     assert dir1.loaded is True
-    assert len(dir1.sub_paths) == original_len  # Contents preserved, not reloaded
+    assert len(dir1.sub_paths) == original_len
 
 
 async def test_open_file_new_and_existing(state: EditorState) -> None:
@@ -214,11 +203,9 @@ async def test_open_file_new_and_existing(state: EditorState) -> None:
         tmp.write(b'print("hello")')
         tmp_path = tmp.name
     rel_path = os.path.relpath(tmp_path, start=state.project_root.parent)
-    # Open new file
     await state.open_file(rel_path)
     assert any(tab.path == rel_path for tab in state.tabs)
     assert state.active_tab_id is not None
-    # Open the same file again (should not duplicate tab)
     prev_tab_count = len(state.tabs)
     await state.open_file(rel_path)
     assert len(state.tabs) == prev_tab_count

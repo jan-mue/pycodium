@@ -330,7 +330,6 @@ class EditorState(rx.State):
 
         for file_path in path.iterdir():
             if file_path.is_dir():
-                # Create directory entry without loading its contents (lazy loading)
                 file_tree.sub_paths.append(FilePath(name=file_path.name, is_dir=True, loaded=False))
             else:
                 file_tree.sub_paths.append(FilePath(name=file_path.name, is_dir=False, loaded=True))
@@ -378,21 +377,16 @@ class EditorState(rx.State):
             return
 
         if node.loaded:
-            # Already loaded, nothing to do
             return
 
-        # Build the full filesystem path
-        # folder_path is relative like "project_name/subdir/..."
-        # project_root is the absolute path to project_name
         parts = folder_path.split("/")
-        relative_parts = parts[1:]  # Remove the project root name
+        relative_parts = parts[1:]
         full_path = self.project_root / "/".join(relative_parts) if relative_parts else self.project_root
 
         if not full_path.exists() or not full_path.is_dir():
             logger.warning(f"Path does not exist or is not a directory: {full_path}")
             return
 
-        # Load immediate children
         node.sub_paths = []
         for file_path in full_path.iterdir():
             if file_path.is_dir():
@@ -400,11 +394,8 @@ class EditorState(rx.State):
             else:
                 node.sub_paths.append(FilePath(name=file_path.name, is_dir=False, loaded=True))
 
-        # Sort the newly loaded contents
         node.sub_paths.sort(key=lambda x: (not x.is_dir, x.name))
         node.loaded = True
-
-        # Trigger reactivity by reassigning file_tree
         self.file_tree = self.file_tree
 
     def _sort_file_tree(self, file_tree: FilePath) -> None:
@@ -421,23 +412,16 @@ class EditorState(rx.State):
 
     @rx.event
     def open_project(self) -> None:
-        """Open a project in the editor.
-
-        If an initial path was passed via CLI, opens that path.
-        Otherwise, opens with an empty file tree.
-        """
+        """Open a project in the editor."""
         initial_path = get_initial_path()
         if initial_path is None:
-            # No path provided - open empty
             logger.info("No initial path provided, opening empty IDE")
             self.file_tree = None
             self.expanded_folders.clear()
             return
 
         if initial_path.is_file():
-            # If it's a file, use its parent directory as project root
             self.project_root = initial_path.parent
-            logger.debug(f"Initial path is a file, using parent: {self.project_root}")
         else:
             self.project_root = initial_path
 

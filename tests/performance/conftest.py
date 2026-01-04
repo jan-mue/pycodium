@@ -34,7 +34,6 @@ def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, No
     """
     repo_path = tmp_path_factory.mktemp("repos") / "fastapi"
 
-    # Clone the repository at the specific tag (shallow clone for speed)
     subprocess.run(
         [
             "git",
@@ -51,8 +50,6 @@ def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, No
     )
 
     yield repo_path
-
-    # Cleanup
     shutil.rmtree(repo_path, ignore_errors=True)
 
 
@@ -60,23 +57,15 @@ def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, No
 def reflex_web_app(fastapi_repo: Path) -> Generator[AppHarness, None, None]:
     """Start the PyCodium Reflex app with the FastAPI repo as initial path.
 
-    This fixture sets the initial path before starting the app, simulating
-    the CLI argument behavior (pycodium /path/to/fastapi).
-
     Args:
         fastapi_repo: Path to the cloned FastAPI repository.
 
     Yields:
         Running AppHarness instance.
     """
-    # Set the initial path before starting the Reflex app
-    # This simulates: pycodium /path/to/fastapi
     set_initial_path(fastapi_repo)
-
     with AppHarness.create(root=PROJECT_ROOT_DIR) as harness:
         yield harness
-
-    # Clear the initial path after tests
     set_initial_path(None)
 
 
@@ -93,6 +82,5 @@ def app_page(reflex_web_app: AppHarness, page: Page) -> Page:
     """
     assert reflex_web_app.frontend_url is not None
     page.goto(reflex_web_app.frontend_url)
-    # Wait for the app to be ready (Reflex apps show a loading spinner initially)
     page.wait_for_load_state("networkidle")
     return page

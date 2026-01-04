@@ -35,7 +35,6 @@ def run(
         print(__version__)
         return
 
-    # Set the initial path for the state to read on startup
     if path is not None:
         resolved_path = path.resolve()
         if resolved_path.exists():

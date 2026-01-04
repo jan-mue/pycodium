@@ -18,33 +18,17 @@ if TYPE_CHECKING:
     from playwright.sync_api import Page
 
 
-# FastAPI repository details for performance testing
 FASTAPI_REPO_URL = "https://github.com/fastapi/fastapi.git"
 FASTAPI_TAG = "0.128.0"
 
 
 @pytest.fixture(scope="session")
 def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, None, None]:
-    """Clone the FastAPI repository at a specific tag for performance testing.
-
-    This fixture clones the repository once per test session and cleans up afterwards.
-
-    Yields:
-        Path to the cloned repository.
-    """
+    """Clone the FastAPI repository at a specific tag for performance testing."""
     repo_path = tmp_path_factory.mktemp("repos") / "fastapi"
 
     subprocess.run(
-        [
-            "git",
-            "clone",
-            "--depth",
-            "1",
-            "--branch",
-            FASTAPI_TAG,
-            FASTAPI_REPO_URL,
-            str(repo_path),
-        ],
+        ["git", "clone", "--depth", "1", "--branch", FASTAPI_TAG, FASTAPI_REPO_URL, str(repo_path)],
         check=True,
         capture_output=True,
     )
@@ -55,14 +39,7 @@ def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, No
 
 @pytest.fixture(scope="session")
 def reflex_web_app(fastapi_repo: Path) -> Generator[AppHarness, None, None]:
-    """Start the PyCodium Reflex app with the FastAPI repo as initial path.
-
-    Args:
-        fastapi_repo: Path to the cloned FastAPI repository.
-
-    Yields:
-        Running AppHarness instance.
-    """
+    """Start the PyCodium Reflex app with the FastAPI repo as initial path."""
     set_initial_path(fastapi_repo)
     with AppHarness.create(root=PROJECT_ROOT_DIR) as harness:
         yield harness
@@ -71,15 +48,7 @@ def reflex_web_app(fastapi_repo: Path) -> Generator[AppHarness, None, None]:
 
 @pytest.fixture
 def app_page(reflex_web_app: AppHarness, page: Page) -> Page:
-    """Navigate to the app's frontend URL and return the page.
-
-    Args:
-        reflex_web_app: The running AppHarness instance.
-        page: Playwright page fixture.
-
-    Returns:
-        Playwright page navigated to the app's frontend URL.
-    """
+    """Navigate to the app's frontend URL and return the page."""
     assert reflex_web_app.frontend_url is not None
     page.goto(reflex_web_app.frontend_url)
     page.wait_for_load_state("networkidle")

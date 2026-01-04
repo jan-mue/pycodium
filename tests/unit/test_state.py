@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pycodium.constants import set_initial_path
+from pycodium.constants import INITIAL_PATH_ENV_VAR
 from pycodium.models.tabs import EditorTab
 from pycodium.state import EditorState
 
@@ -108,24 +108,24 @@ async def test_update_tab_content(state: EditorState) -> None:
     assert tab.content == "def"
 
 
-def test_open_project_no_initial_path(state: EditorState) -> None:
+def test_open_project_no_initial_path(state: EditorState, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that open_project with no initial path opens empty IDE."""
-    set_initial_path(None)
+    monkeypatch.delenv(INITIAL_PATH_ENV_VAR, raising=False)
     state.open_project()
     assert state.file_tree is None
     assert len(state.expanded_folders) == 0
 
 
-def test_open_project(tmp_path: Path, state: EditorState) -> None:
+def test_open_project(tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "dir").mkdir()
     (tmp_path / "file.txt").write_text("hi")
-    set_initial_path(tmp_path)
+    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
     state.open_project()
     assert state.file_tree is not None
     assert tmp_path.name in state.expanded_folders
 
 
-def test_open_project_shallow_loading(tmp_path: Path, state: EditorState) -> None:
+def test_open_project_shallow_loading(tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that open_project only loads immediate children (shallow loading)."""
     (tmp_path / "dir1").mkdir()
     (tmp_path / "dir1" / "subdir").mkdir()
@@ -133,7 +133,7 @@ def test_open_project_shallow_loading(tmp_path: Path, state: EditorState) -> Non
     (tmp_path / "dir1" / "file_in_dir1.txt").write_text("content")
     (tmp_path / "file.txt").write_text("hi")
 
-    set_initial_path(tmp_path)
+    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
     state.open_project()
 
     assert state.file_tree is not None
@@ -146,13 +146,15 @@ def test_open_project_shallow_loading(tmp_path: Path, state: EditorState) -> Non
     assert dir1.sub_paths == []
 
 
-async def test_toggle_folder_lazy_loads_contents(tmp_path: Path, state: EditorState) -> None:
+async def test_toggle_folder_lazy_loads_contents(
+    tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test that toggle_folder lazily loads directory contents."""
     (tmp_path / "dir1").mkdir()
     (tmp_path / "dir1" / "subdir").mkdir()
     (tmp_path / "dir1" / "file_in_dir1.txt").write_text("content")
 
-    set_initial_path(tmp_path)
+    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
     state.open_project()
 
     assert state.file_tree is not None
@@ -172,12 +174,14 @@ async def test_toggle_folder_lazy_loads_contents(tmp_path: Path, state: EditorSt
     assert dir1.sub_paths[1].is_dir is False
 
 
-async def test_toggle_folder_does_not_reload_loaded_dir(tmp_path: Path, state: EditorState) -> None:
+async def test_toggle_folder_does_not_reload_loaded_dir(
+    tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test that toggle_folder doesn't reload already loaded directories."""
     (tmp_path / "dir1").mkdir()
     (tmp_path / "dir1" / "file.txt").write_text("content")
 
-    set_initial_path(tmp_path)
+    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
     state.open_project()
 
     folder_path = f"{tmp_path.name}/dir1"

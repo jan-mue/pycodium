@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from typing import TYPE_CHECKING
@@ -9,7 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 from reflex.testing import AppHarness
 
-from pycodium.constants import PROJECT_ROOT_DIR, set_initial_path
+from pycodium.constants import INITIAL_PATH_ENV_VAR, PROJECT_ROOT_DIR
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -40,10 +41,16 @@ def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, No
 @pytest.fixture(scope="session")
 def reflex_web_app(fastapi_repo: Path) -> Generator[AppHarness, None, None]:
     """Start the PyCodium Reflex app with the FastAPI repo as initial path."""
-    set_initial_path(fastapi_repo)
-    with AppHarness.create(root=PROJECT_ROOT_DIR) as harness:
-        yield harness
-    set_initial_path(None)
+    original_env = os.environ.get(INITIAL_PATH_ENV_VAR)
+    os.environ[INITIAL_PATH_ENV_VAR] = str(fastapi_repo)
+    try:
+        with AppHarness.create(root=PROJECT_ROOT_DIR) as harness:
+            yield harness
+    finally:
+        if original_env is not None:
+            os.environ[INITIAL_PATH_ENV_VAR] = original_env
+        elif INITIAL_PATH_ENV_VAR in os.environ:
+            del os.environ[INITIAL_PATH_ENV_VAR]
 
 
 @pytest.fixture

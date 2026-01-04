@@ -16,7 +16,7 @@ from reflex.state import reset_disk_state_manager
 from reflex.utils import exec, processes  # noqa: A004
 
 from pycodium import __version__
-from pycodium.constants import PROJECT_ROOT_DIR, set_initial_path
+from pycodium.constants import INITIAL_PATH_ENV_VAR, PROJECT_ROOT_DIR
 from pycodium.menu import init_menu
 from pycodium.utils.processes import terminate_or_kill_process_on_port, wait_for_port
 
@@ -38,7 +38,7 @@ def run(
     if path is not None:
         resolved_path = path.resolve()
         if resolved_path.exists():
-            set_initial_path(resolved_path)
+            os.environ[INITIAL_PATH_ENV_VAR] = str(resolved_path)
             logger.info(f"Opening IDE with path: {resolved_path}")
         else:
             logger.warning(f"Path does not exist: {path}")

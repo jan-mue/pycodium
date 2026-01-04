@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 import time
 from pathlib import Path
 from uuid import uuid4
@@ -12,7 +13,7 @@ from reflex.event import EventCallback, EventSpec, KeyInputInfo
 from typing_extensions import Unpack
 from watchfiles import Change, awatch
 
-from pycodium.constants import get_initial_path
+from pycodium.constants import INITIAL_PATH_ENV_VAR
 from pycodium.models.files import FilePath
 from pycodium.models.tabs import EditorTab
 from pycodium.utils.detect_encoding import decode
@@ -413,13 +414,14 @@ class EditorState(rx.State):
     @rx.event
     def open_project(self) -> None:
         """Open a project in the editor."""
-        initial_path = get_initial_path()
-        if initial_path is None:
+        path_str = os.environ.get(INITIAL_PATH_ENV_VAR)
+        if path_str is None:
             logger.info("No initial path provided, opening empty IDE")
             self.file_tree = None
             self.expanded_folders.clear()
             return
 
+        initial_path = Path(path_str)
         if initial_path.is_file():
             self.project_root = initial_path.parent
         else:

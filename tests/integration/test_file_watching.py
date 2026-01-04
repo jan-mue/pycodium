@@ -95,29 +95,37 @@ def test_editor_updates_when_file_modified_externally(file_watch_page: Page, tes
     This test verifies the keep_active_tab_content_updated background task
     that watches for file changes and updates the editor content accordingly.
     """
+    # Wait for the file explorer to show the file
     file_item = file_watch_page.locator(".file-item:has-text('watched_file.py')")
     expect(file_item).to_be_visible(timeout=10000)
 
+    # Click on the file to open it in the editor
     file_item.click()
     file_watch_page.wait_for_timeout(1000)
 
+    # Wait for the editor to load and verify original content is displayed
+    # The Monaco editor renders content in a specific way, look for content in the editor area
     editor_area = file_watch_page.locator(".monaco-editor")
     expect(editor_area).to_be_visible(timeout=5000)
 
+    # Verify the tab is open with the file name (use the specific editor-tab class)
     tab = file_watch_page.locator(".editor-tab:has-text('watched_file.py')")
     expect(tab).to_be_visible(timeout=5000)
 
+    # Verify original content is in the editor (look inside monaco editor)
     original_content = file_watch_page.locator(".monaco-editor >> text=Original content")
     expect(original_content).to_be_visible(timeout=5000)
 
-    # Modify the file outside the editor to trigger the file watcher
+    # Modify the file externally
     watched_file = test_folder_with_file / "watched_file.py"
     watched_file.write_text("# Modified externally\nprint('updated!')")
 
-    # The watchfiles library should detect the change and update the editor
+    # Wait for the file watcher to detect the change and update the editor
+    # The watchfiles library should detect changes within a reasonable time
     modified_content = file_watch_page.locator(".monaco-editor >> text=Modified externally")
     expect(modified_content).to_be_visible(timeout=10000)
 
+    # Verify the old content is no longer visible
     old_content = file_watch_page.locator(".monaco-editor >> text=Original content")
     expect(old_content).not_to_be_visible()
 
@@ -128,28 +136,31 @@ def test_file_watcher_stops_when_tab_closed(file_watch_page: Page) -> None:
     This verifies that the on_not_active event is properly set when closing a tab,
     which signals the file watcher to stop.
     """
+    # Open the file
     file_item = file_watch_page.locator(".file-item:has-text('watched_file.py')")
     expect(file_item).to_be_visible(timeout=10000)
     file_item.click()
     file_watch_page.wait_for_timeout(1000)
 
+    # Wait for the tab to appear (use the specific editor-tab class)
     tab = file_watch_page.locator(".editor-tab:has-text('watched_file.py')")
     expect(tab).to_be_visible(timeout=5000)
 
-    # Try multiple selectors since the close button UI might vary
+    # Close the tab by clicking the close button
     close_button = tab.locator("svg, [class*='close'], button:has-text('x'), button:has-text('✕')")
     if close_button.count() > 0:
         close_button.first.click()
     else:
-        # Fallback to keyboard shortcut if no close button found
+        # If no close button found, use keyboard shortcut
         file_watch_page.keyboard.press("Meta+w")
 
     file_watch_page.wait_for_timeout(500)
 
+    # Verify the tab is closed
     file_watch_page.wait_for_timeout(500)
     expect(tab).not_to_be_visible(timeout=5000)
 
-    # Verify no crashes from orphaned file watchers
+    # The app should still be functional (no crashes from orphaned watchers)
     activity_bar = file_watch_page.locator('[class*="bg-pycodium-activity-bar"]')
     expect(activity_bar).to_be_visible()
 
@@ -162,31 +173,37 @@ def test_switching_tabs_updates_file_watcher(multi_file_page: Page, test_folder_
     """
     second_file = test_folder_with_multiple_files / "second_file.py"
 
+    # Open the first file
     first_file_item = multi_file_page.locator(".file-item:has-text('first_file.py')")
     expect(first_file_item).to_be_visible(timeout=10000)
     first_file_item.click()
     multi_file_page.wait_for_timeout(1000)
 
+    # Wait for first file tab (use the specific editor-tab class)
     first_tab = multi_file_page.locator(".editor-tab:has-text('first_file.py')")
     expect(first_tab).to_be_visible(timeout=5000)
 
+    # Open the second file
     second_file_item = multi_file_page.locator(".file-item:has-text('second_file.py')")
     expect(second_file_item).to_be_visible(timeout=5000)
     second_file_item.click()
     multi_file_page.wait_for_timeout(1000)
 
+    # Wait for second file tab (use the specific editor-tab class)
     second_tab = multi_file_page.locator(".editor-tab:has-text('second_file.py')")
     expect(second_tab).to_be_visible(timeout=5000)
 
+    # Verify second file content is visible (look inside monaco editor)
     second_content = multi_file_page.locator(".monaco-editor >> text=Second file content")
     expect(second_content).to_be_visible(timeout=5000)
 
-    # Modify the second file externally - watcher should be active for this tab
+    # Modify the second file externally
     second_file.write_text("# Second file modified!")
 
-    # Verify the change is detected (confirms watcher switched to second file)
+    # Wait for the change to be detected
     modified_content = multi_file_page.locator(".monaco-editor >> text=Second file modified!")
     expect(modified_content).to_be_visible(timeout=10000)
 
+    # App should still be functional
     activity_bar = multi_file_page.locator('[class*="bg-pycodium-activity-bar"]')
     expect(activity_bar).to_be_visible()

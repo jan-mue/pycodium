@@ -110,9 +110,11 @@ def test_editor_updates_when_file_modified_externally(file_watch_page: Page, tes
     original_content = file_watch_page.locator(".monaco-editor >> text=Original content")
     expect(original_content).to_be_visible(timeout=5000)
 
+    # Modify the file outside the editor to trigger the file watcher
     watched_file = test_folder_with_file / "watched_file.py"
     watched_file.write_text("# Modified externally\nprint('updated!')")
 
+    # The watchfiles library should detect the change and update the editor
     modified_content = file_watch_page.locator(".monaco-editor >> text=Modified externally")
     expect(modified_content).to_be_visible(timeout=10000)
 
@@ -134,10 +136,12 @@ def test_file_watcher_stops_when_tab_closed(file_watch_page: Page) -> None:
     tab = file_watch_page.locator(".editor-tab:has-text('watched_file.py')")
     expect(tab).to_be_visible(timeout=5000)
 
+    # Try multiple selectors since the close button UI might vary
     close_button = tab.locator("svg, [class*='close'], button:has-text('x'), button:has-text('✕')")
     if close_button.count() > 0:
         close_button.first.click()
     else:
+        # Fallback to keyboard shortcut if no close button found
         file_watch_page.keyboard.press("Meta+w")
 
     file_watch_page.wait_for_timeout(500)
@@ -145,6 +149,7 @@ def test_file_watcher_stops_when_tab_closed(file_watch_page: Page) -> None:
     file_watch_page.wait_for_timeout(500)
     expect(tab).not_to_be_visible(timeout=5000)
 
+    # Verify no crashes from orphaned file watchers
     activity_bar = file_watch_page.locator('[class*="bg-pycodium-activity-bar"]')
     expect(activity_bar).to_be_visible()
 
@@ -176,8 +181,10 @@ def test_switching_tabs_updates_file_watcher(multi_file_page: Page, test_folder_
     second_content = multi_file_page.locator(".monaco-editor >> text=Second file content")
     expect(second_content).to_be_visible(timeout=5000)
 
+    # Modify the second file externally - watcher should be active for this tab
     second_file.write_text("# Second file modified!")
 
+    # Verify the change is detected (confirms watcher switched to second file)
     modified_content = multi_file_page.locator(".monaco-editor >> text=Second file modified!")
     expect(modified_content).to_be_visible(timeout=10000)
 

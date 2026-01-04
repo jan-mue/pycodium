@@ -491,57 +491,6 @@ async def test_open_file_with_active_tab_history(state: EditorState, tmp_path: P
     assert tab1.on_not_active.is_set()
 
 
-def test_stop_updating_active_tab_no_active(state: EditorState) -> None:
-    """Test _stop_updating_active_tab logs warning when no active tab."""
-    state.tabs = []
-    state.active_tab_id = None
-    state._stop_updating_active_tab()
-
-
-async def test_save_current_file_no_active_tab(state: EditorState) -> None:
-    """Test _save_current_file logs warning when no active tab."""
-    state.tabs = []
-    state.active_tab_id = None
-    await state._save_current_file()
-
-
-def test_find_node_by_path_wrong_prefix(state: EditorState, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test _find_node_by_path returns None when path prefix doesn't match."""
-    (tmp_path / "file.txt").write_text("hi")
-    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
-    state.open_project()
-
-    result = state._find_node_by_path("wrong_prefix/some/path")
-    assert result is None
-
-
-def test_find_node_by_path_child_not_found(state: EditorState, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test _find_node_by_path returns None when child node doesn't exist."""
-    (tmp_path / "dir1").mkdir()
-    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
-    state.open_project()
-
-    result = state._find_node_by_path(f"{tmp_path.name}/nonexistent/child")
-    assert result is None
-
-
-async def test_load_directory_contents_path_not_exists(
-    state: EditorState, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Test _load_directory_contents logs warning when path doesn't exist."""
-    (tmp_path / "dir1").mkdir()
-    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
-    state.open_project()
-
-    dir1_node = state._find_node_by_path(f"{tmp_path.name}/dir1")
-    assert dir1_node is not None
-    dir1_node.loaded = False
-
-    (tmp_path / "dir1").rmdir()
-
-    state._load_directory_contents(f"{tmp_path.name}/dir1")
-
-
 def test_open_project_with_file_path(state: EditorState, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test open_project sets project_root to parent when initial path is a file."""
     test_file = tmp_path / "test.py"

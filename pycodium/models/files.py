@@ -11,3 +11,4 @@ class FilePath(rx.Base):
     name: str
     sub_paths: list[FilePath] = []
     is_dir: bool = True
+    loaded: bool = False  # Track if directory contents have been fetched (for lazy loading)

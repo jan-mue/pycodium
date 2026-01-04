@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from pycodium.constants import set_initial_path
 from pycodium.models.tabs import EditorTab
 from pycodium.state import EditorState
 
@@ -107,13 +108,138 @@ async def test_update_tab_content(state: EditorState) -> None:
     assert tab.content == "def"
 
 
+def test_open_project_no_initial_path(state: EditorState) -> None:
+    """Test that open_project with no initial path opens empty IDE."""
+    set_initial_path(None)
+    state.open_project()
+    assert state.file_tree is None
+    assert len(state.expanded_folders) == 0
+
+
 def test_open_project(tmp_path: Path, state: EditorState) -> None:
     (tmp_path / "dir").mkdir()
     (tmp_path / "file.txt").write_text("hi")
-    state.project_root = tmp_path
+    set_initial_path(tmp_path)
     state.open_project()
     assert state.file_tree is not None
     assert tmp_path.name in state.expanded_folders
+
+
+def test_open_project_shallow_loading(tmp_path: Path, state: EditorState) -> None:
+    """Test that open_project only loads immediate children (shallow loading)."""
+    # Create a nested directory structure
+    (tmp_path / "dir1").mkdir()
+    (tmp_path / "dir1" / "subdir").mkdir()
+    (tmp_path / "dir1" / "subdir" / "deep_file.txt").write_text("deep")
+    (tmp_path / "dir1" / "file_in_dir1.txt").write_text("content")
+    (tmp_path / "file.txt").write_text("hi")
+
+    set_initial_path(tmp_path)
+    state.open_project()
+
+    assert state.file_tree is not None
+    assert state.file_tree.loaded is True
+
+    # Check that dir1 is in sub_paths but not loaded
+    dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
+    assert dir1 is not None
+    assert dir1.is_dir is True
+    assert dir1.loaded is False
+    assert dir1.sub_paths == []  # Not loaded yet
+
+
+async def test_toggle_folder_lazy_loads_contents(tmp_path: Path, state: EditorState) -> None:
+    """Test that toggle_folder lazily loads directory contents."""
+    # Create a nested directory structure
+    (tmp_path / "dir1").mkdir()
+    (tmp_path / "dir1" / "subdir").mkdir()
+    (tmp_path / "dir1" / "file_in_dir1.txt").write_text("content")
+
+    set_initial_path(tmp_path)
+    state.open_project()
+
+    # dir1 should not be loaded yet
+    dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
+    assert dir1 is not None
+    assert dir1.loaded is False
+    assert dir1.sub_paths == []
+
+    # Expand dir1
+    folder_path = f"{tmp_path.name}/dir1"
+    await state.toggle_folder(folder_path)
+
+    # Now dir1 should be loaded
+    assert dir1.loaded is True
+    assert len(dir1.sub_paths) == 2  # subdir and file_in_dir1.txt
+
+    # Check that contents are sorted (directories first)
+    assert dir1.sub_paths[0].name == "subdir"
+    assert dir1.sub_paths[0].is_dir is True
+    assert dir1.sub_paths[1].name == "file_in_dir1.txt"
+    assert dir1.sub_paths[1].is_dir is False
+
+
+async def test_toggle_folder_does_not_reload_loaded_dir(tmp_path: Path, state: EditorState) -> None:
+    """Test that toggle_folder doesn't reload already loaded directories."""
+    (tmp_path / "dir1").mkdir()
+    (tmp_path / "dir1" / "file.txt").write_text("content")
+
+    set_initial_path(tmp_path)
+    state.open_project()
+
+    folder_path = f"{tmp_path.name}/dir1"
+
+    # First toggle - loads the directory
+    await state.toggle_folder(folder_path)
+    dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
+    assert dir1.loaded is True
+    original_len = len(dir1.sub_paths)
+
+    # Collapse the folder
+    await state.toggle_folder(folder_path)
+    assert folder_path not in state.expanded_folders
+
+    # Expand again - should not reload (loaded flag should prevent reload)
+    await state.toggle_folder(folder_path)
+    assert dir1.loaded is True
+    assert len(dir1.sub_paths) == original_len  # Contents preserved, not reloaded
+
+
+def test_find_node_by_path(tmp_path: Path, state: EditorState) -> None:
+    """Test _find_node_by_path finds nodes correctly."""
+    (tmp_path / "dir1").mkdir()
+    (tmp_path / "dir1" / "subdir").mkdir()
+
+    set_initial_path(tmp_path)
+    state.open_project()
+
+    # Load dir1 first
+    state._load_directory_contents(f"{tmp_path.name}/dir1")
+
+    # Find root
+    root = state._find_node_by_path(tmp_path.name)
+    assert root is not None
+    assert root.name == tmp_path.name
+
+    # Find dir1
+    dir1 = state._find_node_by_path(f"{tmp_path.name}/dir1")
+    assert dir1 is not None
+    assert dir1.name == "dir1"
+
+    # Find subdir
+    subdir = state._find_node_by_path(f"{tmp_path.name}/dir1/subdir")
+    assert subdir is not None
+    assert subdir.name == "subdir"
+
+    # Non-existent path
+    assert state._find_node_by_path(f"{tmp_path.name}/nonexistent") is None
+    assert state._find_node_by_path("wrong_root/dir1") is None
+
+
+def test_find_node_by_path_no_file_tree(state: EditorState) -> None:
+    """Test _find_node_by_path returns None when file_tree is None."""
+    state.file_tree = None
+    assert state._find_node_by_path("any/path") is None
 
 
 async def test_open_file_new_and_existing(state: EditorState) -> None:

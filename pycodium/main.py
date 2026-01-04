@@ -16,7 +16,7 @@ from reflex.state import reset_disk_state_manager
 from reflex.utils import exec, processes  # noqa: A004
 
 from pycodium import __version__
-from pycodium.constants import PROJECT_ROOT_DIR
+from pycodium.constants import PROJECT_ROOT_DIR, set_initial_path
 from pycodium.menu import init_menu
 from pycodium.utils.processes import terminate_or_kill_process_on_port, wait_for_port
 
@@ -34,10 +34,20 @@ def run(
     if show_version:
         print(__version__)
         return
-    logger.info(f"Opening IDE with path: {path}")
+
+    # Set the initial path for the state to read on startup
+    if path is not None:
+        resolved_path = path.resolve()
+        if resolved_path.exists():
+            set_initial_path(resolved_path)
+            logger.info(f"Opening IDE with path: {resolved_path}")
+        else:
+            logger.warning(f"Path does not exist: {path}")
+    else:
+        logger.info("Opening IDE with no initial path")
+
     # TODO: run the frontend in dev mode when the package is installed in editable mode
     run_app_with_tauri()
-    # TODO: actually open path in editor
 
 
 def run_app_with_tauri(

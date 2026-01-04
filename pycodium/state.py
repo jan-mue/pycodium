@@ -12,6 +12,7 @@ from reflex.event import EventCallback, EventSpec, KeyInputInfo
 from typing_extensions import Unpack
 from watchfiles import Change, awatch
 
+from pycodium.constants import get_initial_path
 from pycodium.models.files import FilePath
 from pycodium.models.tabs import EditorTab
 from pycodium.utils.detect_encoding import decode
@@ -61,6 +62,8 @@ class EditorState(rx.State):
         if folder_path in self.expanded_folders:
             self.expanded_folders.remove(folder_path)
         else:
+            # Lazily load directory contents when first expanded
+            self._load_directory_contents(folder_path)
             self.expanded_folders.add(folder_path)
 
     def _stop_updating_active_tab(self) -> None:
@@ -315,24 +318,94 @@ class EditorState(rx.State):
                 break
 
     def _build_file_tree(self, path: Path) -> FilePath:
-        """Build the file tree for a given path.
+        """Build a shallow file tree for a given path (immediate children only).
 
         Args:
-            path: The path to the file to build.
+            path: The path to build the tree for.
 
         Returns:
-            FilePath: The file tree for the given path.
+            FilePath: The file tree with only immediate children loaded.
         """
-        file_tree = FilePath(name=path.name)
+        file_tree = FilePath(name=path.name, loaded=True)
 
         for file_path in path.iterdir():
             if file_path.is_dir():
-                sub_tree = self._build_file_tree(file_path)
-                file_tree.sub_paths.append(sub_tree)
+                # Create directory entry without loading its contents (lazy loading)
+                file_tree.sub_paths.append(FilePath(name=file_path.name, is_dir=True, loaded=False))
             else:
-                file_tree.sub_paths.append(FilePath(name=file_path.name, is_dir=False))
+                file_tree.sub_paths.append(FilePath(name=file_path.name, is_dir=False, loaded=True))
 
         return file_tree
+
+    def _find_node_by_path(self, path: str) -> FilePath | None:
+        """Find a node in the file tree by its path.
+
+        Args:
+            path: The path to find (e.g., "project/src/utils").
+
+        Returns:
+            The FilePath node if found, None otherwise.
+        """
+        if self.file_tree is None:
+            return None
+
+        parts = path.split("/")
+        if not parts or parts[0] != self.file_tree.name:
+            return None
+
+        current = self.file_tree
+        for part in parts[1:]:
+            found = None
+            for sub_path in current.sub_paths:
+                if sub_path.name == part:
+                    found = sub_path
+                    break
+            if found is None:
+                return None
+            current = found
+
+        return current
+
+    def _load_directory_contents(self, folder_path: str) -> None:
+        """Load the contents of a directory lazily.
+
+        Args:
+            folder_path: The path to the folder to load (e.g., "project/src").
+        """
+        node = self._find_node_by_path(folder_path)
+        if node is None:
+            logger.warning(f"Could not find node for path: {folder_path}")
+            return
+
+        if node.loaded:
+            # Already loaded, nothing to do
+            return
+
+        # Build the full filesystem path
+        # folder_path is relative like "project_name/subdir/..."
+        # project_root is the absolute path to project_name
+        parts = folder_path.split("/")
+        relative_parts = parts[1:]  # Remove the project root name
+        full_path = self.project_root / "/".join(relative_parts) if relative_parts else self.project_root
+
+        if not full_path.exists() or not full_path.is_dir():
+            logger.warning(f"Path does not exist or is not a directory: {full_path}")
+            return
+
+        # Load immediate children
+        node.sub_paths = []
+        for file_path in full_path.iterdir():
+            if file_path.is_dir():
+                node.sub_paths.append(FilePath(name=file_path.name, is_dir=True, loaded=False))
+            else:
+                node.sub_paths.append(FilePath(name=file_path.name, is_dir=False, loaded=True))
+
+        # Sort the newly loaded contents
+        node.sub_paths.sort(key=lambda x: (not x.is_dir, x.name))
+        node.loaded = True
+
+        # Trigger reactivity by reassigning file_tree
+        self.file_tree = self.file_tree
 
     def _sort_file_tree(self, file_tree: FilePath) -> None:
         """Sort the file tree by name with directories first.
@@ -348,7 +421,26 @@ class EditorState(rx.State):
 
     @rx.event
     def open_project(self) -> None:
-        """Open a project in the editor."""
+        """Open a project in the editor.
+
+        If an initial path was passed via CLI, opens that path.
+        Otherwise, opens with an empty file tree.
+        """
+        initial_path = get_initial_path()
+        if initial_path is None:
+            # No path provided - open empty
+            logger.info("No initial path provided, opening empty IDE")
+            self.file_tree = None
+            self.expanded_folders.clear()
+            return
+
+        if initial_path.is_file():
+            # If it's a file, use its parent directory as project root
+            self.project_root = initial_path.parent
+            logger.debug(f"Initial path is a file, using parent: {self.project_root}")
+        else:
+            self.project_root = initial_path
+
         logger.debug(f"Opening project {self.project_root}")
         start_time = time.perf_counter()
         self.file_tree = self._build_file_tree(self.project_root)

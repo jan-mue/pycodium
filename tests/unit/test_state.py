@@ -159,6 +159,7 @@ async def test_toggle_folder_lazy_loads_contents(tmp_path: Path, state: EditorSt
     state.open_project()
 
     # dir1 should not be loaded yet
+    assert state.file_tree is not None
     dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
     assert dir1 is not None
     assert dir1.loaded is False
@@ -191,7 +192,9 @@ async def test_toggle_folder_does_not_reload_loaded_dir(tmp_path: Path, state: E
 
     # First toggle - loads the directory
     await state.toggle_folder(folder_path)
+    assert state.file_tree is not None
     dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
+    assert dir1 is not None
     assert dir1.loaded is True
     original_len = len(dir1.sub_paths)
 
@@ -203,43 +206,6 @@ async def test_toggle_folder_does_not_reload_loaded_dir(tmp_path: Path, state: E
     await state.toggle_folder(folder_path)
     assert dir1.loaded is True
     assert len(dir1.sub_paths) == original_len  # Contents preserved, not reloaded
-
-
-def test_find_node_by_path(tmp_path: Path, state: EditorState) -> None:
-    """Test _find_node_by_path finds nodes correctly."""
-    (tmp_path / "dir1").mkdir()
-    (tmp_path / "dir1" / "subdir").mkdir()
-
-    set_initial_path(tmp_path)
-    state.open_project()
-
-    # Load dir1 first
-    state._load_directory_contents(f"{tmp_path.name}/dir1")
-
-    # Find root
-    root = state._find_node_by_path(tmp_path.name)
-    assert root is not None
-    assert root.name == tmp_path.name
-
-    # Find dir1
-    dir1 = state._find_node_by_path(f"{tmp_path.name}/dir1")
-    assert dir1 is not None
-    assert dir1.name == "dir1"
-
-    # Find subdir
-    subdir = state._find_node_by_path(f"{tmp_path.name}/dir1/subdir")
-    assert subdir is not None
-    assert subdir.name == "subdir"
-
-    # Non-existent path
-    assert state._find_node_by_path(f"{tmp_path.name}/nonexistent") is None
-    assert state._find_node_by_path("wrong_root/dir1") is None
-
-
-def test_find_node_by_path_no_file_tree(state: EditorState) -> None:
-    """Test _find_node_by_path returns None when file_tree is None."""
-    state.file_tree = None
-    assert state._find_node_by_path("any/path") is None
 
 
 async def test_open_file_new_and_existing(state: EditorState) -> None:

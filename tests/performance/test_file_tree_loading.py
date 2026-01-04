@@ -82,21 +82,28 @@ def test_subdirectory_lazy_load_time(
     page.wait_for_load_state("networkidle")
 
     # Wait for root folder to appear
-    # Use .first because there may be a subfolder also named "fastapi"
     root_folder = page.locator(f'.folder-item:has-text("{folder_name}")').first
     root_folder.wait_for(state="visible", timeout=30000)
 
     # The root folder should already be expanded (it's in expanded_folders)
-    # Look for the "fastapi" subfolder which contains the main source code
-    # Use .nth(1) because the first match is the root folder, second is the subfolder
-    subfolder = page.locator('.folder-item:has-text("fastapi")').nth(1)
+    # Look for the "docs" subfolder which exists in FastAPI repo
+    # Using "docs" instead of "fastapi" to avoid collision with root folder name
+    subfolder = page.locator('.folder-item:has-text("docs")').first
 
-    # Click to expand the subdirectory (this triggers lazy loading)
+    # Check if already expanded by looking for a child element
+    # If child files are visible, we need to collapse first then re-expand
+    child_file = page.locator('.file-item:has-text(".md")').first
+
+    if child_file.is_visible():
+        # Collapse the subfolder first
+        subfolder.click()
+        page.wait_for_timeout(500)
+
+    # Now expand the subfolder (this triggers lazy loading)
     subfolder.click()
 
-    # Wait for files to appear (e.g., __init__.py in the fastapi/ directory)
-    child_file = page.locator('.file-item:has-text("__init__.py")')
-    child_file.first.wait_for(state="visible", timeout=10000)
+    # Wait for files to appear (markdown files in docs/ directory)
+    child_file.wait_for(state="visible", timeout=10000)
 
     # Verify expansion worked
-    expect(child_file.first).to_be_visible()
+    expect(child_file).to_be_visible()

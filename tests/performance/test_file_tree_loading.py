@@ -70,13 +70,15 @@ def test_subdirectory_lazy_load_time(
     subfolder = page.locator(f'.folder-item:has-text("{BENCHMARK_SUBFOLDER}")').first
     child_file = page.locator(f'.file-item:has-text("{BENCHMARK_CHILD_FILE}")').first
 
-    if child_file.is_visible():
-        subfolder.click()
-        page.wait_for_timeout(500)
+    def setup() -> None:
+        """Ensure subfolder is collapsed before each iteration."""
+        if child_file.is_visible():
+            subfolder.click()
+            child_file.wait_for(state="hidden", timeout=5000)
 
     def expand_subdirectory() -> None:
         subfolder.click()
         child_file.wait_for(state="visible", timeout=10000)
 
-    benchmark(expand_subdirectory)
+    benchmark.pedantic(expand_subdirectory, setup=setup, rounds=5)
     expect(child_file).to_be_visible()

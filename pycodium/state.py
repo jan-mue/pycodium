@@ -73,6 +73,68 @@ class EditorState(rx.State):
             return
         active_tab.on_not_active.set()  # Signal to stop watching the file for changes
 
+    async def _read_and_decode_file(self, path: Path) -> tuple[str, str] | None:
+        """Read and decode a file's content.
+
+        Args:
+            path: The path to the file to read.
+
+        Returns:
+            A tuple of (decoded_content, encoding) if successful, None if the file
+            is binary or uses an unsupported encoding.
+        """
+        async with aiofiles.open(path, "rb") as f:
+            file_content = await f.read()
+
+        # PEP3120 suggests using UTF-8 as the default encoding for Python source files
+        path_str = str(path)
+        default_encoding = "utf-8" if path_str.endswith((".py", ".pyw", ".ipy", ".pyi")) else None
+        decoded_content, encoding = decode(file_content, default_encoding=default_encoding)
+        if encoding.endswith("-guessed"):
+            return None
+        logger.debug(f"Detected encoding for {path}: {encoding}")
+        return decoded_content, encoding
+
+    def _create_tab(self, file_path: str, title: str, content: str, encoding: str) -> EditorTab:
+        """Create a new editor tab for a file.
+
+        Args:
+            file_path: The path to the file (used as tab identifier).
+            title: The title to display in the tab.
+            content: The decoded file content.
+            encoding: The file's encoding.
+
+        Returns:
+            The newly created EditorTab.
+        """
+        tab = EditorTab(
+            id=str(uuid4()),
+            title=title,
+            language=detect_programming_language(file_path).lower(),
+            content=content,
+            encoding=encoding,
+            path=file_path,
+            on_not_active=asyncio.Event(),
+        )
+        self.tabs.append(tab)
+        logger.debug(f"Created tab {tab.id} for {file_path}")
+        return tab
+
+    def _activate_tab(self, tab: EditorTab) -> EventCallback[Unpack[tuple[()]]]:
+        """Activate a tab, updating history and stopping the previous tab's file watcher.
+
+        Args:
+            tab: The tab to activate.
+
+        Returns:
+            The event callback to keep the tab content updated.
+        """
+        if self.active_tab_id:
+            self.active_tab_history.append(self.active_tab_id)
+            self._stop_updating_active_tab()
+        self.active_tab_id = tab.id
+        return EditorState.keep_active_tab_content_updated
+
     @rx.event
     async def open_file(self, file_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
         """Open a file in the editor.
@@ -83,37 +145,14 @@ class EditorState(rx.State):
         logger.debug(f"Opening file {file_path}")
 
         tab = next((tab for tab in self.tabs if tab.path == file_path), None)
-
-        # Add to open files if not already open
         if not tab:
-            async with aiofiles.open(self.project_root.parent / file_path, "rb") as f:
-                file_content = await f.read()
-
-            # PEP3120 suggests using UTF-8 as the default encoding for Python source files
-            default_encoding = "utf-8" if file_path.endswith((".py", ".pyw", ".ipy", ".pyi")) else None
-            decoded_file_content, encoding = decode(file_content, default_encoding=default_encoding)
-            if encoding.endswith("-guessed"):
+            result = await self._read_and_decode_file(self.project_root.parent / file_path)
+            if result is None:
                 return rx.toast.error("The file is either binary or uses an unsupported text encoding.")
-            logger.debug(f"Detected encoding for {file_path}: {encoding}")
+            decoded_content, encoding = result
+            tab = self._create_tab(file_path, title=file_path, content=decoded_content, encoding=encoding)
 
-            tab = EditorTab(
-                id=str(uuid4()),
-                title=file_path,
-                language=detect_programming_language(file_path).lower(),
-                content=decoded_file_content,
-                encoding=encoding,
-                path=file_path,
-                on_not_active=asyncio.Event(),
-            )
-            self.tabs.append(tab)
-            logger.debug(f"Created tab {tab.id}")
-
-        if self.active_tab_id:
-            self.active_tab_history.append(self.active_tab_id)
-            self._stop_updating_active_tab()
-
-        self.active_tab_id = tab.id
-        return EditorState.keep_active_tab_content_updated
+        return self._activate_tab(tab)
 
     async def _save_current_file(self) -> None:
         """Save the content of the currently active tab to its file."""
@@ -143,38 +182,15 @@ class EditorState(rx.State):
         if not path.is_file():
             return rx.toast.error(f"Not a file: {file_path}")
 
-        # Check if file is already open
         tab = next((tab for tab in self.tabs if tab.path == file_path), None)
-
         if not tab:
-            async with aiofiles.open(path, "rb") as f:
-                file_content = await f.read()
-
-            # PEP3120 suggests using UTF-8 as the default encoding for Python source files
-            default_encoding = "utf-8" if file_path.endswith((".py", ".pyw", ".ipy", ".pyi")) else None
-            decoded_file_content, encoding = decode(file_content, default_encoding=default_encoding)
-            if encoding.endswith("-guessed"):
+            result = await self._read_and_decode_file(path)
+            if result is None:
                 return rx.toast.error("The file is either binary or uses an unsupported text encoding.")
-            logger.debug(f"Detected encoding for {file_path}: {encoding}")
+            decoded_content, encoding = result
+            tab = self._create_tab(file_path, title=path.name, content=decoded_content, encoding=encoding)
 
-            tab = EditorTab(
-                id=str(uuid4()),
-                title=path.name,
-                language=detect_programming_language(file_path).lower(),
-                content=decoded_file_content,
-                encoding=encoding,
-                path=file_path,
-                on_not_active=asyncio.Event(),
-            )
-            self.tabs.append(tab)
-            logger.debug(f"Created tab {tab.id} for {file_path}")
-
-        if self.active_tab_id:
-            self.active_tab_history.append(self.active_tab_id)
-            self._stop_updating_active_tab()
-
-        self.active_tab_id = tab.id
-        return EditorState.keep_active_tab_content_updated
+        return self._activate_tab(tab)
 
     @rx.event
     async def menu_open_folder(self, folder_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
@@ -192,18 +208,7 @@ class EditorState(rx.State):
         if not path.is_dir():
             return rx.toast.error(f"Not a folder: {folder_path}")
 
-        # Update the project root
-        self.project_root = path
-
-        # Clear existing state
-        self.expanded_folders.clear()
-        self.file_tree = None
-
-        # Rebuild the file tree
-        self.file_tree = self._build_file_tree(self.project_root)
-        self._sort_file_tree(self.file_tree)
-        self.expanded_folders.add(self.project_root.name)
-
+        self._set_project_root(path)
         logger.info(f"Project root changed to: {folder_path}")
 
     @rx.event
@@ -257,19 +262,16 @@ class EditorState(rx.State):
         Args:
             tab_id: The ID of the tab to set as active.
         """
-        if tab_id not in {tab.id for tab in self.tabs}:
+        tab = next((tab for tab in self.tabs if tab.id == tab_id), None)
+        if tab is None:
             logger.warning(f"Tab {tab_id} not found in open tabs")
             return
         if self.active_tab_id == tab_id:
             logger.debug(f"Tab {tab_id} is already active, no change needed")
             return
         logger.debug(f"Setting active tab {tab_id}")
-        if self.active_tab_id is not None:
-            self.active_tab_history.append(self.active_tab_id)
-            self._stop_updating_active_tab()
-        self.active_tab_id = tab_id
-        self.active_tab.on_not_active.clear()  # type: ignore[reportOptionalMemberAccess]
-        return EditorState.keep_active_tab_content_updated
+        tab.on_not_active.clear()
+        return self._activate_tab(tab)
 
     @rx.var
     def active_tab(self) -> EditorTab | None:
@@ -318,6 +320,22 @@ class EditorState(rx.State):
                 tab.content = content
                 break
 
+    def _list_directory(self, path: Path) -> list[FilePath]:
+        """List the contents of a directory as FilePath objects.
+
+        Args:
+            path: The directory path to list.
+
+        Returns:
+            A sorted list of FilePath objects (directories first, then by name).
+        """
+        sub_paths = [
+            FilePath(name=file_path.name, is_dir=file_path.is_dir(), loaded=not file_path.is_dir())
+            for file_path in path.iterdir()
+        ]
+        sub_paths.sort(key=lambda x: (not x.is_dir, x.name.lower()))
+        return sub_paths
+
     def _build_file_tree(self, path: Path) -> FilePath:
         """Build a shallow file tree for a given path (immediate children only).
 
@@ -327,18 +345,7 @@ class EditorState(rx.State):
         Returns:
             FilePath: The file tree with only immediate children loaded.
         """
-        file_tree = FilePath(name=path.name, loaded=True)
-
-        for file_path in path.iterdir():
-            if file_path.is_dir():
-                file_tree.sub_paths.append(FilePath(name=file_path.name, is_dir=True, loaded=False))
-            else:
-                file_tree.sub_paths.append(FilePath(name=file_path.name, is_dir=False, loaded=True))
-
-        # Sort sub_paths for deterministic ordering, consistent with _load_directory_contents.
-        file_tree.sub_paths.sort(key=lambda x: (not x.is_dir, x.name.lower()))
-
-        return file_tree
+        return FilePath(name=path.name, loaded=True, sub_paths=self._list_directory(path))
 
     def _find_node_by_path(self, path: str) -> FilePath | None:
         """Find a node in the file tree by its path.
@@ -391,14 +398,7 @@ class EditorState(rx.State):
             logger.warning(f"Path does not exist or is not a directory: {full_path}")
             return
 
-        node.sub_paths = []
-        for file_path in full_path.iterdir():
-            if file_path.is_dir():
-                node.sub_paths.append(FilePath(name=file_path.name, is_dir=True, loaded=False))
-            else:
-                node.sub_paths.append(FilePath(name=file_path.name, is_dir=False, loaded=True))
-
-        node.sub_paths.sort(key=lambda x: (not x.is_dir, x.name.lower()))
+        node.sub_paths = self._list_directory(full_path)
         node.loaded = True
         # Trigger frontend update
         self.file_tree = self.file_tree
@@ -415,6 +415,18 @@ class EditorState(rx.State):
             if sub_path.is_dir:
                 self._sort_file_tree(sub_path)
 
+    def _set_project_root(self, path: Path) -> None:
+        """Set the project root and rebuild the file tree.
+
+        Args:
+            path: The path to set as the project root.
+        """
+        self.project_root = path
+        self.expanded_folders.clear()
+        self.file_tree = self._build_file_tree(self.project_root)
+        self._sort_file_tree(self.file_tree)
+        self.expanded_folders.add(self.project_root.name)
+
     @rx.event
     def open_project(self) -> None:
         """Open a project in the editor."""
@@ -426,16 +438,11 @@ class EditorState(rx.State):
             return
 
         initial_path = Path(path_str)
-        if initial_path.is_file():
-            self.project_root = initial_path.parent
-        else:
-            self.project_root = initial_path
+        project_root = initial_path.parent if initial_path.is_file() else initial_path
 
-        logger.debug(f"Opening project {self.project_root}")
+        logger.debug(f"Opening project {project_root}")
         start_time = time.perf_counter()
-        self.file_tree = self._build_file_tree(self.project_root)
-        self._sort_file_tree(self.file_tree)
-        self.expanded_folders.add(self.project_root.name)
+        self._set_project_root(project_root)
         logger.debug(f"File tree built in {time.perf_counter() - start_time:.2f} seconds")
 
     @rx.event

@@ -80,7 +80,7 @@ def wait_for_editor_content(page: Page, text: str, *, timeout: int = 5000) -> Lo
     Returns:
         Locator for the content element.
     """
-    content_locator = page.locator(f".monaco-editor >> text={text}")
+    content_locator = page.locator(".monaco-editor").get_by_text(text)
     expect(content_locator).to_be_visible(timeout=timeout)
     return content_locator
 

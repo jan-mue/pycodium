@@ -29,9 +29,7 @@ def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, No
     repo_path = tmp_path_factory.mktemp("repos") / "fastapi"
 
     subprocess.run(
-        ["git", "clone", "--depth", "1", "--branch", FASTAPI_TAG, FASTAPI_REPO_URL, str(repo_path)],
-        check=True,
-        capture_output=True,
+        ["git", "clone", "--depth", "1", "--branch", FASTAPI_TAG, FASTAPI_REPO_URL, str(repo_path)], check=True
     )
 
     yield repo_path

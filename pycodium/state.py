@@ -335,6 +335,9 @@ class EditorState(rx.State):
             else:
                 file_tree.sub_paths.append(FilePath(name=file_path.name, is_dir=False, loaded=True))
 
+        # Sort sub_paths for deterministic ordering, consistent with _load_directory_contents.
+        file_tree.sub_paths.sort(key=lambda x: (not x.is_dir, x.name.lower()))
+
         return file_tree
 
     def _find_node_by_path(self, path: str) -> FilePath | None:
@@ -395,8 +398,9 @@ class EditorState(rx.State):
             else:
                 node.sub_paths.append(FilePath(name=file_path.name, is_dir=False, loaded=True))
 
-        node.sub_paths.sort(key=lambda x: (not x.is_dir, x.name))
+        node.sub_paths.sort(key=lambda x: (not x.is_dir, x.name.lower()))
         node.loaded = True
+        # Trigger frontend update
         self.file_tree = self.file_tree
 
     def _sort_file_tree(self, file_tree: FilePath) -> None:

@@ -1,9 +1,4 @@
-"""Integration tests for the PyCodium initial path functionality.
-
-These tests verify that the initial path feature works correctly when
-the PYCODIUM_INITIAL_PATH environment variable is set. This simulates
-what happens when the CLI is invoked with a path argument.
-"""
+"""Integration tests for the PyCodium initial path functionality."""
 
 from __future__ import annotations
 
@@ -25,12 +20,7 @@ if TYPE_CHECKING:
 
 
 def test_cli_opens_folder_from_path_argument(cli_app_page: Page, test_folder: Path) -> None:
-    """Test that the CLI correctly passes the initial path to the Reflex backend.
-
-    This verifies that when the CLI is invoked with a path argument,
-    the environment variable is set and inherited by the backend subprocess,
-    resulting in the file explorer showing the contents of that folder.
-    """
+    """Test that the CLI correctly passes the initial path to the Reflex backend."""
     folder_name = test_folder.name
     wait_for_folder(cli_app_page, folder_name)
 
@@ -78,7 +68,7 @@ def test_folder_with_inaccessible_dir(tmp_path: Path) -> Generator[Path, None, N
 def app_with_inaccessible_dir(
     test_folder_with_inaccessible_dir: Path,
 ) -> Generator[AppHarness, None, None]:
-    """Start the PyCodium Reflex app with a folder containing an inaccessible subdirectory."""
+    """Start the app with a folder containing an inaccessible subdirectory."""
     yield from create_app_harness_with_path(test_folder_with_inaccessible_dir)
 
 
@@ -89,18 +79,11 @@ def inaccessible_dir_page(app_with_inaccessible_dir: AppHarness, page: Page) -> 
 
 
 def test_expanding_inaccessible_directory_shows_toast(inaccessible_dir_page: Page) -> None:
-    """Test that expanding an inaccessible directory shows an error toast.
-
-    This verifies that when a user tries to expand a directory they don't have
-    permission to read, a toast notification is displayed informing them of the error.
-    """
-    # Wait for the file explorer to load and expand the restricted folder
+    """Test that expanding an inaccessible directory shows an error toast."""
     expand_folder(inaccessible_dir_page, "restricted")
     inaccessible_dir_page.wait_for_timeout(500)
 
-    # Verify that a toast error is shown
+    # Verify that a toast error is shown with the folder name
     toast = inaccessible_dir_page.locator("[data-sonner-toast][data-type='error']")
     expect(toast).to_be_visible(timeout=5000)
-
-    # Verify the toast message mentions the folder name
     expect(toast).to_contain_text("restricted")

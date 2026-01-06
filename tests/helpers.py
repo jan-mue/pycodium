@@ -1,8 +1,4 @@
-"""Helper utilities for integration and performance tests.
-
-This module provides reusable functions for common test operations,
-reducing code duplication across test files.
-"""
+"""Helper utilities for integration and performance tests."""
 
 from __future__ import annotations
 

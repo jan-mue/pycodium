@@ -1,10 +1,6 @@
 """Conftest for performance tests.
 
-Performance test fixtures are inherited from the central tests/conftest.py.
-Shared fixtures like `runner` are defined there.
-
-This file contains performance-test-specific fixtures, including the
-FastAPI repository clone for benchmarking file tree loading.
+Shared fixtures like `runner` are inherited from the central tests/conftest.py.
 """
 
 from __future__ import annotations
@@ -31,17 +27,7 @@ FASTAPI_TAG = "0.128.0"
 
 @pytest.fixture(scope="session")
 def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, None, None]:
-    """Clone the FastAPI repository at a specific tag for performance testing.
-
-    This provides a real-world codebase (~1000+ files) for benchmarking
-    file tree loading performance.
-
-    Args:
-        tmp_path_factory: Pytest temporary path factory fixture.
-
-    Yields:
-        Path to the cloned FastAPI repository.
-    """
+    """Clone the FastAPI repository at a specific tag for performance testing."""
     repo_path = tmp_path_factory.mktemp("repos") / "fastapi"
 
     subprocess.run(
@@ -54,29 +40,11 @@ def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, No
 
 @pytest.fixture(scope="session")
 def reflex_web_app(fastapi_repo: Path) -> Generator[AppHarness, None, None]:
-    """Start the PyCodium Reflex app with the FastAPI repo as initial path.
-
-    This overrides the shared `reflex_web_app` fixture to use the FastAPI
-    repository as the initial path for performance testing.
-
-    Args:
-        fastapi_repo: Path to the cloned FastAPI repository.
-
-    Yields:
-        Running AppHarness instance.
-    """
+    """Start the app with the FastAPI repo as initial path."""
     yield from create_app_harness_with_path(fastapi_repo)
 
 
 @pytest.fixture
 def app_page(reflex_web_app: AppHarness, page: Page) -> Page:
-    """Navigate to the app's frontend URL and return the page.
-
-    Args:
-        reflex_web_app: The running AppHarness instance.
-        page: Playwright page fixture.
-
-    Returns:
-        Playwright page navigated to the app's frontend URL.
-    """
+    """Navigate to the app's frontend URL and return the page."""
     return navigate_to_app(reflex_web_app, page)

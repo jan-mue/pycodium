@@ -4,9 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
 from playwright.sync_api import expect
+from reflex.testing import AppHarness
+
+from pycodium.constants import INITIAL_PATH_ENV_VAR, PROJECT_ROOT_DIR
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+    from pathlib import Path
+
     from playwright.sync_api import Locator, Page
 
 
@@ -151,3 +158,34 @@ def trigger_menu_action(page: Page, action: str) -> None:
         action: The menu action to trigger (e.g., "open_file", "save").
     """
     page.evaluate(f"window.__PYCODIUM_MENU__({{ action: '{action}' }})")
+
+
+def create_app_harness_with_path(path: Path | str) -> Generator[AppHarness, None, None]:
+    """Create an AppHarness with a specific initial path.
+
+    Args:
+        path: The initial path to set for the app.
+
+    Yields:
+        Running AppHarness instance.
+    """
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(path))
+        with AppHarness.create(root=PROJECT_ROOT_DIR) as harness:
+            yield harness
+
+
+def navigate_to_app(harness: AppHarness, page: Page) -> Page:
+    """Navigate a Playwright page to the app's frontend URL.
+
+    Args:
+        harness: The running AppHarness instance.
+        page: Playwright page fixture.
+
+    Returns:
+        Playwright page navigated to the app's frontend URL.
+    """
+    assert harness.frontend_url is not None
+    page.goto(harness.frontend_url)
+    page.wait_for_load_state("networkidle")
+    return page

@@ -8,8 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 from playwright.sync_api import expect
 
-from tests.conftest import create_app_harness_with_path, navigate_to_app
-from tests.helpers import expand_folder, wait_for_file, wait_for_folder
+from tests.helpers import create_app_harness_with_path, expand_folder, navigate_to_app, wait_for_file, wait_for_folder
 
 if TYPE_CHECKING:
     from collections.abc import Generator

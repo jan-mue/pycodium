@@ -1,7 +1,6 @@
 """Conftest for integration tests.
 
-Shared fixtures like `reflex_web_app`, `app_page`, and `runner` are inherited
-from the central tests/conftest.py.
+The `reflex_web_app` fixture is inherited from the central tests/conftest.py.
 """
 
 from __future__ import annotations
@@ -10,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.conftest import create_app_harness_with_path, navigate_to_app
+from tests.helpers import create_app_harness_with_path, navigate_to_app
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -18,6 +17,12 @@ if TYPE_CHECKING:
 
     from playwright.sync_api import Page
     from reflex.testing import AppHarness
+
+
+@pytest.fixture
+def app_page(reflex_web_app: AppHarness, page: Page) -> Page:
+    """Navigate to the app's frontend URL and return the page."""
+    return navigate_to_app(reflex_web_app, page)
 
 
 @pytest.fixture

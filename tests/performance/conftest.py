@@ -1,7 +1,4 @@
-"""Conftest for performance tests.
-
-Shared fixtures like `runner` are inherited from the central tests/conftest.py.
-"""
+"""Conftest for performance tests."""
 
 from __future__ import annotations
 
@@ -11,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.conftest import create_app_harness_with_path, navigate_to_app
+from tests.helpers import create_app_harness_with_path, navigate_to_app
 
 if TYPE_CHECKING:
     from collections.abc import Generator

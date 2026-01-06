@@ -1,22 +1,28 @@
-"""Shared fixtures for performance tests."""
+"""Conftest for performance tests.
+
+Performance test fixtures are inherited from the central tests/conftest.py.
+Shared fixtures like `runner` are defined there.
+
+This file contains performance-test-specific fixtures, including the
+FastAPI repository clone for benchmarking file tree loading.
+"""
 
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 from typing import TYPE_CHECKING
 
 import pytest
-from reflex.testing import AppHarness
 
-from pycodium.constants import INITIAL_PATH_ENV_VAR, PROJECT_ROOT_DIR
+from tests.conftest import create_app_harness_with_path, navigate_to_app
 
 if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
 
     from playwright.sync_api import Page
+    from reflex.testing import AppHarness
 
 
 FASTAPI_REPO_URL = "https://github.com/fastapi/fastapi.git"
@@ -25,7 +31,17 @@ FASTAPI_TAG = "0.128.0"
 
 @pytest.fixture(scope="session")
 def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, None, None]:
-    """Clone the FastAPI repository at a specific tag for performance testing."""
+    """Clone the FastAPI repository at a specific tag for performance testing.
+
+    This provides a real-world codebase (~1000+ files) for benchmarking
+    file tree loading performance.
+
+    Args:
+        tmp_path_factory: Pytest temporary path factory fixture.
+
+    Yields:
+        Path to the cloned FastAPI repository.
+    """
     repo_path = tmp_path_factory.mktemp("repos") / "fastapi"
 
     subprocess.run(
@@ -38,23 +54,29 @@ def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, No
 
 @pytest.fixture(scope="session")
 def reflex_web_app(fastapi_repo: Path) -> Generator[AppHarness, None, None]:
-    """Start the PyCodium Reflex app with the FastAPI repo as initial path."""
-    original_env = os.environ.get(INITIAL_PATH_ENV_VAR)
-    os.environ[INITIAL_PATH_ENV_VAR] = str(fastapi_repo)
-    try:
-        with AppHarness.create(root=PROJECT_ROOT_DIR) as harness:
-            yield harness
-    finally:
-        if original_env is not None:
-            os.environ[INITIAL_PATH_ENV_VAR] = original_env
-        elif INITIAL_PATH_ENV_VAR in os.environ:
-            del os.environ[INITIAL_PATH_ENV_VAR]
+    """Start the PyCodium Reflex app with the FastAPI repo as initial path.
+
+    This overrides the shared `reflex_web_app` fixture to use the FastAPI
+    repository as the initial path for performance testing.
+
+    Args:
+        fastapi_repo: Path to the cloned FastAPI repository.
+
+    Yields:
+        Running AppHarness instance.
+    """
+    yield from create_app_harness_with_path(fastapi_repo)
 
 
 @pytest.fixture
 def app_page(reflex_web_app: AppHarness, page: Page) -> Page:
-    """Navigate to the app's frontend URL and return the page."""
-    assert reflex_web_app.frontend_url is not None
-    page.goto(reflex_web_app.frontend_url)
-    page.wait_for_load_state("networkidle")
-    return page
+    """Navigate to the app's frontend URL and return the page.
+
+    Args:
+        reflex_web_app: The running AppHarness instance.
+        page: Playwright page fixture.
+
+    Returns:
+        Playwright page navigated to the app's frontend URL.
+    """
+    return navigate_to_app(reflex_web_app, page)

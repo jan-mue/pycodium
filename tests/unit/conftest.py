@@ -1,7 +1,7 @@
-import pytest
-from typer.testing import CliRunner
+"""Conftest for unit tests.
 
+Unit test fixtures are inherited from the central tests/conftest.py.
+The shared `runner` fixture for CLI testing is defined there.
 
-@pytest.fixture(scope="session")
-def runner() -> CliRunner:
-    return CliRunner()
+Add unit-test-specific fixtures here as needed.
+"""

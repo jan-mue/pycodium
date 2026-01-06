@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0](https://github.com/jan-mue/pycodium/compare/v0.2.1...v0.3.0) (2026-01-06)
+
+
+### Features
+
+* Add application menu ([#310](https://github.com/jan-mue/pycodium/issues/310)) ([be70392](https://github.com/jan-mue/pycodium/commit/be70392dd3fd6ea055bb54b26b007f7ec870a9e6))
+* Speed up loading file tree in explorer ([#313](https://github.com/jan-mue/pycodium/issues/313)) ([ae5c440](https://github.com/jan-mue/pycodium/commit/ae5c440561edb5ec553e5224268088acce6f8a8b))
+* Use Tauri with PyTauri instead of pywebview ([#305](https://github.com/jan-mue/pycodium/issues/305)) ([c43c94d](https://github.com/jan-mue/pycodium/commit/c43c94de4bad0406ece4c04dce3ced4c2589eb86))
+
+
+### Bug Fixes
+
+* **deps:** update dependency psutil to v7.2.0 ([#306](https://github.com/jan-mue/pycodium/issues/306)) ([75ac844](https://github.com/jan-mue/pycodium/commit/75ac8442c605a76ec25c15f375575be1acc6ba84))
+* **deps:** update dependency psutil to v7.2.1 ([#316](https://github.com/jan-mue/pycodium/issues/316)) ([75241e3](https://github.com/jan-mue/pycodium/commit/75241e3c7f9a4c8ba130ec7f32cece80d02da364))
+* **deps:** update dependency reflex to v0.8.24.post1 ([#308](https://github.com/jan-mue/pycodium/issues/308)) ([d6e0712](https://github.com/jan-mue/pycodium/commit/d6e0712f5e302a7175c6b872f39920b6786b15ce))
+* **deps:** update dependency typer to v0.21.0 ([#309](https://github.com/jan-mue/pycodium/issues/309)) ([62a658c](https://github.com/jan-mue/pycodium/commit/62a658cff6e20136790c3e6d7e8ff951e75559e2))
+* Fix decode function ([#311](https://github.com/jan-mue/pycodium/issues/311)) ([dad1872](https://github.com/jan-mue/pycodium/commit/dad18726a75d40f3f8bb4deeddf790704250eea4))
+
 ## 0.2.1 (2025-12-30)
 
 

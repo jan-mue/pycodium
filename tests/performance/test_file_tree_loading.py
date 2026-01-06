@@ -24,11 +24,7 @@ BENCHMARK_CHILD_FILE = "test_ws_router.py"
 
 
 @pytest.mark.benchmark
-def test_file_tree_initial_load_time(
-    reflex_web_app: AppHarness,
-    page: Page,
-    fastapi_repo: Path,
-) -> None:
+def test_file_tree_initial_load_time(reflex_web_app: AppHarness, page: Page, fastapi_repo: Path) -> None:
     """Benchmark the initial file tree loading time for a large repository.
 
     This test measures the time from page load to seeing the root folder
@@ -49,10 +45,7 @@ def test_file_tree_initial_load_time(
 
 
 def test_subdirectory_lazy_load_time(
-    reflex_web_app: AppHarness,
-    page: Page,
-    fastapi_repo: Path,
-    benchmark: BenchmarkFixture,
+    reflex_web_app: AppHarness, page: Page, fastapi_repo: Path, benchmark: BenchmarkFixture
 ) -> None:
     """Benchmark the lazy loading time when expanding a subdirectory.
 

@@ -4,7 +4,7 @@
 
 - PyCodium is a Python IDE built with [Reflex](https://github.com/reflex-dev/reflex), [Tauri](https://github.com/tauri-apps/tauri) (via [PyTauri](https://github.com/pytauri/pytauri)), and the [Monaco](https://github.com/microsoft/monaco-editor) editor
 - [uv](https://github.com/astral-sh/uv) is used for dependency management. Dependencies are defined in `pyproject.toml` and installed with `uv sync`. Run `uv lock` when you modify dependencies to update the lock file.
-- pre-commit is used for formatting and linting. Run `pre-commit run --all-files` to format all files. The pre-commit hooks are defined in `.pre-commit-config.yaml`.
+- pre-commit is used for formatting and linting. Run `pre-commit run -a` to format all files. The pre-commit hooks are defined in `.pre-commit-config.yaml`.
 
 ## Reflex Development Guidelines
 
@@ -121,7 +121,7 @@
 ### Integration and Performance Tests
 
 - Use Playwright for browser-based testing via `pytest-playwright`
-- Shared fixtures are in `tests/conftest.py` (e.g., `reflex_web_app`, `app_page`)
+- Shared fixtures are in `tests/conftest.py` (e.g., `reflex_web_app`)
 - Helper functions are in `tests/helpers.py` (e.g., `open_file()`, `wait_for_folder()`)
 - Use `create_app_harness_with_path()` to start the app with a custom initial path
 - Never use `page.wait_for_timeout()` - use proper signals like `expect().to_be_visible()`

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from pycodium.constants import INITIAL_PATH_ENV_VAR
 from pycodium.models.tabs import EditorTab
 from pycodium.state import EditorState
 
@@ -107,13 +108,97 @@ async def test_update_tab_content(state: EditorState) -> None:
     assert tab.content == "def"
 
 
-def test_open_project(tmp_path: Path, state: EditorState) -> None:
+def test_open_project_no_initial_path(state: EditorState, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that open_project with no initial path opens empty IDE."""
+    monkeypatch.delenv(INITIAL_PATH_ENV_VAR, raising=False)
+    state.open_project()
+    assert state.file_tree is None
+    assert len(state.expanded_folders) == 0
+
+
+def test_open_project(tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "dir").mkdir()
     (tmp_path / "file.txt").write_text("hi")
-    state.project_root = tmp_path
+    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
     state.open_project()
     assert state.file_tree is not None
     assert tmp_path.name in state.expanded_folders
+
+
+def test_open_project_shallow_loading(tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that open_project only loads immediate children (shallow loading)."""
+    (tmp_path / "dir1").mkdir()
+    (tmp_path / "dir1" / "subdir").mkdir()
+    (tmp_path / "dir1" / "subdir" / "deep_file.txt").write_text("deep")
+    (tmp_path / "dir1" / "file_in_dir1.txt").write_text("content")
+    (tmp_path / "file.txt").write_text("hi")
+
+    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
+    state.open_project()
+
+    assert state.file_tree is not None
+    assert state.file_tree.loaded is True
+
+    dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
+    assert dir1 is not None
+    assert dir1.is_dir is True
+    assert dir1.loaded is False
+    assert dir1.sub_paths == []
+
+
+async def test_toggle_folder_lazy_loads_contents(
+    tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that toggle_folder lazily loads directory contents."""
+    (tmp_path / "dir1").mkdir()
+    (tmp_path / "dir1" / "subdir").mkdir()
+    (tmp_path / "dir1" / "file_in_dir1.txt").write_text("content")
+
+    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
+    state.open_project()
+
+    assert state.file_tree is not None
+    dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
+    assert dir1 is not None
+    assert dir1.loaded is False
+    assert dir1.sub_paths == []
+
+    folder_path = f"{tmp_path.name}/dir1"
+    await state.toggle_folder(folder_path)
+
+    assert dir1.loaded is True
+    assert len(dir1.sub_paths) == 2
+    assert dir1.sub_paths[0].name == "subdir"
+    assert dir1.sub_paths[0].is_dir is True
+    assert dir1.sub_paths[1].name == "file_in_dir1.txt"
+    assert dir1.sub_paths[1].is_dir is False
+
+
+async def test_toggle_folder_does_not_reload_loaded_dir(
+    tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that toggle_folder doesn't reload already loaded directories."""
+    (tmp_path / "dir1").mkdir()
+    (tmp_path / "dir1" / "file.txt").write_text("content")
+
+    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
+    state.open_project()
+
+    folder_path = f"{tmp_path.name}/dir1"
+
+    await state.toggle_folder(folder_path)
+    assert state.file_tree is not None
+    dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
+    assert dir1 is not None
+    assert dir1.loaded is True
+    original_len = len(dir1.sub_paths)
+
+    await state.toggle_folder(folder_path)
+    assert folder_path not in state.expanded_folders
+
+    await state.toggle_folder(folder_path)
+    assert dir1.loaded is True
+    assert len(dir1.sub_paths) == original_len
 
 
 async def test_open_file_new_and_existing(state: EditorState) -> None:
@@ -122,11 +207,9 @@ async def test_open_file_new_and_existing(state: EditorState) -> None:
         tmp.write(b'print("hello")')
         tmp_path = tmp.name
     rel_path = os.path.relpath(tmp_path, start=state.project_root.parent)
-    # Open new file
     await state.open_file(rel_path)
     assert any(tab.path == rel_path for tab in state.tabs)
     assert state.active_tab_id is not None
-    # Open the same file again (should not duplicate tab)
     prev_tab_count = len(state.tabs)
     await state.open_file(rel_path)
     assert len(state.tabs) == prev_tab_count
@@ -135,7 +218,8 @@ async def test_open_file_new_and_existing(state: EditorState) -> None:
 
 async def test_open_file_binary_error(state: EditorState) -> None:
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
-        tmp.write(b"\x00\x01\x02\x03")
+        # Use content that triggers latin-1-guessed encoding (ends with -guessed)
+        tmp.write(b"\xff\xfe\x00\x00\x80\x00")
         tmp_path = tmp.name
     rel_path = os.path.relpath(tmp_path, start=state.project_root.parent)
     result = await state.open_file(rel_path)
@@ -208,7 +292,8 @@ async def test_menu_open_file_not_a_file(state: EditorState, tmp_path: Path) -> 
 async def test_menu_open_file_binary_error(state: EditorState, tmp_path: Path) -> None:
     """Test menu_open_file returns error toast for binary file."""
     test_file = tmp_path / "binary.bin"
-    test_file.write_bytes(b"\x00\x01\x02\x03")
+    # Use content that triggers latin-1-guessed encoding (ends with -guessed)
+    test_file.write_bytes(b"\xff\xfe\x00\x00\x80\x00")
 
     result = await state.menu_open_file(str(test_file))
     assert result is not None  # Should return a toast error
@@ -404,3 +489,15 @@ async def test_open_file_with_active_tab_history(state: EditorState, tmp_path: P
 
     assert "1" in state.active_tab_history
     assert tab1.on_not_active.is_set()
+
+
+def test_open_project_with_file_path(state: EditorState, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test open_project sets project_root to parent when initial path is a file."""
+    test_file = tmp_path / "test.py"
+    test_file.write_text("print('hello')")
+
+    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(test_file))
+    state.open_project()
+
+    assert state.project_root == tmp_path
+    assert state.file_tree is not None

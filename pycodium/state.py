@@ -428,22 +428,29 @@ class EditorState(rx.State):
         self.expanded_folders.add(self.project_root.name)
 
     @rx.event
-    def open_project(self) -> None:
+    def open_project(self) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
         """Open a project in the editor."""
         path_str = os.environ.get(INITIAL_PATH_ENV_VAR)
         if path_str is None:
             logger.info("No initial path provided, opening empty IDE")
             self.file_tree = None
             self.expanded_folders.clear()
-            return
+            return None
 
         initial_path = Path(path_str)
-        project_root = initial_path.parent if initial_path.is_file() else initial_path
+        is_file = initial_path.is_file()
+        project_root = initial_path.parent if is_file else initial_path
 
         logger.debug(f"Opening project {project_root}")
         start_time = time.perf_counter()
         self._set_project_root(project_root)
         logger.debug(f"File tree built in {time.perf_counter() - start_time:.2f} seconds")
+
+        if is_file:
+            file_path = f"{project_root.name}/{initial_path.name}"
+            logger.debug(f"Opening initial file {file_path}")
+            return EditorState.open_file(file_path)
+        return None
 
     @rx.event
     async def open_settings(self) -> None:

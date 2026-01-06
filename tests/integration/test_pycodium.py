@@ -55,11 +55,9 @@ def test_sidebar_toggle(app_page: Page) -> None:
     expect(sidebar).to_be_visible()
 
     explorer_icon.click()
-    app_page.wait_for_timeout(500)
     expect(sidebar).not_to_be_visible()
 
     explorer_icon.click()
-    app_page.wait_for_timeout(500)
     expect(sidebar).to_be_visible()
 
 
@@ -68,44 +66,39 @@ def test_switch_sidebar_tabs(app_page: Page) -> None:
     explorer_icon = app_page.locator('[title="Explorer"]')
     search_icon = app_page.locator('[title="Search"]')
 
-    search_icon.click()
-    app_page.wait_for_timeout(500)
-
     search_content = app_page.get_by_text("Search functionality would be here")
+
+    search_icon.click()
     expect(search_content).to_be_visible()
 
     explorer_icon.click()
-    app_page.wait_for_timeout(500)
     expect(search_content).not_to_be_visible()
 
 
 def test_source_control_tab(app_page: Page) -> None:
     """Test the source control tab content."""
     source_control_icon = app_page.locator('[title="Source Control"]')
-    source_control_icon.click()
-    app_page.wait_for_timeout(500)
-
     source_control_content = app_page.get_by_text("Source control functionality would be here")
+
+    source_control_icon.click()
     expect(source_control_content).to_be_visible()
 
 
 def test_debug_tab(app_page: Page) -> None:
     """Test the debug tab content."""
     debug_icon = app_page.locator('[title="Debug"]')
-    debug_icon.click()
-    app_page.wait_for_timeout(500)
-
     debug_content = app_page.get_by_text("Debugging tools would be here")
+
+    debug_icon.click()
     expect(debug_content).to_be_visible()
 
 
 def test_extensions_tab(app_page: Page) -> None:
     """Test the extensions tab content."""
     extensions_icon = app_page.locator('[title="Extensions"]')
-    extensions_icon.click()
-    app_page.wait_for_timeout(500)
-
     extensions_content = app_page.get_by_text("Extensions marketplace would be here")
+
+    extensions_icon.click()
     expect(extensions_content).to_be_visible()
 
 
@@ -129,6 +122,9 @@ def test_no_console_errors(app_page: Page) -> None:
     app_page.on("console", handle_console)
     app_page.reload()
     app_page.wait_for_load_state("networkidle")
-    app_page.wait_for_timeout(1000)
+
+    # Wait for a known element to ensure page has finished rendering
+    activity_bar = app_page.locator('[class*="bg-pycodium-activity-bar"]')
+    expect(activity_bar).to_be_visible()
 
     assert len(errors) == 0, f"Console errors found: {errors}"

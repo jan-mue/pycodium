@@ -81,7 +81,6 @@ def inaccessible_dir_page(app_with_inaccessible_dir: AppHarness, page: Page) -> 
 def test_expanding_inaccessible_directory_shows_toast(inaccessible_dir_page: Page) -> None:
     """Test that expanding an inaccessible directory shows an error toast."""
     expand_folder(inaccessible_dir_page, "restricted")
-    inaccessible_dir_page.wait_for_timeout(500)
 
     # Verify that a toast error is shown with the folder name
     toast = inaccessible_dir_page.locator("[data-sonner-toast][data-type='error']")

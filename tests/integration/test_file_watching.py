@@ -16,7 +16,6 @@ from tests.helpers import (
     open_file,
     wait_for_editor_content,
     wait_for_editor_visible,
-    wait_for_file,
 )
 
 if TYPE_CHECKING:
@@ -78,13 +77,7 @@ def test_switching_tabs_updates_file_watcher(multi_file_page: Page, test_folder_
     open_file(multi_file_page, "first_file.py")
 
     # Open the second file
-    wait_for_file(multi_file_page, "second_file.py")
-    multi_file_page.locator(".file-item:has-text('second_file.py')").click()
-    multi_file_page.wait_for_timeout(1000)
-
-    # Wait for second file tab
-    second_tab = multi_file_page.locator(".editor-tab:has-text('second_file.py')")
-    expect(second_tab).to_be_visible(timeout=5000)
+    open_file(multi_file_page, "second_file.py")
 
     # Verify second file content is visible
     wait_for_editor_content(multi_file_page, "Second file content")

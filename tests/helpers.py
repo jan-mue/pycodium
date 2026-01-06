@@ -42,24 +42,19 @@ def wait_for_file(page: Page, filename: str, *, timeout: int = 10000) -> Locator
     return file_locator
 
 
-def open_file(page: Page, filename: str, *, timeout: int = 10000, wait_after_click: int = 1000) -> Locator:
+def open_file(page: Page, filename: str, *, timeout: int = 10000) -> Locator:
     """Open a file in the editor by clicking on it in the file explorer.
-
-    This function waits for the file to be visible, clicks on it, and waits
-    for the editor tab to appear.
 
     Args:
         page: Playwright page instance.
         filename: The name of the file to open.
         timeout: Maximum time to wait for elements in milliseconds.
-        wait_after_click: Time to wait after clicking the file in milliseconds.
 
     Returns:
         Locator for the editor tab that was opened.
     """
     file_locator = wait_for_file(page, filename, timeout=timeout)
     file_locator.click()
-    page.wait_for_timeout(wait_after_click)
 
     # Wait for the tab to appear
     tab_locator = page.locator(f".editor-tab:has-text('{filename}')")
@@ -117,7 +112,6 @@ def close_active_tab(page: Page, filename: str, *, timeout: int = 5000) -> None:
         # Fall back to keyboard shortcut
         page.keyboard.press("Meta+w")
 
-    page.wait_for_timeout(500)
     expect(tab).not_to_be_visible(timeout=timeout)
 
 
@@ -139,8 +133,6 @@ def expand_folder(page: Page, folder_name: str, *, timeout: int = 10000) -> Loca
 
 def assert_app_functional(page: Page) -> None:
     """Assert that the app is still functional by checking key UI elements.
-
-    This is useful after performing actions that might cause crashes.
 
     Args:
         page: Playwright page instance.

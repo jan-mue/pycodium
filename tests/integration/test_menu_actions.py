@@ -50,25 +50,18 @@ def test_pycodium_menu_function_setup(app_page_with_tauri_mock: Page) -> None:
 def test_menu_save_action_no_crash(app_page_with_tauri_mock: Page) -> None:
     """Test that save menu action doesn't crash with no open files."""
     trigger_menu_action(app_page_with_tauri_mock, "save")
-    app_page_with_tauri_mock.wait_for_timeout(300)
-
-    # App should still be functional
     assert_app_functional(app_page_with_tauri_mock)
 
 
 def test_menu_save_as_action_no_crash(app_page_with_tauri_mock: Page) -> None:
     """Test that save_as menu action doesn't crash with no open files."""
     trigger_menu_action(app_page_with_tauri_mock, "save_as")
-    app_page_with_tauri_mock.wait_for_timeout(300)
-
     assert_app_functional(app_page_with_tauri_mock)
 
 
 def test_menu_close_tab_action_no_crash(app_page_with_tauri_mock: Page) -> None:
     """Test that close_tab menu action doesn't crash with no open tabs."""
     trigger_menu_action(app_page_with_tauri_mock, "close_tab")
-    app_page_with_tauri_mock.wait_for_timeout(300)
-
     assert_app_functional(app_page_with_tauri_mock)
 
 

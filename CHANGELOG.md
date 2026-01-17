@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/jan-mue/pycodium/compare/v0.3.0...v0.3.1) (2026-01-17)
+
+
+### Bug Fixes
+
+* **deps:** update dependency granian to v2.6.1 ([#333](https://github.com/jan-mue/pycodium/issues/333)) ([57363fd](https://github.com/jan-mue/pycodium/commit/57363fd6579a6ce065c13fd84168d1e9ad2fa0c8))
+* **deps:** update dependency typer to v0.21.1 ([#330](https://github.com/jan-mue/pycodium/issues/330)) ([380956e](https://github.com/jan-mue/pycodium/commit/380956e54a127ca00183752b44c66c7121558850))
+
 ## [0.3.0](https://github.com/jan-mue/pycodium/compare/v0.2.1...v0.3.0) (2026-01-06)
 
 

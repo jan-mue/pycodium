@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import asyncio  # noqa: TC003
 
-import reflex as rx
+from pydantic import BaseModel
 
 
-class Tab(rx.Base):
+class Tab(BaseModel):
     """A class representing a generic tab."""
 
     id: str
@@ -16,6 +16,11 @@ class Tab(rx.Base):
 
 class EditorTab(Tab):
     """A class representing an editor tab."""
+
+    class Config:
+        """Pydantic configuration."""
+
+        arbitrary_types_allowed = True
 
     language: str
     content: str

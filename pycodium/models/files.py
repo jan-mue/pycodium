@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import reflex as rx
+from pydantic import BaseModel
 
 
-class FilePath(rx.Base):
+class FilePath(BaseModel):
     """A class representing a file path."""
 
     name: str

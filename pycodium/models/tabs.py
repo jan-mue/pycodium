@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import asyncio  # noqa: TC003
 
-import reflex as rx
+from pydantic import BaseModel
 
 
-class Tab(rx.Base):
+class Tab(BaseModel):
     """A class representing a generic tab."""
 
     id: str

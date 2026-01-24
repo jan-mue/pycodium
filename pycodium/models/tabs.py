@@ -17,6 +17,11 @@ class Tab(BaseModel):
 class EditorTab(Tab):
     """A class representing an editor tab."""
 
+    class Config:
+        """Pydantic configuration."""
+
+        arbitrary_types_allowed = True
+
     language: str
     content: str
     encoding: str

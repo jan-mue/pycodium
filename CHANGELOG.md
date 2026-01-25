@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.1](https://github.com/jan-mue/pycodium/compare/v0.3.0...v0.3.1) (2026-01-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency granian to v2.6.1 ([#333](https://github.com/jan-mue/pycodium/issues/333)) ([57363fd](https://github.com/jan-mue/pycodium/commit/57363fd6579a6ce065c13fd84168d1e9ad2fa0c8))
+* **deps:** update dependency reflex to v0.8.25 ([#341](https://github.com/jan-mue/pycodium/issues/341)) ([a157dc0](https://github.com/jan-mue/pycodium/commit/a157dc03d6a5403ecd441a526ea6f4043bbddbf4))
+* **deps:** update dependency typer to v0.21.1 ([#330](https://github.com/jan-mue/pycodium/issues/330)) ([380956e](https://github.com/jan-mue/pycodium/commit/380956e54a127ca00183752b44c66c7121558850))
+* Replace deprecated rx.Base with Pydantic BaseModel ([#351](https://github.com/jan-mue/pycodium/issues/351)) ([9b153d3](https://github.com/jan-mue/pycodium/commit/9b153d353b4f0bbd3f84f507a0eb33b00df56f9b))
+
 ## [0.3.0](https://github.com/jan-mue/pycodium/compare/v0.2.1...v0.3.0) (2026-01-06)
 
 

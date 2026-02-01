@@ -204,3 +204,6 @@ assets/external/
 *.db
 .states
 requirements.txt
+
+# CodSpeed
+.codspeed/

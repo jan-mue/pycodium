@@ -1,4 +1,4 @@
-"""LSP client for interacting with the ty language server."""
+"""LSP client for interacting with the basedpyright language server."""
 
 import asyncio
 import json
@@ -6,11 +6,11 @@ import logging
 from typing import Any
 
 
-class TyLSPClient:
-    """Client for interacting with the ty LSP server."""
+class BasedPyrightLSPClient:
+    """Client for interacting with the basedpyright LSP server."""
 
-    def __init__(self, server_path: str = "ty"):
-        """Initialize the TyLSPClient."""
+    def __init__(self, server_path: str = "basedpyright-langserver"):
+        """Initialize the BasedPyrightLSPClient."""
         self.server_path = server_path
         self.process: asyncio.subprocess.Process | None = None
         self.request_id = 0
@@ -19,12 +19,12 @@ class TyLSPClient:
         self.logger = logging.getLogger(__name__)
 
     async def start_server(self) -> None:
-        """Start the ty LSP server process."""
+        """Start the basedpyright LSP server process."""
         try:
-            # Start the ty server using the ruff command
+            # Start the basedpyright language server with stdio
             self.process = await asyncio.create_subprocess_exec(
                 self.server_path,
-                "server",
+                "--stdio",
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -36,14 +36,14 @@ class TyLSPClient:
             # Send initialize request
             await self._initialize()
 
-            self.logger.info("ty LSP server started successfully")
+            self.logger.info("basedpyright LSP server started successfully")
 
         except Exception as e:
-            self.logger.error(f"Failed to start ty server: {e}")
+            self.logger.error(f"Failed to start basedpyright server: {e}")
             raise
 
     async def stop_server(self) -> None:
-        """Stop the ty LSP server process."""
+        """Stop the basedpyright LSP server process."""
         if self.process:
             try:
                 # Send shutdown request with null params
@@ -66,7 +66,7 @@ class TyLSPClient:
                     await self.process.wait()
             finally:
                 self.process = None
-                self.logger.info("ty LSP server stopped")
+                self.logger.info("basedpyright LSP server stopped")
 
     async def get_completions(self, uri: str, line: int, character: int) -> list[dict[str, Any]]:
         """Get code completions at the specified position."""
@@ -118,7 +118,7 @@ class TyLSPClient:
         """Send the initialize request to the server."""
         params = {
             "processId": None,
-            "clientInfo": {"name": "TyPythonClient", "version": "1.0.0"},
+            "clientInfo": {"name": "PyCodiumLSPClient", "version": "1.0.0"},
             "capabilities": {
                 "textDocument": {
                     "completion": {
@@ -259,13 +259,13 @@ class TyLSPClient:
                 self.logger.debug(f"Received notification: {method}")
 
 
-lsp_client: TyLSPClient | None = None
+lsp_client: BasedPyrightLSPClient | None = None
 
 
-async def get_lsp_client() -> TyLSPClient:
-    """Get the singleton instance of the TyLSPClient."""
+async def get_lsp_client() -> BasedPyrightLSPClient:
+    """Get the singleton instance of the BasedPyrightLSPClient."""
     global lsp_client  # noqa: PLW0603
     if lsp_client is None:
-        lsp_client = TyLSPClient()
+        lsp_client = BasedPyrightLSPClient()
         await lsp_client.start_server()
     return lsp_client

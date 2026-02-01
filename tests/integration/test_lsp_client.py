@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest_asyncio
 
-from pycodium.utils.lsp_client import TyLSPClient
+from pycodium.utils.lsp_client import BasedPyrightLSPClient
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -20,14 +20,14 @@ reveal_type(x)
 
 
 @pytest_asyncio.fixture
-async def lsp_client() -> AsyncGenerator[TyLSPClient, None]:
-    client = TyLSPClient()
+async def lsp_client() -> AsyncGenerator[BasedPyrightLSPClient, None]:
+    client = BasedPyrightLSPClient()
     await client.start_server()
     yield client
     await client.stop_server()
 
 
-async def test_tylspclient_integration(lsp_client: TyLSPClient) -> None:
+async def test_basedpyright_lsp_client_integration(lsp_client: BasedPyrightLSPClient) -> None:
     await lsp_client.open_document(TEST_URI, TEST_CONTENT)
 
     completions = await lsp_client.get_completions(TEST_URI, 4, 10)

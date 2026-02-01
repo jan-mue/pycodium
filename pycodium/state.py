@@ -524,15 +524,26 @@ class EditorState(rx.State):
 
     @rx.event
     async def handle_completion_request(self, request: CompletionRequest) -> None:
-        """Handle completion requests from the editor using the ty LSP server."""
+        """Handle completion requests from the editor using the basedpyright LSP server."""
         text = request.get("text", "")
         position = request.get("position", {})
         line = position.get("line", 0)
         column = position.get("column", 0)
         file_path = request.get("file_path")
+
+        # Fall back to active tab's path if file_path is not provided or is an in-memory URI
+        if not file_path or file_path.startswith("inmemory://"):
+            active_tab = self.get_active_tab()
+            if active_tab and active_tab.path:
+                file_path = active_tab.path
+
         logger.debug(f"Received completion request for file {file_path}, line {line}, column {column}")
         if not file_path:
-            raise ValueError("File path is required for completion requests")
+            # Return empty completions instead of raising an error
+            logger.warning("No file path available for completion request, returning empty results")
+            self.completion_response = {"items": []}
+            return
+
         lsp_client = await get_lsp_client()
         uri = f"file://{self.project_root.parent / file_path}"
         await lsp_client.open_document(uri, text)
@@ -553,15 +564,25 @@ class EditorState(rx.State):
 
     @rx.event
     async def handle_hover_request(self, request: HoverRequest) -> None:
-        """Handle hover requests from the editor using the ty LSP server."""
+        """Handle hover requests from the editor using the basedpyright LSP server."""
         text = request.get("text", "")
         position = request.get("position", {})
         line = position.get("line", 0)
         column = position.get("column", 0)
         file_path = request.get("file_path")
+
+        # Fall back to active tab's path if file_path is not provided or is an in-memory URI
+        if not file_path or file_path.startswith("inmemory://"):
+            active_tab = self.get_active_tab()
+            if active_tab and active_tab.path:
+                file_path = active_tab.path
+
         logger.debug(f"Received hover request for file {file_path}, line {line}, column {column}")
         if not file_path:
-            raise ValueError("File path is required for hover requests")
+            # Return empty hover info instead of raising an error
+            logger.warning("No file path available for hover request, returning empty results")
+            self.hover_info = {}
+            return
         lsp_client = await get_lsp_client()
         uri = f"file://{self.project_root.parent / file_path}"
         await lsp_client.open_document(uri, text)
@@ -591,15 +612,25 @@ class EditorState(rx.State):
 
     @rx.event
     async def handle_declaration_request(self, request: DeclarationRequest) -> None:
-        """Handle declaration requests from the editor using the ty LSP server."""
+        """Handle declaration requests from the editor using the basedpyright LSP server."""
         text = request.get("text", "")
         position = request.get("position", {})
         line = position.get("line", 0)
         column = position.get("column", 0)
         file_path = request.get("file_path")
+
+        # Fall back to active tab's path if file_path is not provided or is an in-memory URI
+        if not file_path or file_path.startswith("inmemory://"):
+            active_tab = self.get_active_tab()
+            if active_tab and active_tab.path:
+                file_path = active_tab.path
+
         logger.debug(f"Received declaration request for file {file_path}, line {line}, column {column}")
         if not file_path:
-            raise ValueError("File path is required for declaration requests")
+            # Return empty declaration info instead of raising an error
+            logger.warning("No file path available for declaration request, returning empty results")
+            self.declaration_response = {"items": []}
+            return
         lsp_client = await get_lsp_client()
         uri = f"file://{self.project_root.parent / file_path}"
         await lsp_client.open_document(uri, text)

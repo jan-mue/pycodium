@@ -33,7 +33,7 @@ dependencies = [
     # Running the Reflex backend
     "granian==2.6.1",
     # To manage the backend process
-    "psutil==7.2.1",
+    "psutil==7.2.2",
     # Runtime data validation
     "pydantic==2.12.5",
     # To detect programming languages

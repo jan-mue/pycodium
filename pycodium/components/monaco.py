@@ -10,7 +10,16 @@ import reflex as rx
 from reflex.utils import imports
 from typing_extensions import override
 
-from pycodium.models.monaco import CompletionItem, CompletionRequest, DeclarationRequest, HoverRequest
+from pycodium.models.monaco import (
+    CompletionItem,
+    CompletionRequest,
+    DeclarationRequest,
+    HoverRequest,
+    PrepareRenameRequest,
+    ReferenceRequest,
+    RenameRequest,
+    SignatureHelpRequest,
+)
 
 
 class MonacoEditor(rx.Component):
@@ -63,6 +72,15 @@ class MonacoEditor(rx.Component):
     # Declaration response from state
     declaration_response: rx.Var[dict[str, Any]] = rx.Var.create({})
 
+    # Signature help response from state
+    signature_help_response: rx.Var[dict[str, Any]] = rx.Var.create({})
+
+    # Rename response from state
+    rename_response: rx.Var[dict[str, Any]] = rx.Var.create({})
+
+    # Prepare rename response from state
+    prepare_rename_response: rx.Var[dict[str, Any]] = rx.Var.create({})
+
     # Triggered when the editor value changes.
     on_change: rx.EventHandler[rx.event.passthrough_event_spec(str)]
 
@@ -77,6 +95,18 @@ class MonacoEditor(rx.Component):
 
     # Triggered when a declaration request is made.
     on_declaration_request: rx.EventHandler[rx.event.passthrough_event_spec(DeclarationRequest)]
+
+    # Triggered when a signature help request is made.
+    on_signature_help_request: rx.EventHandler[rx.event.passthrough_event_spec(SignatureHelpRequest)]
+
+    # Triggered when a reference request is made.
+    on_reference_request: rx.EventHandler[rx.event.passthrough_event_spec(ReferenceRequest)]
+
+    # Triggered when a prepare rename request is made.
+    on_prepare_rename_request: rx.EventHandler[rx.event.passthrough_event_spec(PrepareRenameRequest)]
+
+    # Triggered when a rename request is made.
+    on_rename_request: rx.EventHandler[rx.event.passthrough_event_spec(RenameRequest)]
 
     @override
     def add_imports(self) -> imports.ImportDict:
@@ -95,12 +125,24 @@ class MonacoEditor(rx.Component):
                 const completionProviderRef = useRef(null);
                 const hoverProviderRef = useRef(null);
                 const declarationProviderRef = useRef(null);
+                const definitionProviderRef = useRef(null);
+                const signatureHelpProviderRef = useRef(null);
+                const referenceProviderRef = useRef(null);
+                const renameProviderRef = useRef(null);
                 const pendingCompletionRef = useRef(null);
                 const pendingHoverRef = useRef(null);
                 const pendingDeclarationRef = useRef(null);
+                const pendingSignatureHelpRef = useRef(null);
+                const pendingReferenceRef = useRef(null);
+                const pendingPrepareRenameRef = useRef(null);
+                const pendingRenameRef = useRef(null);
                 const lastCompletionItemsRef = useRef([]);
                 const lastHoverInfoRef = useRef({{}});
                 const lastDeclarationInfoRef = useRef([]);
+                const lastSignatureHelpRef = useRef({{}});
+                const lastReferenceRef = useRef([]);
+                const lastPrepareRenameRef = useRef({{}});
+                const lastRenameRef = useRef({{}});
 
                 // Update refs when state changes
                 useEffect(() => {{
@@ -152,6 +194,58 @@ class MonacoEditor(rx.Component):
                     }}
                 }}, [{self.declaration_response!s}]);
 
+                // Signature help response effect
+                useEffect(() => {{
+                    const signatureHelpResponse = {self.signature_help_response!s};
+                    if (JSON.stringify(signatureHelpResponse) !== JSON.stringify(lastSignatureHelpRef.current)) {{
+                        lastSignatureHelpRef.current = signatureHelpResponse;
+                        if (pendingSignatureHelpRef.current) {{
+                            console.log('Resolving signature help:', signatureHelpResponse);
+                            pendingSignatureHelpRef.current(signatureHelpResponse.signatures ? signatureHelpResponse : null);
+                            pendingSignatureHelpRef.current = null;
+                        }}
+                    }}
+                }}, [{self.signature_help_response!s}]);
+
+                // Reference response effect
+                useEffect(() => {{
+                    const referenceResponse = {self.reference_response!s};
+                    if (JSON.stringify(referenceResponse) !== JSON.stringify(lastReferenceRef.current)) {{
+                        lastReferenceRef.current = referenceResponse;
+                        if (pendingReferenceRef.current) {{
+                            console.log('Resolving references:', referenceResponse);
+                            pendingReferenceRef.current(referenceResponse.items || []);
+                            pendingReferenceRef.current = null;
+                        }}
+                    }}
+                }}, [{self.reference_response!s}]);
+
+                // Prepare rename response effect
+                useEffect(() => {{
+                    const prepareRenameResponse = {self.prepare_rename_response!s};
+                    if (JSON.stringify(prepareRenameResponse) !== JSON.stringify(lastPrepareRenameRef.current)) {{
+                        lastPrepareRenameRef.current = prepareRenameResponse;
+                        if (pendingPrepareRenameRef.current) {{
+                            console.log('Resolving prepare rename:', prepareRenameResponse);
+                            pendingPrepareRenameRef.current(prepareRenameResponse.range ? prepareRenameResponse : null);
+                            pendingPrepareRenameRef.current = null;
+                        }}
+                    }}
+                }}, [{self.prepare_rename_response!s}]);
+
+                // Rename response effect
+                useEffect(() => {{
+                    const renameResponse = {self.rename_response!s};
+                    if (JSON.stringify(renameResponse) !== JSON.stringify(lastRenameRef.current)) {{
+                        lastRenameRef.current = renameResponse;
+                        if (pendingRenameRef.current) {{
+                            console.log('Resolving rename:', renameResponse);
+                            pendingRenameRef.current(renameResponse.edit || null);
+                            pendingRenameRef.current = null;
+                        }}
+                    }}
+                }}, [{self.rename_response!s}]);
+
                 // Setup Monaco when available
                 useEffect(() => {{
                     if (monaco) {{
@@ -170,6 +264,14 @@ class MonacoEditor(rx.Component):
                         const handleHoverRequest = {rx.Var.create(self.event_triggers["on_hover_request"])!s};
                         // Handle go to declaration requests
                         const handleDeclarationRequest = {rx.Var.create(self.event_triggers["on_declaration_request"])!s};
+                        // Handle signature help requests
+                        const handleSignatureHelpRequest = {rx.Var.create(self.event_triggers["on_signature_help_request"])!s};
+                        // Handle reference requests
+                        const handleReferenceRequest = {rx.Var.create(self.event_triggers["on_reference_request"])!s};
+                        // Handle prepare rename requests
+                        const handlePrepareRenameRequest = {rx.Var.create(self.event_triggers["on_prepare_rename_request"])!s};
+                        // Handle rename requests
+                        const handleRenameRequest = {rx.Var.create(self.event_triggers["on_rename_request"])!s};
 
                         // Register completion provider
                         if (completionProviderRef.current) {{
@@ -279,6 +381,152 @@ class MonacoEditor(rx.Component):
                                 }});
                             }}
                         }});
+
+                        // Register definition provider (for Cmd+Click / F12)
+                        if (definitionProviderRef.current) {{
+                            definitionProviderRef.current.dispose();
+                        }}
+                        definitionProviderRef.current = monaco.languages.registerDefinitionProvider('python', {{
+                            provideDefinition: async (model, position, token) => {{
+                                return new Promise((resolve) => {{
+                                    const text = model.getValue();
+                                    const definitionData = {{
+                                        text: text,
+                                        position: {{
+                                            line: position.lineNumber - 1,
+                                            column: position.column - 1
+                                        }},
+                                        file_path: model.uri ? model.uri.toString() : null
+                                    }};
+                                    // Reuse declaration pending ref since they serve same purpose
+                                    pendingDeclarationRef.current = resolve;
+                                    handleDeclarationRequest(definitionData);
+                                    console.log('Definition request sent:', definitionData);
+                                    setTimeout(() => {{
+                                        if (pendingDeclarationRef.current === resolve) {{
+                                            pendingDeclarationRef.current = null;
+                                            console.log('Definition request timed out');
+                                            resolve([]);
+                                        }}
+                                    }}, 10000);
+                                }});
+                            }}
+                        }});
+
+                        // Register signature help provider
+                        if (signatureHelpProviderRef.current) {{
+                            signatureHelpProviderRef.current.dispose();
+                        }}
+                        signatureHelpProviderRef.current = monaco.languages.registerSignatureHelpProvider('python', {{
+                            signatureHelpTriggerCharacters: ['(', ','],
+                            provideSignatureHelp: async (model, position, token, context) => {{
+                                return new Promise((resolve) => {{
+                                    const text = model.getValue();
+                                    const signatureData = {{
+                                        text: text,
+                                        position: {{
+                                            line: position.lineNumber - 1,
+                                            column: position.column - 1
+                                        }},
+                                        file_path: model.uri ? model.uri.toString() : null
+                                    }};
+                                    pendingSignatureHelpRef.current = resolve;
+                                    handleSignatureHelpRequest(signatureData);
+                                    console.log('Signature help request sent:', signatureData);
+                                    setTimeout(() => {{
+                                        if (pendingSignatureHelpRef.current === resolve) {{
+                                            pendingSignatureHelpRef.current = null;
+                                            console.log('Signature help request timed out');
+                                            resolve(null);
+                                        }}
+                                    }}, 5000);
+                                }});
+                            }}
+                        }});
+
+                        // Register reference provider
+                        if (referenceProviderRef.current) {{
+                            referenceProviderRef.current.dispose();
+                        }}
+                        referenceProviderRef.current = monaco.languages.registerReferenceProvider('python', {{
+                            provideReferences: async (model, position, context, token) => {{
+                                return new Promise((resolve) => {{
+                                    const text = model.getValue();
+                                    const referenceData = {{
+                                        text: text,
+                                        position: {{
+                                            line: position.lineNumber - 1,
+                                            column: position.column - 1
+                                        }},
+                                        file_path: model.uri ? model.uri.toString() : null
+                                    }};
+                                    pendingReferenceRef.current = resolve;
+                                    handleReferenceRequest(referenceData);
+                                    console.log('Reference request sent:', referenceData);
+                                    setTimeout(() => {{
+                                        if (pendingReferenceRef.current === resolve) {{
+                                            pendingReferenceRef.current = null;
+                                            console.log('Reference request timed out');
+                                            resolve([]);
+                                        }}
+                                    }}, 10000);
+                                }});
+                            }}
+                        }});
+
+                        // Register rename provider
+                        if (renameProviderRef.current) {{
+                            renameProviderRef.current.dispose();
+                        }}
+                        renameProviderRef.current = monaco.languages.registerRenameProvider('python', {{
+                            provideRenameEdits: async (model, position, newName, token) => {{
+                                return new Promise((resolve) => {{
+                                    const text = model.getValue();
+                                    const renameData = {{
+                                        text: text,
+                                        position: {{
+                                            line: position.lineNumber - 1,
+                                            column: position.column - 1
+                                        }},
+                                        file_path: model.uri ? model.uri.toString() : null,
+                                        new_name: newName
+                                    }};
+                                    pendingRenameRef.current = resolve;
+                                    handleRenameRequest(renameData);
+                                    console.log('Rename request sent:', renameData);
+                                    setTimeout(() => {{
+                                        if (pendingRenameRef.current === resolve) {{
+                                            pendingRenameRef.current = null;
+                                            console.log('Rename request timed out');
+                                            resolve(null);
+                                        }}
+                                    }}, 10000);
+                                }});
+                            }},
+                            resolveRenameLocation: async (model, position, token) => {{
+                                return new Promise((resolve) => {{
+                                    const text = model.getValue();
+                                    const prepareData = {{
+                                        text: text,
+                                        position: {{
+                                            line: position.lineNumber - 1,
+                                            column: position.column - 1
+                                        }},
+                                        file_path: model.uri ? model.uri.toString() : null
+                                    }};
+                                    pendingPrepareRenameRef.current = resolve;
+                                    handlePrepareRenameRequest(prepareData);
+                                    console.log('Prepare rename request sent:', prepareData);
+                                    setTimeout(() => {{
+                                        if (pendingPrepareRenameRef.current === resolve) {{
+                                            pendingPrepareRenameRef.current = null;
+                                            console.log('Prepare rename request timed out');
+                                            resolve(null);
+                                        }}
+                                    }}, 5000);
+                                }});
+                            }}
+                        }});
                     }}
 
                     // Cleanup on unmount
@@ -292,10 +540,26 @@ class MonacoEditor(rx.Component):
                         if (declarationProviderRef.current) {{
                             declarationProviderRef.current.dispose();
                         }}
+                        if (definitionProviderRef.current) {{
+                            definitionProviderRef.current.dispose();
+                        }}
+                        if (signatureHelpProviderRef.current) {{
+                            signatureHelpProviderRef.current.dispose();
+                        }}
+                        if (referenceProviderRef.current) {{
+                            referenceProviderRef.current.dispose();
+                        }}
+                        if (renameProviderRef.current) {{
+                            renameProviderRef.current.dispose();
+                        }}
                         // Clear any pending promises
                         pendingCompletionRef.current = null;
                         pendingHoverRef.current = null;
                         pendingDeclarationRef.current = null;
+                        pendingSignatureHelpRef.current = null;
+                        pendingReferenceRef.current = null;
+                        pendingPrepareRenameRef.current = null;
+                        pendingRenameRef.current = null;
                     }};
                 }}, [monaco]);
             """

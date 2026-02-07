@@ -45,3 +45,36 @@ class DeclarationRequest(TypedDict):
     text: str
     position: dict[str, int]
     file_path: str
+
+
+class SignatureHelpRequest(TypedDict):
+    """Signature help request data."""
+
+    text: str
+    position: Position
+    file_path: str | None
+
+
+class ReferenceRequest(TypedDict):
+    """Reference request data."""
+
+    text: str
+    position: Position
+    file_path: str | None
+
+
+class RenameRequest(TypedDict):
+    """Rename request data."""
+
+    text: str
+    position: Position
+    file_path: str | None
+    new_name: str
+
+
+class PrepareRenameRequest(TypedDict):
+    """Prepare rename request data."""
+
+    text: str
+    position: Position
+    file_path: str | None

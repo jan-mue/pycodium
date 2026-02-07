@@ -96,61 +96,72 @@ class TestLSPHover:
     def test_hover_on_function_shows_signature(self, lsp_editor_page: Page) -> None:
         """Test that hovering over a function call shows its signature.
 
-        This test hovers over the `greet` function to verify
-        the LSP provides type information via mouse hover.
+        This test navigates to the `greet` function call and triggers hover
+        to verify the LSP provides type information.
         """
         editor = lsp_editor_page.locator(".monaco-editor")
         editor.click()
 
-        # Find the 'greet' function definition on line 4
-        # We'll hover over it to trigger LSP hover
-        greet_text = lsp_editor_page.locator(".view-line:has-text('def greet')")
-        expect(greet_text).to_be_visible(timeout=10000)
+        # Go to line 20 where `result = greet("World")` is
+        lsp_editor_page.keyboard.press("Meta+g")
+        lsp_editor_page.wait_for_timeout(300)
+        lsp_editor_page.keyboard.type("20")
+        lsp_editor_page.keyboard.press("Enter")
+        lsp_editor_page.wait_for_timeout(500)
 
-        # Get the bounding box of the greet line and hover over it
-        greet_box = greet_text.bounding_box()
-        if greet_box:
-            # Hover over 'greet' text (offset into the line to hit the function name)
-            lsp_editor_page.mouse.move(greet_box["x"] + 50, greet_box["y"] + greet_box["height"] / 2)
+        # Position cursor on "greet" (after "result = ")
+        lsp_editor_page.keyboard.press("Home")
+        for _ in range(9):  # Move past "result = "
+            lsp_editor_page.keyboard.press("ArrowRight")
 
-            # Wait for hover popup (it can take a few seconds)
-            hover_widget = lsp_editor_page.locator(".monaco-hover:not(.hidden)")
-            expect(hover_widget.first).to_be_visible(timeout=10000)
+        # Trigger hover via keyboard shortcut (Cmd+K Cmd+I on Mac)
+        lsp_editor_page.keyboard.press("Meta+k")
+        lsp_editor_page.wait_for_timeout(100)
+        lsp_editor_page.keyboard.press("Meta+i")
 
-            # Verify hover content contains function info
-            hover_content = lsp_editor_page.locator(".monaco-hover-content")
-            expect(hover_content.first).to_be_visible(timeout=5000)
+        # Wait for hover widget to appear
+        hover_widget = lsp_editor_page.locator(".monaco-hover")
+        expect(hover_widget).to_be_visible(timeout=15000)
 
-            hover_text = hover_content.first.inner_text()
-            assert "greet" in hover_text.lower() or "str" in hover_text.lower(), (
-                f"Expected function info in hover, got: {hover_text}"
-            )
+        # Verify hover content contains function signature info
+        # basedpyright should show the function signature
+        hover_content = lsp_editor_page.locator(".monaco-hover-content")
+        expect(hover_content).to_be_visible(timeout=5000)
+
+        # The hover should contain "greet" and type information
+        hover_text = hover_content.inner_text()
+        assert "greet" in hover_text, f"Expected 'greet' in hover, got: {hover_text}"
 
     def test_hover_on_class_shows_class_info(self, lsp_editor_page: Page) -> None:
         """Test that hovering over a class shows class information."""
         editor = lsp_editor_page.locator(".monaco-editor")
         editor.click()
 
-        # Find the Calculator class definition
-        calc_text = lsp_editor_page.locator(".view-line:has-text('class Calculator')")
-        expect(calc_text).to_be_visible(timeout=10000)
+        # Go to line 21 where `calc = Calculator(10)` is
+        lsp_editor_page.keyboard.press("Meta+g")
+        lsp_editor_page.wait_for_timeout(300)
+        lsp_editor_page.keyboard.type("21")
+        lsp_editor_page.keyboard.press("Enter")
+        lsp_editor_page.wait_for_timeout(500)
 
-        # Get the bounding box and hover
-        calc_box = calc_text.bounding_box()
-        if calc_box:
-            # Hover over 'Calculator' text
-            lsp_editor_page.mouse.move(calc_box["x"] + 80, calc_box["y"] + calc_box["height"] / 2)
+        # Position cursor on "Calculator" (after "calc = ")
+        lsp_editor_page.keyboard.press("Home")
+        for _ in range(7):  # Move past "calc = "
+            lsp_editor_page.keyboard.press("ArrowRight")
 
-            # Wait for hover popup
-            hover_widget = lsp_editor_page.locator(".monaco-hover:not(.hidden)")
-            expect(hover_widget.first).to_be_visible(timeout=10000)
+        # Trigger hover
+        lsp_editor_page.keyboard.press("Meta+k")
+        lsp_editor_page.wait_for_timeout(100)
+        lsp_editor_page.keyboard.press("Meta+i")
 
-            # Verify hover content
-            hover_content = lsp_editor_page.locator(".monaco-hover-content")
-            hover_text = hover_content.first.inner_text()
-            assert "Calculator" in hover_text or "class" in hover_text.lower(), (
-                f"Expected class info in hover, got: {hover_text}"
-            )
+        # Wait for hover widget
+        hover_widget = lsp_editor_page.locator(".monaco-hover")
+        expect(hover_widget).to_be_visible(timeout=15000)
+
+        # Verify hover contains class info
+        hover_content = lsp_editor_page.locator(".monaco-hover-content")
+        hover_text = hover_content.inner_text()
+        assert "Calculator" in hover_text, f"Expected 'Calculator' in hover, got: {hover_text}"
 
 
 class TestLSPGoToDefinition:
@@ -164,21 +175,25 @@ class TestLSPGoToDefinition:
         editor = lsp_editor_page.locator(".monaco-editor")
         editor.click()
 
-        # Find the 'result = greet("World")' line
-        result_line = lsp_editor_page.locator(".view-line:has-text('result = greet')")
-        expect(result_line).to_be_visible(timeout=10000)
+        # Go to line 20 where `result = greet("World")` is
+        lsp_editor_page.keyboard.press("Meta+g")
+        lsp_editor_page.wait_for_timeout(300)
+        lsp_editor_page.keyboard.type("20")
+        lsp_editor_page.keyboard.press("Enter")
+        lsp_editor_page.wait_for_timeout(500)
 
-        # Click on 'greet' in that line
-        result_box = result_line.bounding_box()
-        if result_box:
-            # Click on 'greet' (approximately after "result = ")
-            lsp_editor_page.mouse.click(result_box["x"] + 100, result_box["y"] + result_box["height"] / 2)
-            lsp_editor_page.wait_for_timeout(500)
+        # Position cursor on "greet"
+        lsp_editor_page.keyboard.press("Home")
+        for _ in range(9):
+            lsp_editor_page.keyboard.press("ArrowRight")
 
-            # Press F12 to go to definition
-            lsp_editor_page.keyboard.press("F12")
-            lsp_editor_page.wait_for_timeout(3000)
+        # Press F12 to go to definition
+        lsp_editor_page.keyboard.press("F12")
+        lsp_editor_page.wait_for_timeout(3000)
 
-            # Verify the function definition line is visible
-            def_line = lsp_editor_page.locator(".view-line:has-text('def greet(name: str)')")
-            expect(def_line).to_be_visible(timeout=5000)
+        # Give time for the cursor to move
+        lsp_editor_page.wait_for_timeout(500)
+
+        # Verify the definition line is visible somewhere in the editor
+        def_line = lsp_editor_page.locator(".view-line:has-text('def greet(name: str)')")
+        expect(def_line).to_be_visible(timeout=5000)

@@ -40,6 +40,8 @@ dependencies = [
     "pygments==2.19.2",
     # Displays the web UI in a native Tauri window
     "pytauri-wheel==0.8.0",
+    # Find Python venvs
+    "pythonfinder==3.0.0",
     # Web framework used for the GUI
     "reflex==0.8.26",
     # CLI framework
@@ -63,7 +65,7 @@ dev = [
     "deptry==0.24.0",
     "hatchling==1.28.0",
     "httpx==0.28.1",
-    "inline-snapshot[dirty-equals]==0.31.1",
+    "inline-snapshot[black,dirty-equals]==0.31.1",
     "playwright==1.57.0",
     "pyright==1.1.408",
     "pytest==9.0.2",

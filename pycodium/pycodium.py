@@ -7,6 +7,8 @@ from reflex.event import EventSpec
 from reflex.utils.exec import is_prod_mode
 
 from pycodium.components.activity_bar import activity_bar
+from pycodium.components.command_palette import command_palette
+from pycodium.components.command_palette_state import CommandPaletteState
 from pycodium.components.editor_area import editor_area
 from pycodium.components.hotkey_watcher import GlobalHotkeyWatcher
 from pycodium.components.menu_events import tauri_menu_handler
@@ -60,13 +62,33 @@ def backend_exception_handler(exception: Exception) -> EventSpec:
 
 
 def index() -> rx.Component:
-    """Main page of the PyCodium IDE. Test."""
+    """Main page of the PyCodium IDE."""
     return rx.el.div(
+        # Command Palette
+        command_palette(
+            is_open=CommandPaletteState.is_open,
+            search_query=CommandPaletteState.search_query,
+            filtered_command_ids=CommandPaletteState.filtered_command_ids,
+            selected_index=CommandPaletteState.selected_index,
+            mode=CommandPaletteState.mode,
+            python_interpreters=CommandPaletteState.python_interpreters,
+            current_interpreter=CommandPaletteState.current_interpreter,
+            on_close=CommandPaletteState.close_command_palette,
+            on_search_change=CommandPaletteState.update_search,
+            on_key_down=CommandPaletteState.handle_key_down,
+            on_select_command=CommandPaletteState.select_command,
+            on_select_interpreter=CommandPaletteState.select_interpreter,
+        ),
         GlobalHotkeyWatcher.create(
             on_key_down=lambda key, key_info: rx.cond(
-                key_info.meta_key & rx.Var.create(["s", "w"]).contains(key),
-                EditorState.on_key_down(key, key_info).prevent_default,
-                None,
+                # Cmd+Shift+P to open command palette
+                key_info.meta_key & key_info.shift_key & (key == "p"),
+                CommandPaletteState.toggle_command_palette.prevent_default,
+                rx.cond(
+                    key_info.meta_key & rx.Var.create(["s", "w"]).contains(key),
+                    EditorState.on_key_down(key, key_info).prevent_default,
+                    None,
+                ),
             )
         ),
         tauri_menu_handler(

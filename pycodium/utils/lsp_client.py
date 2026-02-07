@@ -104,6 +104,47 @@ class BasedPyrightLSPClient:
         response = await self._send_request("textDocument/declaration", params)
         return response
 
+    async def get_definition(self, uri: str, line: int, character: int) -> list[dict[str, Any]]:
+        """Get the definition of the symbol at the specified position."""
+        params = {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}}
+        response = await self._send_request("textDocument/definition", params)
+        if isinstance(response, list):
+            return response
+        elif isinstance(response, dict):
+            return [response]
+        return []
+
+    async def get_signature_help(self, uri: str, line: int, character: int) -> dict[str, Any] | None:
+        """Get signature help at the specified position.
+
+        Typically triggered when typing '(' or ',' in a function call.
+        """
+        params = {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}}
+        response = await self._send_request("textDocument/signatureHelp", params)
+        return response
+
+    async def rename_symbol(self, uri: str, line: int, character: int, new_name: str) -> dict[str, Any] | None:
+        """Rename a symbol at the specified position.
+
+        Returns a WorkspaceEdit that describes the changes to be made.
+        """
+        params = {
+            "textDocument": {"uri": uri},
+            "position": {"line": line, "character": character},
+            "newName": new_name,
+        }
+        response = await self._send_request("textDocument/rename", params)
+        return response
+
+    async def prepare_rename(self, uri: str, line: int, character: int) -> dict[str, Any] | None:
+        """Prepare a rename operation at the specified position.
+
+        Returns the range of the symbol to be renamed, or null if renaming is not allowed.
+        """
+        params = {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}}
+        response = await self._send_request("textDocument/prepareRename", params)
+        return response
+
     async def open_document(self, uri: str, content: str, language_id: str = "python") -> None:
         """Open a document in the server."""
         params = {"textDocument": {"uri": uri, "languageId": language_id, "version": 1, "text": content}}

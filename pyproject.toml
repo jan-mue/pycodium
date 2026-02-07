@@ -7,9 +7,7 @@ name = "pycodium"
 description = "A Python IDE written in Python"
 readme = "README.md"
 license = { file = "LICENSE" }
-authors = [
-    { name = "Jan Müller", email = "" },
-]
+authors = [ { name = "Jan Müller", email = "" } ]
 requires-python = ">=3.10,<3.14"
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -28,6 +26,8 @@ dynamic = [ "version" ]
 dependencies = [
     # For asynchronous file operations
     "aiofiles==25.1.0",
+    # Python language server
+    "basedpyright==1.37.3",
     # To detect file encodings
     "charset-normalizer==3.4.4",
     # Running the Reflex backend
@@ -129,6 +129,7 @@ lint.ignore = [
     "E501",    # Line too long, handled by formatter
     "PLR0913", # Too many arguments in function definition"
     "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar`
+    "S608",    # Possible SQL injection vector through string-based query construction
     "TC006",   # Add quotes to type expression in `typing.cast()`
 ]
 lint.per-file-ignores."__init__.py" = [ "D104", "F401" ]
@@ -147,7 +148,8 @@ DEP004 = [
     "hatchling", # not required at runtime as it is only used to build the package
 ]
 DEP002 = [
-    "granian", # used to run the Reflex backend
+    "granian",      # used to run the Reflex backend
+    "basedpyright", # used as language server for Python
 ]
 
 [tool.deptry.package_module_name_map]

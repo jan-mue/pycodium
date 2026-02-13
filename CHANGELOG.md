@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.2](https://github.com/jan-mue/pycodium/compare/v0.3.1...v0.3.2) (2026-02-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency granian to v2.7.0 ([#377](https://github.com/jan-mue/pycodium/issues/377)) ([5cd31a6](https://github.com/jan-mue/pycodium/commit/5cd31a6e649d93241dd0c3dbbd19a4753fe748ea))
+* **deps:** update dependency psutil to v7.2.2 ([#368](https://github.com/jan-mue/pycodium/issues/368)) ([0760720](https://github.com/jan-mue/pycodium/commit/07607203e8aa4c5080b01e18967d0f55f8482df7))
+* **deps:** update dependency reflex to v0.8.26 ([#355](https://github.com/jan-mue/pycodium/issues/355)) ([01d98a1](https://github.com/jan-mue/pycodium/commit/01d98a15628f1171f67c5cdfae933bac1cdd0ee5))
+
 ## [0.3.1](https://github.com/jan-mue/pycodium/compare/v0.3.0...v0.3.1) (2026-01-24)
 
 

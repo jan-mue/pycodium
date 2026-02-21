@@ -49,12 +49,10 @@ dependencies = [
     # Update editor content when files change
     "watchfiles==1.1.1",
 ]
-
 urls.Changelog = "https://github.com/jan-mue/pycodium/releases"
 urls.Documentation = "https://github.com/jan-mue/pycodium#readme"
 urls.Issues = "https://github.com/jan-mue/pycodium/issues"
 urls.Source = "https://github.com/jan-mue/pycodium"
-
 scripts.pycodium = "pycodium.main:app"
 
 [dependency-groups]
@@ -96,7 +94,6 @@ path = "pycodium/version.py"
 [tool.ruff]
 target-version = "py310"
 line-length = 120
-
 lint.select = [
     "A",     # flake8-builtins
     "ARG",   # flake8-unused-arguments
@@ -133,7 +130,7 @@ lint.ignore = [
 ]
 lint.per-file-ignores."__init__.py" = [ "D104", "F401" ]
 lint.per-file-ignores."tests/**" = [ "D", "PLR2004", "S" ]
-lint.unfixable = [  ]
+lint.unfixable = []
 lint.flake8-tidy-imports.ban-relative-imports = "all"
 lint.flake8-tidy-imports.banned-api."unittest.mock".msg = "Use `pytest-mock` instead."
 lint.isort.known-first-party = [ "pycodium" ]
@@ -141,6 +138,9 @@ lint.pydocstyle.convention = "google"
 
 [tool.codespell]
 ignore-words-list = "nin"
+
+[tool.deptry.package_module_name_map]
+pytauri-wheel = [ "pytauri", "pytauri_plugins" ]
 
 [tool.deptry.per_rule_ignores]
 DEP004 = [
@@ -150,13 +150,18 @@ DEP002 = [
     "granian", # used to run the Reflex backend
 ]
 
-[tool.deptry.package_module_name_map]
-pytauri-wheel = [ "pytauri", "pytauri_plugins" ]
-
 [tool.pyproject-fmt]
 indent = 4
 column_width = 120
 keep_full_version = true
+expand_tables = [
+    "tool.coverage.report",
+    "tool.hatch.build",
+    "tool.hatch.version",
+    "tool.deptry.per_rule_ignores",
+    "tool.deptry.package_module_name_map",
+    "tool.pytest.ini_options",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

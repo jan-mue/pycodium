@@ -43,7 +43,7 @@ dependencies = [
     # Web framework used for the GUI
     "reflex==0.8.27",
     # CLI framework
-    "typer==0.24.0",
+    "typer==0.24.1",
     # Type checking backward compatibility
     "typing-extensions==4.15.0",
     # Update editor content when files change

@@ -602,7 +602,7 @@ wheels = [
 
 [[package]]
 name = "inline-snapshot"
-version = "0.32.3"
+version = "0.32.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asttokens" },
@@ -612,9 +612,9 @@ dependencies = [
     { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c7/66/9e1a4d3341e8301a98f6987afd7c7053441b4c07360b1fa4fca7279683f9/inline_snapshot-0.32.3.tar.gz", hash = "sha256:c606d2551de08a293d29bfcd1df2edde9d478f57c83f063b4642f45906b2d748", size = 2625275, upload-time = "2026-02-24T07:46:54.851Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/fd/535e30d0dfaf97666e79900c3d8369bf0fe80aabcd3bf56c64dd5b2fd9fc/inline_snapshot-0.32.4.tar.gz", hash = "sha256:f6c21f3a5cb8b4cc5a9ae80fa5d1b66bb642195884ddd6960d383c21a2258318", size = 2626703, upload-time = "2026-03-01T06:19:13.777Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/af/38e4c5192ab8dbcc73dee07bc0f76718e4a8612783f0e573374588228c1c/inline_snapshot-0.32.3-py3-none-any.whl", hash = "sha256:3925c75fadfcbd190f3c77218a485d27d8af46b952bfe64410b482dd9dbeb24f", size = 84668, upload-time = "2026-02-24T07:46:53.029Z" },
+    { url = "https://files.pythonhosted.org/packages/14/c8/7cf871126446634542777e9b8db79230463c9502cce26b75487b3889dcf7/inline_snapshot-0.32.4-py3-none-any.whl", hash = "sha256:39635f91f34453250969bdaba14b0de8d4d02126ef60b2ae654676aafa42f687", size = 84985, upload-time = "2026-03-01T06:19:10.994Z" },
 ]
 
 [package.optional-dependencies]
@@ -932,7 +932,7 @@ dev = [
     { name = "deptry", specifier = "==0.24.0" },
     { name = "hatchling", specifier = "==1.29.0" },
     { name = "httpx", specifier = "==0.28.1" },
-    { name = "inline-snapshot", extras = ["dirty-equals"], specifier = "==0.32.3" },
+    { name = "inline-snapshot", extras = ["dirty-equals"], specifier = "==0.32.4" },
     { name = "playwright", specifier = "==1.58.0" },
     { name = "pyright", specifier = "==1.1.408" },
     { name = "pytest", specifier = "==9.0.2" },

@@ -42,7 +42,7 @@ jobs:
         run: uv run --no-sync playwright install chromium --with-deps
 
       - name: Run performance tests
-        uses: CodSpeedHQ/action@2ac572851726409c88c02a307f1ea2632a9ea59b # v4.11.0
+        uses: CodSpeedHQ/action@281164b0f014a4e7badd2c02cecad9b595b70537 # v4.11.1
         with:
           mode: walltime
           run: uv run --no-sync pytest tests/performance --codspeed

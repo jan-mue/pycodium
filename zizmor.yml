@@ -1,0 +1,8 @@
+rules:
+  secrets-outside-env:
+    ignore:
+      - unit-tests.yaml:52:22
+# TODO: uncomment when supported by zizmor
+#    config:
+#      allow:
+#        - CODECOV_TOKEN

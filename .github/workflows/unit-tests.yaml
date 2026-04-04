@@ -46,6 +46,11 @@ jobs:
           uv run --no-sync coverage xml
 
       - name: Upload coverage to Codecov
+        if: >
+          github.event_name != 'pull_request' || (
+            !startsWith(github.head_ref, 'renovate/') &&
+            !startsWith(github.head_ref, 'release-please--')
+          )
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5.5.4
         with:
           fail_ci_if_error: true

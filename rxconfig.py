@@ -69,5 +69,5 @@ config = rx.Config(
     telemetry_enabled=False,
     show_built_with_reflex=False,
     plugins=[rx.plugins.TailwindV3Plugin(tailwind_config)],
-    disable_plugins=["reflex.plugins.sitemap.SitemapPlugin"],
+    disable_plugins=[rx.plugins.SitemapPlugin],
 )

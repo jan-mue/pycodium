@@ -8,6 +8,7 @@ on:
 
 jobs:
   performance-test:
+    if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read # required for actions/checkout

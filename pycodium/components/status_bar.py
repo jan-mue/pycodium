@@ -9,7 +9,6 @@ from pycodium.state import EditorState
 def status_bar() -> rx.Component:
     """Creates the status bar component for the IDE."""
     return rx.el.div(
-        # Left side - Git branch and notifications
         rx.el.div(
             rx.el.div(
                 rx.el.span(
@@ -25,13 +24,9 @@ def status_bar() -> rx.Component:
             ),
             class_name="flex-1 flex",
         ),
-        # Right side - File info and interpreter
         rx.el.div(
-            # Cursor position
             rx.el.div("Ln 1, Col 1", class_name="status-bar-item"),
-            # Indentation
             rx.el.div("Spaces: 4", class_name="status-bar-item"),
-            # Encoding
             rx.cond(
                 EditorState.active_tab,
                 rx.el.div(
@@ -40,15 +35,12 @@ def status_bar() -> rx.Component:
                 ),
                 rx.fragment(),
             ),
-            # Line ending
             rx.el.div("LF", class_name="status-bar-item"),
-            # Language (from active tab - using computed var)
             rx.el.div(
                 EditorState.active_language_display,
                 class_name="status-bar-item",
                 id="status-bar-language",
             ),
-            # Python interpreter (clickable to open palette)
             rx.el.div(
                 rx.icon("terminal", size=14),
                 CommandPaletteState.interpreter_display,

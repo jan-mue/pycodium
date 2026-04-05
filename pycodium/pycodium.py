@@ -64,7 +64,6 @@ def backend_exception_handler(exception: Exception) -> EventSpec:
 def index() -> rx.Component:
     """Main page of the PyCodium IDE."""
     return rx.el.div(
-        # Command Palette
         command_palette(
             is_open=CommandPaletteState.is_open,
             search_query=CommandPaletteState.search_query,
@@ -81,7 +80,6 @@ def index() -> rx.Component:
         ),
         GlobalHotkeyWatcher.create(
             on_key_down=lambda key, key_info: rx.cond(
-                # Cmd+Shift+P to open command palette
                 key_info.meta_key & key_info.shift_key & (key == "p"),
                 CommandPaletteState.toggle_command_palette.prevent_default,
                 rx.cond(

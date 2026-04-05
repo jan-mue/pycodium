@@ -28,7 +28,6 @@ class CommandItem:
     icon: str = ""
 
 
-# Define available commands
 COMMANDS: list[CommandItem] = [
     CommandItem(id="new-file", label="File: New File...", category="file", shortcut="", icon="file-plus"),
     CommandItem(id="new-folder", label="File: New Folder...", category="file", shortcut="", icon="folder-plus"),
@@ -114,8 +113,7 @@ def command_palette_list(
         rx.foreach(
             filtered_ids,
             lambda cmd_id, idx: rx.cond(
-                # Find the command by ID and render it
-                rx.Var.create(True),  # Always render
+                rx.Var.create(True),
                 command_palette_item_by_id(cmd_id, idx, selected_index, on_select),
                 rx.fragment(),
             ),
@@ -133,7 +131,6 @@ def command_palette_item_by_id(
 ) -> rx.Component:
     """Render a command item by its ID."""
 
-    # We create specific on_click handlers for each command to avoid lambda capture issues
     def make_cmd_item(cmd: CommandItem) -> tuple[str, rx.Component]:
         return (
             cmd.id,
@@ -198,7 +195,7 @@ def command_palette(
     search_query: rx.Var[str],
     filtered_command_ids: rx.Var[list[str]],
     selected_index: rx.Var[int],
-    mode: rx.Var[str],  # "commands" or "interpreters"
+    mode: rx.Var[str],
     python_interpreters: rx.Var[list[dict]],
     current_interpreter: rx.Var[str],
     on_close: rx.event.EventSpec,
@@ -213,7 +210,6 @@ def command_palette(
         rx.cond(
             is_open,
             rx.fragment(
-                # Use GlobalHotkeyWatcher for keyboard navigation when palette is open
                 GlobalHotkeyWatcher.create(on_key_down=on_key_down),
                 rx.el.div(
                     rx.el.div(
@@ -228,7 +224,6 @@ def command_palette(
                         ),
                         rx.cond(
                             mode == "interpreters",
-                            # Python interpreter selection mode
                             rx.el.div(
                                 rx.foreach(
                                     python_interpreters,
@@ -260,7 +255,6 @@ def command_palette(
                                 class_name="max-h-[300px] overflow-y-auto py-1",
                                 id="interpreter-list",
                             ),
-                            # Commands mode
                             command_palette_list(
                                 filtered_command_ids,
                                 selected_index,

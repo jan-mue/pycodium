@@ -22,27 +22,14 @@ from pycodium.components.command_palette import COMMANDS
 logger = logging.getLogger(__name__)
 
 
-# Command handlers are defined as a mapping to simplify the select_command method
-# Keys are command IDs, values are tuples of (requires_close, handler_type, handler_data)
-
-
 class CommandPaletteState(rx.State):
     """State for the command palette."""
 
-    # Command palette visibility
     is_open: bool = False
-
-    # Search and filtering
     search_query: str = ""
     filtered_command_ids: list[str] = [cmd.id for cmd in COMMANDS]
-
-    # Navigation
     selected_index: int = 0
-
-    # Palette mode (commands or interpreters)
     mode: str = "commands"
-
-    # Python interpreters
     python_interpreters: list[dict[str, str]] = []
     current_interpreter: str = ""
     _interpreters_loaded: bool = False
@@ -140,11 +127,9 @@ class CommandPaletteState(rx.State):
         """Execute a command by its ID."""
         logger.info(f"Executing command: {command_id}")
 
-        # Handle interpreter selection mode switch
         if command_id == "select-python":
             return await self._handle_select_python()
 
-        # Close palette and execute command
         await self.close_command_palette()
         return self._get_command_action(command_id)
 
@@ -158,10 +143,8 @@ class CommandPaletteState(rx.State):
 
     def _get_command_action(self, command_id: str) -> rx.event.EventSpec | None:
         """Get the action for a command ID."""
-        # Lazy import to avoid circular imports
         from pycodium.state import EditorState  # noqa: PLC0415
 
-        # Map command IDs to their actions
         state_actions = {
             "toggle-sidebar": EditorState.toggle_sidebar,
             "open-settings": EditorState.open_settings,
@@ -172,7 +155,6 @@ class CommandPaletteState(rx.State):
         if command_id in state_actions:
             return state_actions[command_id]
 
-        # Script-based commands
         script_commands = {
             "open-file": "window.__PYCODIUM_MENU__({ action: 'open_file' })",
             "open-folder": "window.__PYCODIUM_MENU__({ action: 'open_folder' })",
@@ -189,7 +171,6 @@ class CommandPaletteState(rx.State):
         if command_id in script_commands:
             return rx.call_script(script_commands[command_id])
 
-        # Feature placeholders
         placeholder_messages = {
             "new-file": "New File: Feature coming soon",
             "new-folder": "New Folder: Feature coming soon",
@@ -220,7 +201,6 @@ class CommandPaletteState(rx.State):
         from pycodium.utils import lsp_client as lsp_module  # noqa: PLC0415
         from pycodium.utils.lsp_client import BasedPyrightLSPClient  # noqa: PLC0415
 
-        # Stop existing client
         if lsp_module.lsp_client is not None:
             await lsp_module.lsp_client.stop_server()
             lsp_module.lsp_client = None
@@ -230,20 +210,14 @@ class CommandPaletteState(rx.State):
         langserver_path = interpreter_dir / "basedpyright-langserver"
         langserver_path_str = str(langserver_path) if langserver_path.exists() else "basedpyright-langserver"
 
-        # Create new client with updated path
         lsp_module.lsp_client = BasedPyrightLSPClient(server_path=langserver_path_str)
         await lsp_module.lsp_client.start_server()
         logger.info(f"LSP server restarted with interpreter: {interpreter_path}")
 
     async def _discover_python_interpreters(self) -> None:
-        """Discover available Python interpreters on the system using pythonfinder.
-
-        Uses the pythonfinder library for fast, cross-platform Python discovery.
-        This is much faster than spawning subprocesses for each interpreter.
-        """
+        """Discover available Python interpreters on the system using pythonfinder."""
         logger.debug("Discovering Python interpreters...")
 
-        # Run pythonfinder in a thread pool to avoid blocking the event loop
         interpreters = await asyncio.get_event_loop().run_in_executor(None, self._discover_interpreters_sync)
 
         self.python_interpreters = interpreters
@@ -255,18 +229,11 @@ class CommandPaletteState(rx.State):
         logger.info(f"Discovered {len(interpreters)} Python interpreters")
 
     def _discover_interpreters_sync(self) -> list[dict[str, str]]:
-        """Synchronous interpreter discovery using pythonfinder.
-
-        This method is called in a thread pool to avoid blocking.
-        """
+        """Synchronous interpreter discovery using pythonfinder."""
         interpreters: list[dict[str, str]] = []
         seen_paths: set[str] = set()
 
-        # Discover interpreters using pythonfinder
         self._discover_with_pythonfinder(interpreters, seen_paths)
-
-        # Also check for local venv which pythonfinder might miss
-        self._discover_local_venvs(interpreters, seen_paths)
 
         return interpreters
 
@@ -301,7 +268,6 @@ class CommandPaletteState(rx.State):
             pv = path_entry.py_version
             version_str = f"Python {pv.major}.{pv.minor}.{pv.patch}"
 
-            # Add environment type indicator
             if hasattr(path_entry, "name") and path_entry.name:
                 name = path_entry.name
                 if "conda" in name.lower():
@@ -406,7 +372,6 @@ class CommandPaletteState(rx.State):
         package_manager = ""
         venv_name = ""
 
-        # Not a virtual environment path
         if ".venv" not in path and "venv" not in path and "envs" not in path:
             return package_manager, venv_name
 
@@ -419,7 +384,6 @@ class CommandPaletteState(rx.State):
                 venv_name = parts[i + 1]
                 break
 
-        # Detect package manager using a dictionary approach
         path_lower = path.lower()
         package_manager_patterns = [
             (".venv", "uv"),
@@ -436,7 +400,6 @@ class CommandPaletteState(rx.State):
                 package_manager = manager
                 break
 
-        # Default to venv if we detected a venv but no specific package manager
         if not package_manager and venv_name:
             package_manager = "venv"
 

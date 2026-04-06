@@ -64,3 +64,8 @@ repos:
         language: pygrep
         files: '(^|/)pyproject\.toml$'
         entry: '^\s*"[^"]+\s*(>=|<=|~=|!=|<|>|==[^"]*\*)'
+      - id: forbid-ble001-ignore
+        name: Forbid explicit BLE001 ignores
+        language: pygrep
+        types: [python]
+        entry: '#\s*(?:noqa|ruff:\s*noqa):\s*[^#\n]*\bBLE001\b'

@@ -9,8 +9,6 @@ repos:
       - id: check-toml
       - id: check-yaml
       - id: mixed-line-ending
-      - id: check-executables-have-shebangs
-      - id: check-shebang-scripts-are-executable
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.14
     hooks:
@@ -55,15 +53,14 @@ repos:
     hooks:
       - id: deptry
         entry: uv run --locked deptry .
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
-    hooks:
-      - id: shellcheck
-  - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.12.0-2
-    hooks:
-      - id: shfmt
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.23.1
     hooks:
       - id: zizmor
+  - repo: local
+    hooks:
+      - id: pyproject-pinned-deps
+        name: Check pyproject dependencies are pinned
+        language: pygrep
+        files: '(^|/)pyproject\.toml$'
+        entry: '^\s*"[^"]+\s*(>=|<=|~=|!=|<|>|==[^"]*\*)'

@@ -586,7 +586,7 @@ class EditorState(rx.State):
 
         # Fall back to active tab's path if file_path is not provided or is an in-memory URI
         if not file_path or file_path.startswith("inmemory://"):
-            active_tab = self.get_active_tab()
+            active_tab = self.active_tab
             if active_tab and active_tab.path:
                 file_path = active_tab.path
 
@@ -626,7 +626,7 @@ class EditorState(rx.State):
 
         # Fall back to active tab's path if file_path is not provided or is an in-memory URI
         if not file_path or file_path.startswith("inmemory://"):
-            active_tab = self.get_active_tab()
+            active_tab = self.active_tab
             if active_tab and active_tab.path:
                 file_path = active_tab.path
 
@@ -674,7 +674,7 @@ class EditorState(rx.State):
 
         # Fall back to active tab's path if file_path is not provided or is an in-memory URI
         if not file_path or file_path.startswith("inmemory://"):
-            active_tab = self.get_active_tab()
+            active_tab = self.active_tab
             if active_tab and active_tab.path:
                 file_path = active_tab.path
 
@@ -729,7 +729,7 @@ class EditorState(rx.State):
         file_path = request.get("file_path")
 
         if not file_path or file_path.startswith("inmemory://"):
-            active_tab = self.get_active_tab()
+            active_tab = self.active_tab
             if active_tab and active_tab.path:
                 file_path = active_tab.path
 
@@ -776,7 +776,7 @@ class EditorState(rx.State):
         file_path = request.get("file_path")
 
         if not file_path or file_path.startswith("inmemory://"):
-            active_tab = self.get_active_tab()
+            active_tab = self.active_tab
             if active_tab and active_tab.path:
                 file_path = active_tab.path
 
@@ -805,7 +805,7 @@ class EditorState(rx.State):
                 },
             }
 
-        locations = [lsp_to_monaco_location(ref) for ref in references if isinstance(ref, dict)]
+        locations = [lsp_to_monaco_location(ref) for ref in references]
         self.reference_response = {"items": locations}
         logger.debug(f"Updated reference response for file {file_path}, line {line}, column {column}")
 
@@ -819,7 +819,7 @@ class EditorState(rx.State):
         file_path = request.get("file_path")
 
         if not file_path or file_path.startswith("inmemory://"):
-            active_tab = self.get_active_tab()
+            active_tab = self.active_tab
             if active_tab and active_tab.path:
                 file_path = active_tab.path
 
@@ -855,7 +855,7 @@ class EditorState(rx.State):
         new_name = request.get("new_name", "")
 
         if not file_path or file_path.startswith("inmemory://"):
-            active_tab = self.get_active_tab()
+            active_tab = self.active_tab
             if active_tab and active_tab.path:
                 file_path = active_tab.path
 

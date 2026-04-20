@@ -35,7 +35,7 @@ dependencies = [
     # To manage the backend process
     "psutil==7.2.2",
     # Runtime data validation
-    "pydantic==2.12.5",
+    "pydantic==2.13.0",
     # To detect programming languages
     "pygments==2.20.0",
     # Displays the web UI in a native Tauri window

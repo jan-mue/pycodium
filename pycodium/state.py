@@ -7,8 +7,8 @@ import time
 from pathlib import Path
 from uuid import uuid4
 
-import aiofiles
 import reflex as rx
+from anyio import open_file
 from reflex.event import EventCallback, EventSpec, KeyInputInfo
 from typing_extensions import Unpack
 from watchfiles import Change, awatch
@@ -83,7 +83,7 @@ class EditorState(rx.State):
             A tuple of (decoded_content, encoding) if successful, None if the file
             is binary or uses an unsupported encoding.
         """
-        async with aiofiles.open(path, "rb") as f:
+        async with await open_file(path, "rb") as f:
             file_content = await f.read()
 
         # PEP3120 suggests using UTF-8 as the default encoding for Python source files
@@ -162,7 +162,7 @@ class EditorState(rx.State):
             return
 
         logger.debug(f"Saving content of tab {active_tab.id} to {active_tab.path}")
-        async with aiofiles.open(self.project_root.parent / active_tab.path, "w", encoding=active_tab.encoding) as f:
+        async with await open_file(self.project_root.parent / active_tab.path, "w", encoding=active_tab.encoding) as f:
             await f.write(active_tab.content)
         logger.debug(f"Content of tab {active_tab.id} saved successfully")
 
@@ -494,7 +494,7 @@ class EditorState(rx.State):
         async for changes in awatch(file_path, stop_event=active_tab.on_not_active):
             for change in changes:
                 if change[0] == Change.modified:
-                    async with aiofiles.open(file_path, encoding=active_tab.encoding) as f, self:
+                    async with await open_file(file_path, encoding=active_tab.encoding) as f, self:
                         active_tab.content = await f.read()
 
                         # workaround for https://github.com/orgs/reflex-dev/discussions/1644

@@ -116,16 +116,18 @@ def test_open_project_no_initial_path(state: EditorState, monkeypatch: pytest.Mo
     assert len(state.expanded_folders) == 0
 
 
-def test_open_project(tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_open_project(tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "dir").mkdir()
     (tmp_path / "file.txt").write_text("hi")
     monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
-    state.open_project()
+    await state.open_project()
     assert state.file_tree is not None
     assert tmp_path.name in state.expanded_folders
 
 
-def test_open_project_shallow_loading(tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_open_project_shallow_loading(
+    tmp_path: Path, state: EditorState, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test that open_project only loads immediate children (shallow loading)."""
     (tmp_path / "dir1").mkdir()
     (tmp_path / "dir1" / "subdir").mkdir()
@@ -134,7 +136,7 @@ def test_open_project_shallow_loading(tmp_path: Path, state: EditorState, monkey
     (tmp_path / "file.txt").write_text("hi")
 
     monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
-    state.open_project()
+    await state.open_project()
 
     assert state.file_tree is not None
     assert state.file_tree.loaded is True
@@ -155,7 +157,7 @@ async def test_toggle_folder_lazy_loads_contents(
     (tmp_path / "dir1" / "file_in_dir1.txt").write_text("content")
 
     monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
-    state.open_project()
+    await state.open_project()
 
     assert state.file_tree is not None
     dir1 = next((sp for sp in state.file_tree.sub_paths if sp.name == "dir1"), None)
@@ -182,7 +184,7 @@ async def test_toggle_folder_does_not_reload_loaded_dir(
     (tmp_path / "dir1" / "file.txt").write_text("content")
 
     monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(tmp_path))
-    state.open_project()
+    await state.open_project()
 
     folder_path = f"{tmp_path.name}/dir1"
 
@@ -491,13 +493,13 @@ async def test_open_file_with_active_tab_history(state: EditorState, tmp_path: P
     assert tab1.on_not_active.is_set()
 
 
-def test_open_project_with_file_path(state: EditorState, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_open_project_with_file_path(state: EditorState, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test open_project sets project_root to parent when initial path is a file."""
     test_file = tmp_path / "test.py"
     test_file.write_text("print('hello')")
 
     monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(test_file))
-    state.open_project()
+    await state.open_project()
 
     assert state.project_root == tmp_path
     assert state.file_tree is not None

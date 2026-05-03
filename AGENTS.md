@@ -125,3 +125,10 @@
 - Helper functions are in `tests/helpers.py` (e.g., `open_file()`, `wait_for_folder()`)
 - Use `create_app_harness_with_path()` to start the app with a custom initial path
 - Never use `page.wait_for_timeout()` - use proper signals like `expect().to_be_visible()`
+
+### Custom Lint Rules
+
+- Use pygrep hooks for simple custom lint rules. They are defined in `.pre-commit-config.yaml`.
+- Write AST-based lint rules with ast-grep and add them to `.ast-grep/rules/`. Config: `sgconfig.yml`
+- Run the rules with `pre-commit run ast-grep -a` and test them with `sg run --pattern 'class $NAME' --lang python .`
+- Use the ast-grep skill

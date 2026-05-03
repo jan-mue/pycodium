@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "ast-grep/skills/ast-grep/SKILL.md",
       "computedHash": "3bca45167617f547e97454ae16d271ba3aeb2550d89e6ef1942057bd122c0061"
+    },
+    "github": {
+      "source": "mitsuhiko/agent-stuff",
+      "sourceType": "github",
+      "skillPath": "skills/github/SKILL.md",
+      "computedHash": "a7580b43bdc65d4f6469ef7e631dbbea649714dc3bbedc060f23525d331a7e53"
     }
   }
 }

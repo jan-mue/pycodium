@@ -65,7 +65,7 @@ repos:
         entry: sg scan --color=never --update-all --report-style=short
         types: [python]
         additional_dependencies:
-          - ast-grep-cli==0.42.0
+          - ast-grep-cli==0.42.1
       - id: pyproject-pinned-deps
         name: Check pyproject dependencies are pinned
         language: pygrep

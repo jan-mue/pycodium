@@ -207,3 +207,6 @@ requirements.txt
 
 # CodSpeed
 .codspeed/
+
+# OpenCode
+.opencode/

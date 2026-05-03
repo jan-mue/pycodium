@@ -5,7 +5,7 @@ import reflex as rx
 from pycodium.state import EditorState
 
 
-def editor_tabs():
+def editor_tabs() -> rx.Component:
     """Creates the editor tabs component."""
     return rx.el.div(
         rx.el.div(

@@ -59,7 +59,7 @@ class BasedPyrightLSPClient:
                 self.logger.warning("Server didn't shut down gracefully, terminating")
                 self.process.terminate()
                 await self.process.wait()
-            except Exception as e:  # noqa: BLE001
+            except OSError as e:
                 self.logger.error(f"Error during server shutdown: {e}")
                 if self.process.returncode is None:
                     self.process.kill()

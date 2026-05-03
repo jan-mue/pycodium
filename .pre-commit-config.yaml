@@ -9,10 +9,8 @@ repos:
       - id: check-toml
       - id: check-yaml
       - id: mixed-line-ending
-      - id: check-executables-have-shebangs
-      - id: check-shebang-scripts-are-executable
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.14
+    rev: v0.15.12
     hooks:
       - id: ruff-check
         args: [--fix, --exit-non-zero-on-fix]
@@ -33,21 +31,21 @@ repos:
     hooks:
       - id: yamlfmt
   - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.11
+    rev: v1.7.12
     hooks:
       - id: actionlint
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: v2.20.0
+    rev: v2.21.1
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.22.0
+    rev: v0.22.1
     hooks:
       - id: markdownlint-cli2
         args: [--fix]
-        exclude: CHANGELOG\.md
+        exclude: CHANGELOG\.md|\.agents/
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.2
+    rev: 0.11.7
     hooks:
       - id: uv-lock
   - repo: https://github.com/fpgmaas/deptry.git
@@ -55,15 +53,26 @@ repos:
     hooks:
       - id: deptry
         entry: uv run --locked deptry .
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
-    hooks:
-      - id: shellcheck
-  - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.12.0-2
-    hooks:
-      - id: shfmt
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.23.1
+    rev: v1.24.1
     hooks:
       - id: zizmor
+  - repo: local
+    hooks:
+      - id: ast-grep
+        name: ast-grep lint
+        language: python
+        entry: sg scan --color=never --update-all --report-style=short
+        types: [python]
+        additional_dependencies:
+          - ast-grep-cli==0.42.0
+      - id: pyproject-pinned-deps
+        name: Check pyproject dependencies are pinned
+        language: pygrep
+        files: '(^|/)pyproject\.toml$'
+        entry: '^\s*"[^"]+\s*(>=|<=|~=|!=|<|>|==[^"]*\*)'
+      - id: forbid-ble001-ignore
+        name: Forbid explicit BLE001 ignores
+        language: pygrep
+        types: [python]
+        entry: '#\s*(?:noqa|ruff:\s*noqa):\s*[^#\n]*\bBLE001\b'

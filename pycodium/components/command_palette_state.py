@@ -192,7 +192,7 @@ class CommandPaletteState(rx.State):
             await self._restart_lsp_with_interpreter(interpreter_path)
             await self.close_command_palette()
             return rx.toast.success(f"Python interpreter set to: {interpreter_path}")
-        except Exception as e:  # noqa: BLE001
+        except (FileNotFoundError, PermissionError) as e:
             logger.error(f"Failed to set Python interpreter: {e}")
             return rx.toast.error(f"Failed to set interpreter: {e}")
 
@@ -258,7 +258,7 @@ class CommandPaletteState(rx.State):
                 version_str = self._get_version_string(path_entry)
                 interpreters.append({"path": path_str, "version": version_str})
 
-        except Exception as e:  # noqa: BLE001
+        except OSError as e:
             logger.warning(f"Error discovering interpreters with pythonfinder: {e}")
 
     def _get_version_string(self, path_entry: object) -> str:
@@ -308,7 +308,7 @@ class CommandPaletteState(rx.State):
             if "venv" not in version_str.lower():
                 version_str += " (venv)"
             return version_str
-        except Exception:  # noqa: BLE001
+        except FileNotFoundError:
             return "Python (venv)"
 
     @rx.var

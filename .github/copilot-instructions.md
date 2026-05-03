@@ -105,7 +105,7 @@
 - Break functionality into separate building blocks
 - Organize constants in dedicated modules
 - Always specify error types in try-except blocks and include logging
-- Don't call sync code from async functions (e.g. use `aiofiles.open()` instead of `open()`)
+- Don't call sync code from async functions (e.g. use `anyio.open_file()` instead of `open()`)
 
 ## Testing
 

@@ -7,8 +7,9 @@ import time
 from pathlib import Path
 from uuid import uuid4
 
-import aiofiles
 import reflex as rx
+from anyio import Path as AsyncPath
+from anyio import open_file
 from reflex.event import EventCallback, EventSpec, KeyInputInfo
 from typing_extensions import Unpack
 from watchfiles import Change, awatch
@@ -64,7 +65,7 @@ class EditorState(rx.State):
             self.expanded_folders.remove(folder_path)
         else:
             # Lazily load directory contents when first expanded
-            self._load_directory_contents(folder_path)
+            await self._load_directory_contents(folder_path)
             self.expanded_folders.add(folder_path)
 
     def _stop_updating_active_tab(self) -> None:
@@ -73,7 +74,7 @@ class EditorState(rx.State):
             return
         active_tab.on_not_active.set()  # Signal to stop watching the file for changes
 
-    async def _read_and_decode_file(self, path: Path) -> tuple[str, str] | None:
+    async def _read_and_decode_file(self, path: AsyncPath) -> tuple[str, str] | None:
         """Read and decode a file's content.
 
         Args:
@@ -83,7 +84,7 @@ class EditorState(rx.State):
             A tuple of (decoded_content, encoding) if successful, None if the file
             is binary or uses an unsupported encoding.
         """
-        async with aiofiles.open(path, "rb") as f:
+        async with await open_file(path, "rb") as f:
             file_content = await f.read()
 
         # PEP3120 suggests using UTF-8 as the default encoding for Python source files
@@ -146,7 +147,7 @@ class EditorState(rx.State):
 
         tab = next((tab for tab in self.tabs if tab.path == file_path), None)
         if not tab:
-            result = await self._read_and_decode_file(self.project_root.parent / file_path)
+            result = await self._read_and_decode_file(AsyncPath(self.project_root.parent / file_path))
             if result is None:
                 return rx.toast.error("The file is either binary or uses an unsupported text encoding.")
             decoded_content, encoding = result
@@ -162,7 +163,7 @@ class EditorState(rx.State):
             return
 
         logger.debug(f"Saving content of tab {active_tab.id} to {active_tab.path}")
-        async with aiofiles.open(self.project_root.parent / active_tab.path, "w", encoding=active_tab.encoding) as f:
+        async with await open_file(self.project_root.parent / active_tab.path, "w", encoding=active_tab.encoding) as f:
             await f.write(active_tab.content)
         logger.debug(f"Content of tab {active_tab.id} saved successfully")
 
@@ -174,12 +175,12 @@ class EditorState(rx.State):
             file_path: The absolute path to the file to open.
         """
         logger.debug(f"Opening file from menu: {file_path}")
-        path = Path(file_path)
+        path = AsyncPath(file_path)
 
-        if not path.exists():
+        if not await path.exists():
             return rx.toast.error(f"File not found: {file_path}")
 
-        if not path.is_file():
+        if not await path.is_file():
             return rx.toast.error(f"Not a file: {file_path}")
 
         tab = next((tab for tab in self.tabs if tab.path == file_path), None)
@@ -200,15 +201,15 @@ class EditorState(rx.State):
             folder_path: The absolute path to the folder to open.
         """
         logger.debug(f"Opening folder from menu: {folder_path}")
-        path = Path(folder_path)
+        path = AsyncPath(folder_path)
 
-        if not path.exists():
+        if not await path.exists():
             return rx.toast.error(f"Folder not found: {folder_path}")
 
-        if not path.is_dir():
+        if not await path.is_dir():
             return rx.toast.error(f"Not a folder: {folder_path}")
 
-        self._set_project_root(path)
+        await self._set_project_root(path)
         logger.info(f"Project root changed to: {folder_path}")
 
     @rx.event
@@ -320,7 +321,7 @@ class EditorState(rx.State):
                 tab.content = content
                 break
 
-    def _list_directory(self, path: Path) -> list[FilePath]:
+    async def _list_directory(self, path: AsyncPath) -> list[FilePath]:
         """List the contents of a directory as FilePath objects.
 
         Args:
@@ -330,13 +331,13 @@ class EditorState(rx.State):
             A sorted list of FilePath objects (directories first, then by name).
         """
         sub_paths = [
-            FilePath(name=file_path.name, is_dir=file_path.is_dir(), loaded=not file_path.is_dir())
-            for file_path in path.iterdir()
+            FilePath(name=file_path.name, is_dir=await file_path.is_dir(), loaded=not await file_path.is_dir())
+            async for file_path in path.iterdir()
         ]
         sub_paths.sort(key=lambda x: (not x.is_dir, x.name.lower()))
         return sub_paths
 
-    def _build_file_tree(self, path: Path) -> FilePath:
+    async def _build_file_tree(self, path: AsyncPath) -> FilePath:
         """Build a shallow file tree for a given path (immediate children only).
 
         Args:
@@ -345,7 +346,7 @@ class EditorState(rx.State):
         Returns:
             FilePath: The file tree with only immediate children loaded.
         """
-        return FilePath(name=path.name, loaded=True, sub_paths=self._list_directory(path))
+        return FilePath(name=path.name, loaded=True, sub_paths=await self._list_directory(path))
 
     def _find_node_by_path(self, path: str) -> FilePath | None:
         """Find a node in the file tree by its path.
@@ -376,7 +377,7 @@ class EditorState(rx.State):
 
         return current
 
-    def _load_directory_contents(self, folder_path: str) -> None:
+    async def _load_directory_contents(self, folder_path: str) -> None:
         """Load the contents of a directory lazily.
 
         Args:
@@ -392,13 +393,13 @@ class EditorState(rx.State):
 
         parts = folder_path.split("/")
         relative_parts = parts[1:]
-        full_path = self.project_root / "/".join(relative_parts) if relative_parts else self.project_root
+        full_path = AsyncPath(self.project_root / "/".join(relative_parts) if relative_parts else self.project_root)
 
-        if not full_path.exists() or not full_path.is_dir():
+        if not await full_path.exists() or not await full_path.is_dir():
             logger.warning(f"Path does not exist or is not a directory: {full_path}")
             return
 
-        node.sub_paths = self._list_directory(full_path)
+        node.sub_paths = await self._list_directory(full_path)
         node.loaded = True
         # Trigger frontend update
         self.file_tree = self.file_tree
@@ -415,20 +416,20 @@ class EditorState(rx.State):
             if sub_path.is_dir:
                 self._sort_file_tree(sub_path)
 
-    def _set_project_root(self, path: Path) -> None:
+    async def _set_project_root(self, path: AsyncPath) -> None:
         """Set the project root and rebuild the file tree.
 
         Args:
             path: The path to set as the project root.
         """
-        self.project_root = path
+        self.project_root = Path(path)
         self.expanded_folders.clear()
-        self.file_tree = self._build_file_tree(self.project_root)
+        self.file_tree = await self._build_file_tree(AsyncPath(self.project_root))
         self._sort_file_tree(self.file_tree)
         self.expanded_folders.add(self.project_root.name)
 
     @rx.event
-    def open_project(self) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+    async def open_project(self) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
         """Open a project in the editor."""
         path_str = os.environ.get(INITIAL_PATH_ENV_VAR)
         if path_str is None:
@@ -437,13 +438,13 @@ class EditorState(rx.State):
             self.expanded_folders.clear()
             return None
 
-        initial_path = Path(path_str)
-        is_file = initial_path.is_file()
+        initial_path = AsyncPath(path_str)
+        is_file = await initial_path.is_file()
         project_root = initial_path.parent if is_file else initial_path
 
         logger.debug(f"Opening project {project_root}")
         start_time = time.perf_counter()
-        self._set_project_root(project_root)
+        await self._set_project_root(project_root)
         logger.debug(f"File tree built in {time.perf_counter() - start_time:.2f} seconds")
 
         if is_file:
@@ -494,7 +495,7 @@ class EditorState(rx.State):
         async for changes in awatch(file_path, stop_event=active_tab.on_not_active):
             for change in changes:
                 if change[0] == Change.modified:
-                    async with aiofiles.open(file_path, encoding=active_tab.encoding) as f, self:
+                    async with await open_file(file_path, encoding=active_tab.encoding) as f, self:
                         active_tab.content = await f.read()
 
                         # workaround for https://github.com/orgs/reflex-dev/discussions/1644

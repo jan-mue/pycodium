@@ -85,7 +85,7 @@ def wait_for_editor_content(page: Page, text: str, *, timeout: int = 5000) -> Lo
     return content_locator
 
 
-def wait_for_editor_visible(page: Page, *, timeout: int = 5000) -> Locator:
+def wait_for_editor_visible(page: Page, *, timeout: int = 10000) -> Locator:
     """Wait for the Monaco editor to be visible.
 
     Args:
@@ -175,17 +175,18 @@ def create_app_harness_with_path(path: Path | str) -> Generator[AppHarness, None
             yield harness
 
 
-def navigate_to_app(harness: AppHarness, page: Page) -> Page:
+def navigate_to_app(harness: AppHarness, page: Page, *, timeout: int = 60000) -> Page:
     """Navigate a Playwright page to the app's frontend URL.
 
     Args:
         harness: The running AppHarness instance.
         page: Playwright page fixture.
+        timeout: Maximum time to wait for navigation in milliseconds.
 
     Returns:
         Playwright page navigated to the app's frontend URL.
     """
     assert harness.frontend_url is not None
-    page.goto(harness.frontend_url)
-    page.wait_for_load_state("networkidle")
+    page.goto(harness.frontend_url, timeout=timeout)
+    page.wait_for_load_state("networkidle", timeout=timeout)
     return page

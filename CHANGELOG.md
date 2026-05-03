@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/jan-mue/pycodium/compare/v0.3.2...v0.3.3) (2026-05-03)
+
+
+### Bug Fixes
+
+* **deps:** update dependency typer to v0.25.0 ([#531](https://github.com/jan-mue/pycodium/issues/531)) ([f11cdc6](https://github.com/jan-mue/pycodium/commit/f11cdc6054100d95a61f19f6fec34258f64199a0))
+
 ## [0.3.2](https://github.com/jan-mue/pycodium/compare/v0.3.1...v0.3.2) (2026-05-01)
 
 

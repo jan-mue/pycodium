@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.3](https://github.com/jan-mue/pycodium/compare/v0.3.2...v0.3.3) (2026-05-18)
+
+
+### Bug Fixes
+
+* **deps:** update dependency pydantic to v2.13.4 ([#552](https://github.com/jan-mue/pycodium/issues/552)) ([fc750fa](https://github.com/jan-mue/pycodium/commit/fc750fa5538df67a534d23cfadf7547af5499dab))
+* **deps:** update dependency typer to v0.25.0 ([#531](https://github.com/jan-mue/pycodium/issues/531)) ([f11cdc6](https://github.com/jan-mue/pycodium/commit/f11cdc6054100d95a61f19f6fec34258f64199a0))
+* **deps:** update dependency typer to v0.25.1 ([#543](https://github.com/jan-mue/pycodium/issues/543)) ([1ae92b8](https://github.com/jan-mue/pycodium/commit/1ae92b8e5dd93db0e3c713f477329beccd7a8777))
+
 ## [0.3.2](https://github.com/jan-mue/pycodium/compare/v0.3.1...v0.3.2) (2026-05-01)
 
 

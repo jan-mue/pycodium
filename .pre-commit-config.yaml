@@ -54,7 +54,7 @@ repos:
       - id: deptry
         entry: uv run --locked deptry .
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.24.1
+    rev: v1.25.0
     hooks:
       - id: zizmor
   - repo: local

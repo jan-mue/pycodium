@@ -50,7 +50,7 @@ def run(
     run_app_with_tauri()
 
 
-def _run_reflex_backend(host: str, port: int) -> None:
+def run_reflex_backend(host: str, port: int) -> None:
     """Run the Reflex backend with Granian."""
     # TODO: use Granian's Python API
     command = [
@@ -113,7 +113,7 @@ def run_app_with_tauri(
     get_config(reload=True)
 
     logger.info(f"Starting Reflex app on port {backend_port}")
-    commands = [(_run_reflex_backend, backend_host, backend_port)]
+    commands = [(run_reflex_backend, backend_host, backend_port)]
     with processes.run_concurrently_context(*commands):  # type: ignore[reportArgumentType]
 
         def app_setup(app_handle: AppHandle) -> None:

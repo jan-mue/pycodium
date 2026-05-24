@@ -6,7 +6,7 @@ from inline_snapshot import snapshot
 from pytauri import AppHandle, RunEvent
 
 from pycodium import __version__
-from pycodium.main import _run_reflex_backend, app
+from pycodium.main import app, run_reflex_backend
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -66,7 +66,7 @@ def test_cli_starts_ide(runner: CliRunner, mocker: MockerFixture) -> None:
     assert result.exit_code == 0
 
     mock_reset.assert_called_once()
-    mock_run_concurrent.assert_called_once_with((_run_reflex_backend, "0.0.0.0", 8000))
+    mock_run_concurrent.assert_called_once_with((run_reflex_backend, "0.0.0.0", 8000))
     mock_wait_for_port.assert_called_with(8000)
     mock_init_dialog_plugin.assert_called_once()
     mock_manager_get_window.assert_called_once()

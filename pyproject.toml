@@ -41,7 +41,7 @@ dependencies = [
     # Displays the web UI in a native Tauri window
     "pytauri-wheel==0.8.0",
     # Web framework used for the GUI
-    "reflex==0.8.28.post1",
+    "reflex==0.9.3",
     # CLI framework
     "typer==0.25.1",
     # Type checking backward compatibility
@@ -75,6 +75,7 @@ dev = [
 [tool.hatch.build]
 include = [
     ".web/build/client",
+    "reflex.lock",
     "assets",
     "capabilities",
     "pycodium",
@@ -146,9 +147,6 @@ pytauri-wheel = [ "pytauri", "pytauri_plugins" ]
 [tool.deptry.per_rule_ignores]
 DEP004 = [
     "hatchling", # not required at runtime as it is only used to build the package
-]
-DEP002 = [
-    "granian", # used to run the Reflex backend
 ]
 
 [tool.pyproject-fmt]

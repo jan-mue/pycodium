@@ -9,7 +9,7 @@ import reflex as rx
 class MonacoEditor(rx.Component):
     """Monaco editor component."""
 
-    library = "@monaco-editor/react@4.7.0"
+    library = "@monaco-editor/react"
     tag = "MonacoEditor"
 
     is_default = True

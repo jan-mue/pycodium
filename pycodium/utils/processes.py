@@ -9,7 +9,7 @@ import psutil
 logger = logging.getLogger(__name__)
 
 
-def wait_for_port(port: int, timeout: int = 5) -> None:
+def wait_for_port(port: int, timeout: int = 50) -> None:
     """Wait for a specific port to become available."""
     logger.info(f"Waiting for port {port} to become available...")
     start_time = time.time()

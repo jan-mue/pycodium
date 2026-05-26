@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.helpers import create_app_harness_with_path, navigate_to_app
+from tests.helpers import navigate_to_app, navigate_to_app_with_path
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -35,13 +35,15 @@ def fastapi_repo(tmp_path_factory: pytest.TempPathFactory) -> Generator[Path, No
     shutil.rmtree(repo_path, ignore_errors=True)
 
 
-@pytest.fixture(scope="session")
-def reflex_web_app(fastapi_repo: Path) -> Generator[AppHarness, None, None]:
-    """Start the app with the FastAPI repo as initial path."""
-    yield from create_app_harness_with_path(fastapi_repo)
-
-
 @pytest.fixture
 def app_page(reflex_web_app: AppHarness, page: Page) -> Page:
     """Navigate to the app's frontend URL and return the page."""
     return navigate_to_app(reflex_web_app, page)
+
+
+@pytest.fixture
+def app_page_with_fastapi(
+    reflex_web_app: AppHarness, page: Page, fastapi_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> Page:
+    """Navigate to the app with the FastAPI repo as initial path."""
+    return navigate_to_app_with_path(reflex_web_app, page, fastapi_repo, monkeypatch)

@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 import pytest
 from playwright.sync_api import expect
 
+from tests.helpers import navigate_to_app_with_path
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -24,17 +26,16 @@ BENCHMARK_CHILD_FILE = "test_ws_router.py"
 
 
 @pytest.mark.benchmark
-def test_file_tree_initial_load_time(reflex_web_app: AppHarness, page: Page, fastapi_repo: Path) -> None:
+def test_file_tree_initial_load_time(
+    reflex_web_app: AppHarness, page: Page, fastapi_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Benchmark the initial file tree loading time for a large repository.
 
     This test measures the time from page load to seeing the root folder
     in the explorer. Uses FastAPI repo (~1000+ files) as a real-world benchmark.
     """
-    assert reflex_web_app.frontend_url is not None
+    navigate_to_app_with_path(reflex_web_app, page, fastapi_repo, monkeypatch)
     folder_name = fastapi_repo.name
-
-    page.goto(reflex_web_app.frontend_url)
-    page.wait_for_load_state("networkidle")
 
     file_explorer = page.locator('[data-testid="file-explorer"]')
     expect(file_explorer).to_be_visible()
@@ -45,17 +46,18 @@ def test_file_tree_initial_load_time(reflex_web_app: AppHarness, page: Page, fas
 
 
 def test_subdirectory_lazy_load_time(
-    reflex_web_app: AppHarness, page: Page, fastapi_repo: Path, benchmark: BenchmarkFixture
+    reflex_web_app: AppHarness,
+    page: Page,
+    fastapi_repo: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    benchmark: BenchmarkFixture,
 ) -> None:
     """Benchmark the lazy loading time when expanding a subdirectory.
 
     This test measures the time from clicking a folder to seeing its contents.
     """
-    assert reflex_web_app.frontend_url is not None
+    navigate_to_app_with_path(reflex_web_app, page, fastapi_repo, monkeypatch)
     folder_name = fastapi_repo.name
-
-    page.goto(reflex_web_app.frontend_url)
-    page.wait_for_load_state("networkidle")
 
     root_folder = page.locator(f'.folder-item:has-text("{folder_name}")').first
     root_folder.wait_for(state="visible", timeout=30000)

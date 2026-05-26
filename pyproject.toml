@@ -47,7 +47,7 @@ dependencies = [
     # Type checking backward compatibility
     "typing-extensions==4.15.0",
     # Update editor content when files change
-    "watchfiles==1.1.1",
+    "watchfiles==1.2.0",
 ]
 urls.Changelog = "https://github.com/jan-mue/pycodium/releases"
 urls.Documentation = "https://github.com/jan-mue/pycodium#readme"
@@ -62,13 +62,13 @@ dev = [
     "hatchling==1.29.0",
     "httpx==0.28.1",
     "inline-snapshot[black,dirty-equals]==0.33.0",
-    "playwright==1.59.0",
+    "playwright==1.60.0",
     "pyright==1.1.409",
     "pytest==9.0.3",
     "pytest-asyncio==1.3.0",
     "pytest-codspeed==5.0.2",
     "pytest-mock==3.15.1",
-    "pytest-playwright==0.7.2",
+    "pytest-playwright==0.8.0",
     "uvicorn==0.47.0",
 ]
 

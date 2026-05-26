@@ -175,6 +175,17 @@ def create_app_harness_with_path(path: Path | str) -> Generator[AppHarness, None
             yield harness
 
 
+def navigate_to_app_with_path(
+    harness: AppHarness, page: Page, path: Path | str, monkeypatch: pytest.MonkeyPatch
+) -> Page:
+    """Navigate to the app's frontend URL with a specific initial path."""
+    monkeypatch.setenv(INITIAL_PATH_ENV_VAR, str(path))
+    assert harness.frontend_url is not None
+    page.goto(harness.frontend_url)
+    page.wait_for_load_state("networkidle")
+    return page
+
+
 def navigate_to_app(harness: AppHarness, page: Page) -> Page:
     """Navigate a Playwright page to the app's frontend URL.
 

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 from playwright.sync_api import expect
 
-from tests.helpers import create_app_harness_with_path, expand_folder, navigate_to_app, wait_for_file, wait_for_folder
+from tests.helpers import expand_folder, navigate_to_app_with_path, wait_for_file, wait_for_folder
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -63,22 +63,14 @@ def test_folder_with_inaccessible_dir(tmp_path: Path) -> Generator[Path, None, N
     restricted_dir.chmod(stat.S_IRWXU)
 
 
-@pytest.fixture
-def app_with_inaccessible_dir(
-    test_folder_with_inaccessible_dir: Path,
-) -> Generator[AppHarness, None, None]:
-    """Start the app with a folder containing an inaccessible subdirectory."""
-    yield from create_app_harness_with_path(test_folder_with_inaccessible_dir)
-
-
-@pytest.fixture
-def inaccessible_dir_page(app_with_inaccessible_dir: AppHarness, page: Page) -> Page:
-    """Navigate to the app's frontend URL and return the page."""
-    return navigate_to_app(app_with_inaccessible_dir, page)
-
-
-def test_expanding_inaccessible_directory_shows_toast(inaccessible_dir_page: Page) -> None:
+def test_expanding_inaccessible_directory_shows_toast(
+    reflex_web_app: AppHarness, page: Page, test_folder_with_inaccessible_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test that expanding an inaccessible directory shows an error toast."""
+    inaccessible_dir_page = navigate_to_app_with_path(
+        reflex_web_app, page, test_folder_with_inaccessible_dir, monkeypatch
+    )
+
     expand_folder(inaccessible_dir_page, "restricted")
 
     # Verify that a toast error is shown with the folder name

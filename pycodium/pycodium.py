@@ -119,7 +119,6 @@ def index() -> rx.Component:
 
 
 app = rx.App(
-    theme=rx.theme(appearance="dark"),
     stylesheets=["/index.css"],
     backend_exception_handler=backend_exception_handler,
 )

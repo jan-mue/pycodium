@@ -494,7 +494,7 @@ class EditorState(rx.State):
         logger.debug(f"Starting to watch tab {active_tab.id} for changes from file {file_path}")
         async for changes in awatch(file_path, stop_event=active_tab.on_not_active):
             for change in changes:
-                if change[0] == Change.modified:
+                if change[0] in (Change.modified, Change.added):
                     async with await open_file(file_path, encoding=active_tab.encoding) as f, self:
                         active_tab.content = await f.read()
 

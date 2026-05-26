@@ -9,10 +9,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.helpers import create_app_harness_with_path, navigate_to_app
+from tests.helpers import navigate_to_app, navigate_to_app_with_path
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
     from pathlib import Path
 
     from playwright.sync_api import Page
@@ -57,36 +56,22 @@ def test_folder_with_multiple_files(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def app_with_initial_path(test_folder: Path) -> Generator[AppHarness, None, None]:
-    """Start the app with an initial path set via environment variable."""
-    yield from create_app_harness_with_path(test_folder)
+def cli_app_page(reflex_web_app: AppHarness, page: Page, test_folder: Path, monkeypatch: pytest.MonkeyPatch) -> Page:
+    """Navigate to the app with an initial path set via environment variable."""
+    return navigate_to_app_with_path(reflex_web_app, page, test_folder, monkeypatch)
 
 
 @pytest.fixture
-def cli_app_page(app_with_initial_path: AppHarness, page: Page) -> Page:
-    """Navigate to the app's frontend URL and return the page."""
-    return navigate_to_app(app_with_initial_path, page)
+def file_watch_page(
+    reflex_web_app: AppHarness, page: Page, test_folder_with_file: Path, monkeypatch: pytest.MonkeyPatch
+) -> Page:
+    """Navigate to the app with a watchable file folder."""
+    return navigate_to_app_with_path(reflex_web_app, page, test_folder_with_file, monkeypatch)
 
 
 @pytest.fixture
-def app_with_watchable_file(test_folder_with_file: Path) -> Generator[AppHarness, None, None]:
-    """Start the app with a test folder containing a watchable file."""
-    yield from create_app_harness_with_path(test_folder_with_file)
-
-
-@pytest.fixture
-def file_watch_page(app_with_watchable_file: AppHarness, page: Page) -> Page:
-    """Navigate to the app's frontend URL and return the page."""
-    return navigate_to_app(app_with_watchable_file, page)
-
-
-@pytest.fixture
-def app_with_multiple_files(test_folder_with_multiple_files: Path) -> Generator[AppHarness, None, None]:
-    """Start the app with a test folder containing multiple files."""
-    yield from create_app_harness_with_path(test_folder_with_multiple_files)
-
-
-@pytest.fixture
-def multi_file_page(app_with_multiple_files: AppHarness, page: Page) -> Page:
-    """Navigate to the app's frontend URL and return the page."""
-    return navigate_to_app(app_with_multiple_files, page)
+def multi_file_page(
+    reflex_web_app: AppHarness, page: Page, test_folder_with_multiple_files: Path, monkeypatch: pytest.MonkeyPatch
+) -> Page:
+    """Navigate to the app with a multiple files folder."""
+    return navigate_to_app_with_path(reflex_web_app, page, test_folder_with_multiple_files, monkeypatch)

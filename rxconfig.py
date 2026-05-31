@@ -68,6 +68,11 @@ config = rx.Config(
     app_name="pycodium",
     telemetry_enabled=False,
     show_built_with_reflex=False,
-    plugins=[rx.plugins.TailwindV3Plugin(tailwind_config)],
-    disable_plugins=["reflex.plugins.sitemap.SitemapPlugin"],
+    plugins=[
+        rx.plugins.RadixThemesPlugin(
+            rx.theme(appearance="dark", has_background=True, radius="large", accent_color="blue")
+        ),
+        rx.plugins.TailwindV3Plugin(tailwind_config),
+    ],
+    disable_plugins=[rx.plugins.SitemapPlugin],
 )

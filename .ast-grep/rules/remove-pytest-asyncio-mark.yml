@@ -1,0 +1,30 @@
+id: remove-pytest-asyncio-mark
+language: python
+message: Remove @pytest.mark.asyncio when asyncio_mode=auto
+note: |
+  The @pytest.mark.asyncio decorator is unnecessary when asyncio_mode=auto is set in pytest config,
+  as async test functions are automatically detected and run as coroutines. Remove the decorator to avoid
+  redundant marking.
+severity: error
+rule:
+  all:
+    - kind: decorator
+    - has:
+        pattern: pytest.mark.asyncio
+        stopBy: end
+    - precedes:
+        stopBy: end
+        any:
+          - pattern:
+              context: |
+                async def $NAME($$$ARGS):
+                  $$$BODY
+              selector: function_definition
+          - pattern:
+              context: |
+                async def $NAME($$$ARGS) -> $RET:
+                  $$$BODY
+              selector: function_definition
+        has:
+          field: name
+          regex: ^test_

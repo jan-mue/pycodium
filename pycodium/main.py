@@ -7,14 +7,18 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from pytauri import AppHandle, Manager, builder_factory, context_factory
+from granian.constants import Interfaces
+from pytauri import AppHandle, Manager, RunEvent, builder_factory, context_factory
+from pytauri.ffi.lib import RunEventType
+from pytauri_plugins.dialog import init as init_dialog_plugin
 from reflex import constants
 from reflex.config import environment, get_config
-from reflex.state import reset_disk_state_manager
+from reflex.istate.manager import reset_disk_state_manager
 from reflex.utils import exec, processes  # noqa: A004
 
 from pycodium import __version__
-from pycodium.constants import PROJECT_ROOT_DIR
+from pycodium.constants import INITIAL_PATH_ENV_VAR, PROJECT_ROOT_DIR
+from pycodium.menu import init_menu
 from pycodium.utils.processes import terminate_or_kill_process_on_port, wait_for_port
 
 # TODO: configure logging
@@ -31,10 +35,42 @@ def run(
     if show_version:
         print(__version__)
         return
-    logger.info(f"Opening IDE with path: {path}")
+
+    if path is not None:
+        resolved_path = path.resolve()
+        if resolved_path.exists():
+            os.environ[INITIAL_PATH_ENV_VAR] = str(resolved_path)
+            logger.info(f"Opening IDE with path: {resolved_path}")
+        else:
+            logger.warning(f"Path does not exist: {path}")
+    else:
+        logger.info("Opening IDE with no initial path")
+
     # TODO: run the frontend in dev mode when the package is installed in editable mode
     run_app_with_tauri()
-    # TODO: actually open path in editor
+
+
+def run_reflex_backend(host: str, port: int) -> None:
+    """Run the Reflex backend with Granian."""
+    # TODO: use Granian's Python API
+    command = [
+        sys.executable,
+        "-m",
+        "granian",
+        *("--host", host),
+        *("--port", str(port)),
+        *("--interface", str(Interfaces.ASGI)),
+        *("--factory", exec.get_app_instance_from_file()),
+    ]
+
+    extra_env = {environment.REFLEX_SKIP_COMPILE.name: "true"}
+
+    if "GRANIAN_WORKERS" not in os.environ:
+        extra_env["GRANIAN_WORKERS"] = str(processes.get_num_workers())
+    if "GRANIAN_LOG_LEVEL" not in os.environ:
+        extra_env["GRANIAN_LOG_LEVEL"] = "critical"
+
+    processes.new_process(command, run=True, show_logs=True, env=extra_env)
 
 
 def run_app_with_tauri(
@@ -52,6 +88,7 @@ def run_app_with_tauri(
     os.chdir(PROJECT_ROOT_DIR)
     config = get_config()
 
+    backend_port = backend_port or config.backend_port
     backend_host = backend_host or config.backend_host
 
     environment.REFLEX_ENV_MODE.set(constants.Env.PROD)
@@ -76,19 +113,35 @@ def run_app_with_tauri(
     get_config(reload=True)
 
     logger.info(f"Starting Reflex app on port {backend_port}")
-    commands = [(exec.run_backend_prod, backend_host, backend_port, config.loglevel.subprocess_level(), True)]
+    commands = [(run_reflex_backend, backend_host, backend_port)]
     with processes.run_concurrently_context(*commands):  # type: ignore[reportArgumentType]
 
         def app_setup(app_handle: AppHandle) -> None:
             """Setup hook for Tauri application."""
+            # Register the dialog plugin for native file/folder dialogs
+            app_handle.plugin(init_dialog_plugin())
+
             window = Manager.get_webview_window(app_handle, "main")
             wait_for_port(backend_port)
             if window:
+                init_menu(app_handle, window)
                 window.set_title(window_title)
                 window.show()
                 window.set_focus()
             else:
                 logger.error("Could not find main window")
+
+        def on_run_event(_app_handle: AppHandle, event: RunEventType) -> None:
+            """Handle Tauri run events for cleanup on exit.
+
+            Note: This callback must not raise exceptions (undefined behavior in PyTauri).
+            """
+            if isinstance(event, RunEvent.Exit):
+                try:
+                    logger.info("Received Exit event, terminating backend...")
+                    terminate_or_kill_process_on_port(backend_port)
+                except Exception:
+                    logger.exception("Error during backend termination")
 
         tauri_app = builder_factory().build(
             context_factory(PROJECT_ROOT_DIR),
@@ -96,8 +149,7 @@ def run_app_with_tauri(
             setup=app_setup,
         )
         logger.info("Tauri app running...")
-        exit_code = tauri_app.run_return()  # blocks until the application exits
-        terminate_or_kill_process_on_port(backend_port)
+        exit_code = tauri_app.run_return(on_run_event)  # blocks until the application exits
         if exit_code != 0:
             logger.error(f"Tauri app exited with code {exit_code}")
             sys.exit(exit_code)

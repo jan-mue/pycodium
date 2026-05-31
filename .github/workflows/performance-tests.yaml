@@ -1,0 +1,49 @@
+name: Run performance tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  performance-test:
+    if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # required for actions/checkout
+      id-token: write # required for OIDC authentication with CodSpeed
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version-file: pyproject.toml
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.16"
+          enable-cache: true
+
+      - name: Install Tauri dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends libwebkit2gtk-4.1-dev libayatana-appindicator3-dev
+
+      - name: Install Python dependencies
+        run: uv sync --locked
+
+      - name: Install Playwright browsers
+        run: uv run --no-sync playwright install chromium --with-deps
+
+      - name: Run performance tests
+        uses: CodSpeedHQ/action@3194d9a39c4d46684cb44bf7207fc56626aad8fd # v4.15.1
+        with:
+          mode: walltime
+          run: uv run --no-sync pytest tests/performance --codspeed

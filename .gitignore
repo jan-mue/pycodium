@@ -204,3 +204,9 @@ assets/external/
 *.db
 .states
 requirements.txt
+
+# CodSpeed
+.codspeed/
+
+# OpenCode
+.opencode/

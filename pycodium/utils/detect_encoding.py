@@ -56,10 +56,11 @@ def decode(text: bytes, default_encoding: str | None = None) -> tuple[str, str]:
     try:
         if text.startswith(BOM_UTF8):
             return str(text[len(BOM_UTF8) :], "utf-8"), "utf-8-bom"
+        elif text.startswith(BOM_UTF32):
+            # Check UTF-32 before UTF-16 since UTF-32 LE BOM starts with UTF-16 LE BOM
+            return str(text[len(BOM_UTF32) :], "utf-32"), "utf-32"
         elif text.startswith(BOM_UTF16):
             return str(text[len(BOM_UTF16) :], "utf-16"), "utf-16"
-        elif text.startswith(BOM_UTF32):
-            return str(text[len(BOM_UTF32) :], "utf-32"), "utf-32"
         coding = get_encoding(text, default_encoding=default_encoding)
         if coding:
             return str(text, coding), coding

@@ -95,9 +95,16 @@ def explorer() -> rx.Component:
             ),
             class_name="p-2 text-xs uppercase font-bold flex justify-between items-center",
         ),
-        rx.el.div(
-            file_tree_view(name=EditorState.file_tree.name, sub_paths=EditorState.file_tree.sub_paths, is_dir=True),  # type: ignore[reportOptionalMemberAccess]
-            class_name="mt-2",
+        rx.cond(
+            EditorState.file_tree,
+            rx.el.div(
+                file_tree_view(name=EditorState.file_tree.name, sub_paths=EditorState.file_tree.sub_paths, is_dir=True),  # type: ignore[reportOptionalMemberAccess]
+                class_name="mt-2",
+            ),
+            rx.el.div(
+                rx.el.span("No folder opened", class_name="text-gray-500 text-sm"),
+                class_name="mt-4 px-2",
+            ),
         ),
         class_name="w-full h-full overflow-auto",
         tab_index=-1,

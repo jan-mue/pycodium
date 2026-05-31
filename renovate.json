@@ -1,4 +1,20 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>jan-mue/renovate-config"]
+  "extends": ["github>jan-mue/renovate-config"],
+  "enabledManagers": ["bun"],
+  "packageRules": [
+    {
+      "matchManagers": ["bun"],
+      "matchPackageNames": ["*"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["bun"],
+      "matchPackageNames": [
+        "@monaco-editor/react",
+        "react-resizable-panels"
+      ],
+      "enabled": true
+    }
+  ]
 }

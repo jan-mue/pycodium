@@ -165,11 +165,11 @@ expand_tables = [
 [tool.pyright]
 typeCheckingMode = "strict"
 reportImplicitOverride = true
-reportUnnecessaryTypeIgnoreComment = true
 reportUnknownArgumentType = false
 reportUnknownLambdaType = false
 reportUnknownMemberType = false
 reportUnknownVariableType = false
+reportUnnecessaryTypeIgnoreComment = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

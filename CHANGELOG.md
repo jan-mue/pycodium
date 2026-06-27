@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.3.3](https://github.com/jan-mue/pycodium/compare/v0.3.2...v0.3.3) (2026-06-27)
+
+
+### Bug Fixes
+
+* **deps:** update dependency anyio to v4.14.0 ([#645](https://github.com/jan-mue/pycodium/issues/645)) ([e052752](https://github.com/jan-mue/pycodium/commit/e052752522e5489d16ecccd5759e9c208845e71a))
+* **deps:** update dependency granian to v2.7.5 ([#607](https://github.com/jan-mue/pycodium/issues/607)) ([f267f56](https://github.com/jan-mue/pycodium/commit/f267f56e9ca24d5e948c7f21117132ef165c74d5))
+* **deps:** update dependency granian to v2.7.6 ([#633](https://github.com/jan-mue/pycodium/issues/633)) ([3dc8474](https://github.com/jan-mue/pycodium/commit/3dc8474167a90019329ff8b81061f9dd00896f72))
+* **deps:** update dependency lucide-react to v1.16.0 ([#585](https://github.com/jan-mue/pycodium/issues/585)) ([54e2657](https://github.com/jan-mue/pycodium/commit/54e2657cd70170d7f06264996c8c19c377a3593f))
+* **deps:** update dependency lucide-react to v1.17.0 ([#594](https://github.com/jan-mue/pycodium/issues/594)) ([f561548](https://github.com/jan-mue/pycodium/commit/f561548e58d7c2ec62807ef184a498bc30ea1a93))
+* **deps:** update dependency pydantic to v2.13.4 ([#552](https://github.com/jan-mue/pycodium/issues/552)) ([fc750fa](https://github.com/jan-mue/pycodium/commit/fc750fa5538df67a534d23cfadf7547af5499dab))
+* **deps:** update dependency react-error-boundary to v6.1.2 ([#589](https://github.com/jan-mue/pycodium/issues/589)) ([54a13f7](https://github.com/jan-mue/pycodium/commit/54a13f7d40798035f26987aaf8b97826ae1c9c0c))
+* **deps:** update dependency react-resizable-panels to v3.0.6 ([#583](https://github.com/jan-mue/pycodium/issues/583)) ([e32fb28](https://github.com/jan-mue/pycodium/commit/e32fb280865dc59b71b6fd0d345dd5caaa122594))
+* **deps:** update dependency reflex to v0.9.4 ([#627](https://github.com/jan-mue/pycodium/issues/627)) ([3c3813c](https://github.com/jan-mue/pycodium/commit/3c3813ca351276115002d4d39246ab0c68e278af))
+* **deps:** update dependency reflex to v0.9.5.post2 ([#635](https://github.com/jan-mue/pycodium/issues/635)) ([f5bda74](https://github.com/jan-mue/pycodium/commit/f5bda74bbc174a2785f578bc24893dc745b3d6b0))
+* **deps:** update dependency typer to v0.25.0 ([#531](https://github.com/jan-mue/pycodium/issues/531)) ([f11cdc6](https://github.com/jan-mue/pycodium/commit/f11cdc6054100d95a61f19f6fec34258f64199a0))
+* **deps:** update dependency typer to v0.25.1 ([#543](https://github.com/jan-mue/pycodium/issues/543)) ([1ae92b8](https://github.com/jan-mue/pycodium/commit/1ae92b8e5dd93db0e3c713f477329beccd7a8777))
+* **deps:** update dependency typer to v0.26.0 ([#603](https://github.com/jan-mue/pycodium/issues/603)) ([1df3b7e](https://github.com/jan-mue/pycodium/commit/1df3b7e4f8b4e428d63b2e766defb2147ac50d53))
+* **deps:** update dependency typer to v0.26.1 ([#604](https://github.com/jan-mue/pycodium/issues/604)) ([bce1d7d](https://github.com/jan-mue/pycodium/commit/bce1d7d30518f642ba94ad22fc4804fa99e63bff))
+* **deps:** update dependency typer to v0.26.2 ([#606](https://github.com/jan-mue/pycodium/issues/606)) ([dcaf21f](https://github.com/jan-mue/pycodium/commit/dcaf21fdbfa4b68eb5d3fe60a87aff287bf2fd6e))
+* **deps:** update dependency typer to v0.26.3 ([#609](https://github.com/jan-mue/pycodium/issues/609)) ([63f2dc8](https://github.com/jan-mue/pycodium/commit/63f2dc823c5b592f7307d4f81cd3357423d050df))
+* **deps:** update dependency typer to v0.26.4 ([#612](https://github.com/jan-mue/pycodium/issues/612)) ([aa5e968](https://github.com/jan-mue/pycodium/commit/aa5e968cf655678fddd74c046997cb18c577385c))
+* **deps:** update dependency typer to v0.26.5 ([#615](https://github.com/jan-mue/pycodium/issues/615)) ([150cbd2](https://github.com/jan-mue/pycodium/commit/150cbd28c60ccc406273d6046a901da0e3872026))
+* **deps:** update dependency typer to v0.26.6 ([#620](https://github.com/jan-mue/pycodium/issues/620)) ([62af2ff](https://github.com/jan-mue/pycodium/commit/62af2ff5efd73981bb503b370ca8d01de23a385c))
+* **deps:** update dependency typer to v0.26.7 ([#621](https://github.com/jan-mue/pycodium/issues/621)) ([cbd4ffb](https://github.com/jan-mue/pycodium/commit/cbd4ffb9db2a0542a0432b997cf2fc6951c4bde3))
+* **deps:** update dependency watchfiles to v1.2.0 ([#573](https://github.com/jan-mue/pycodium/issues/573)) ([23a043d](https://github.com/jan-mue/pycodium/commit/23a043d796462649470caacc8c3c67f63970a72e))
+* Upgrade Reflex to version 0.9.3 ([#571](https://github.com/jan-mue/pycodium/issues/571)) ([3e79710](https://github.com/jan-mue/pycodium/commit/3e7971006e8bd9b5b0a148a6230c51ee3597ce84))
+
 ## [0.3.2](https://github.com/jan-mue/pycodium/compare/v0.3.1...v0.3.2) (2026-05-01)
 
 

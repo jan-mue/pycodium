@@ -63,7 +63,7 @@ dev = [
     "httpx==0.28.1",
     "inline-snapshot[black,dirty-equals]==0.34.2",
     "playwright==1.60.0",
-    "pyright==1.1.410",
+    "pyright==1.1.411",
     "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
     "pytest-codspeed==5.0.3",

@@ -45,7 +45,7 @@ dependencies = [
     # CLI framework
     "typer==0.26.8",
     # Type checking backward compatibility
-    "typing-extensions==4.15.0",
+    "typing-extensions==4.16.0",
     # Update editor content when files change
     "watchfiles==1.2.0",
 ]

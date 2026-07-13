@@ -69,7 +69,7 @@ dev = [
     "pytest-codspeed==5.0.3",
     "pytest-mock==3.15.1",
     "pytest-playwright==0.8.0",
-    "uvicorn==0.50.1",
+    "uvicorn==0.50.2",
 ]
 
 [tool.hatch.build]

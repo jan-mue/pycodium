@@ -534,7 +534,7 @@ wheels = [
 
 [[package]]
 name = "inline-snapshot"
-version = "0.34.2"
+version = "0.35.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asttokens" },
@@ -544,9 +544,9 @@ dependencies = [
     { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/91/c3/b5c36ab59e355b8d7c59205b8903fa74458c6938c9691f7d7730404f94c9/inline_snapshot-0.34.2.tar.gz", hash = "sha256:d160cb6059e00916c2e846abc014ead6f01fb24479f13696fb8670d7a7937f67", size = 2641142, upload-time = "2026-06-19T21:17:27.338Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8b/98/6492994344e8c1dbdd01eb6e8ceec8a8fc61321e9aebba5901f3d7609360/inline_snapshot-0.35.1.tar.gz", hash = "sha256:c3cd3b68aa395f2c43b5fd393f2193da677043c3d653d9eb4fb0ccb09e3b184c", size = 2534613, upload-time = "2026-07-16T05:31:56.085Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bb/2a/84fe7ef052ac666e95e7cabdf0905aa3f2c90b5a117419760b39b577602a/inline_snapshot-0.34.2-py3-none-any.whl", hash = "sha256:743a514a08ffd0d2d62878b0208d4def5041585affa7db6b89f0ca2e23552361", size = 90717, upload-time = "2026-06-19T21:17:25.629Z" },
+    { url = "https://files.pythonhosted.org/packages/57/cd/4a007d3e5fd6d8559a46da113fecdd9596b6e57cd4f6ceaa3215d4c984ab/inline_snapshot-0.35.1-py3-none-any.whl", hash = "sha256:840d1cbe42810017530e1c7bb0aa987154fe05c8ba0cfacfefa2100769533564", size = 94638, upload-time = "2026-07-16T05:31:54.611Z" },
 ]
 
 [package.optional-dependencies]
@@ -780,7 +780,7 @@ dev = [
     { name = "deptry", specifier = "==0.25.1" },
     { name = "hatchling", specifier = "==1.31.0" },
     { name = "httpx", specifier = "==0.28.1" },
-    { name = "inline-snapshot", extras = ["black", "dirty-equals"], specifier = "==0.34.2" },
+    { name = "inline-snapshot", extras = ["black", "dirty-equals"], specifier = "==0.35.1" },
     { name = "playwright", specifier = "==1.61.0" },
     { name = "pyright", specifier = "==1.1.411" },
     { name = "pytest", specifier = "==9.1.1" },

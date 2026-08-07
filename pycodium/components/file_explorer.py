@@ -63,13 +63,12 @@ class FileTree(rx.ComponentState):
 
 file_tree_view = FileTree.create
 
+EMPTY_PATH: rx.Var[str] = rx.Var.create("")
+
 
 @rx.memo
 def file_tree(
-    name: rx.Var[str],
-    sub_paths: rx.Var[list[FilePath]],
-    is_dir: rx.Var[bool],
-    path: rx.Var[str] = "",
+    name: rx.Var[str], sub_paths: rx.Var[list[FilePath]], is_dir: rx.Var[bool], path: rx.Var[str] = EMPTY_PATH
 ) -> rx.Component:
     """Render a file tree item."""
     return file_tree_view(name=name, sub_paths=sub_paths, is_dir=is_dir, path=path)

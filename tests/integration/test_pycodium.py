@@ -107,6 +107,34 @@ def test_page_title(app_page: Page) -> None:
     expect(app_page).to_have_title("PyCodium")
 
 
+def test_app_component_tailwind_classes_are_generated(app_page: Page) -> None:
+    """Ensure Tailwind classes from compiled app_components are generated."""
+    required_classes = [
+        "bg-pycodium-activity-bar",
+        "bg-pycodium-sidebar-bg",
+        "bg-pycodium-statusbar-bg",
+        "text-pycodium-text",
+        "text-pycodium-icon",
+        "border-pycodium-highlight",
+        "bg-pycodium-tab-active",
+        "bg-pycodium-tab-inactive",
+    ]
+
+    for class_name in required_classes:
+        is_present = app_page.evaluate(
+            """(className) => {
+                for (const sheet of document.styleSheets) {
+                    for (const rule of sheet.cssRules || []) {
+                        if (rule.selectorText?.includes('.' + className)) return true;
+                    }
+                }
+                return false;
+            }""",
+            class_name,
+        )
+        assert is_present, f"Tailwind class {class_name!r} is missing from the generated stylesheet"
+
+
 def test_no_console_errors(app_page: Page) -> None:
     """Test that there are no critical console errors on page load."""
     errors: list[str] = []

@@ -6,6 +6,11 @@ from reflex.plugins.shared_tailwind import TailwindConfig
 tailwind_config: TailwindConfig = {
     "darkMode": "class",
     "prefix": "",
+    "content": [
+        "./app/**/*.{js,ts,jsx,tsx}",
+        "./app_components/**/*.{js,ts,jsx,tsx}",
+        "./utils/**/*.{js,ts,jsx,tsx}",
+    ],
     "theme": {
         "container": {"center": True, "padding": "2rem", "screens": {"2xl": "1400px"}},
         "extend": {

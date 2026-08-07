@@ -43,7 +43,7 @@ def backend_exception_handler(exception: Exception) -> EventSpec:
         logger.error("I/O error: %s", exception)
         return rx.toast.error(f"I/O error: {exception.strerror or str(exception)}")
 
-    logger.exception("Unhandled exception: %s", exception)
+    logger.error("Unhandled exception: %s", exception)
     if is_prod_mode():
         error_message = "An unexpected error occurred. Please try again."
     else:

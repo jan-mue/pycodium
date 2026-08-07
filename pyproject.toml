@@ -150,15 +150,15 @@ DEP004 = [
 ]
 
 [tool.pyproject-fmt]
-indent = 4
 column_width = 120
+indent = 4
 keep_full_version = true
 expand_tables = [
     "tool.coverage.report",
+    "tool.deptry.package_module_name_map",
+    "tool.deptry.per_rule_ignores",
     "tool.hatch.build",
     "tool.hatch.version",
-    "tool.deptry.per_rule_ignores",
-    "tool.deptry.package_module_name_map",
     "tool.pytest.ini_options",
 ]
 

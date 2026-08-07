@@ -107,6 +107,50 @@ def test_page_title(app_page: Page) -> None:
     expect(app_page).to_have_title("PyCodium")
 
 
+def test_app_component_tailwind_classes_are_generated(app_page: Page) -> None:
+    """Test that Tailwind classes used in compiled app_components are generated.
+
+    Reflex compiles stateful subtrees into ``.web/app_components/...``. If those
+    files are not included in Tailwind's ``content`` paths, classes such as
+    ``border-pycodium-highlight`` will be missing from the generated CSS and the
+    UI will look broken.
+    """
+    # Classes that are referenced from compiled app_components and were
+    # previously stripped when the Tailwind content config was incomplete.
+    required_classes = [
+        "bg-pycodium-activity-bar",
+        "bg-pycodium-sidebar-bg",
+        "bg-pycodium-statusbar-bg",
+        "text-pycodium-text",
+        "text-pycodium-icon",
+        "border-pycodium-highlight",
+        "bg-pycodium-tab-active",
+        "bg-pycodium-tab-inactive",
+    ]
+
+    for class_name in required_classes:
+        # Query the generated stylesheet for the expected CSS rule. Using
+        # ``evaluate`` lets us inspect the browser's computed styles directly.
+        is_present = app_page.evaluate(
+            """(className) => {
+                for (const sheet of document.styleSheets) {
+                    try {
+                        for (const rule of sheet.cssRules || []) {
+                            if (rule.selectorText && rule.selectorText.includes('.' + className)) {
+                                return true;
+                            }
+                        }
+                    } catch (e) {
+                        // Cross-origin stylesheets may throw; ignore them.
+                    }
+                }
+                return false;
+            }""",
+            class_name,
+        )
+        assert is_present, f"Tailwind class {class_name!r} is missing from the generated stylesheet"
+
+
 def test_no_console_errors(app_page: Page) -> None:
     """Test that there are no critical console errors on page load."""
     errors: list[str] = []

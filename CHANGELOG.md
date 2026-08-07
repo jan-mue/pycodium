@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.4](https://github.com/jan-mue/pycodium/compare/v0.3.3...v0.3.4) (2026-08-07)
+
+
+### Bug Fixes
+
+* **deps:** update dependency reflex to v0.9.7 ([#752](https://github.com/jan-mue/pycodium/issues/752)) ([78b9083](https://github.com/jan-mue/pycodium/commit/78b90832256713373efe4ef7acf245789d1fd189))
+
 ## [0.3.3](https://github.com/jan-mue/pycodium/compare/v0.3.2...v0.3.3) (2026-08-07)
 
 

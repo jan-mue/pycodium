@@ -131,4 +131,4 @@
 - Use pygrep hooks for simple custom lint rules. They are defined in `.pre-commit-config.yaml`.
 - Write AST-based lint rules with ast-grep and add them to `.ast-grep/rules/`. Config: `sgconfig.yml`
 - Run the rules with `pre-commit run ast-grep -a` and test them with `sg run --pattern 'class $NAME' --lang python .`
-- Use the ast-grep skill
+- Documentation: <https://astgrep.com/llms.txt>

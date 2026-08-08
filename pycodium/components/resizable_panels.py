@@ -11,7 +11,7 @@ import reflex as rx
 class ResizablePanels(rx.Component):
     """Base class for ResizablePanels components."""
 
-    library = "react-resizable-panels@3.0.2"
+    library = "react-resizable-panels"
 
 
 class PanelGroup(ResizablePanels):

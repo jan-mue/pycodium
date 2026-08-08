@@ -3,13 +3,13 @@
 import asyncio
 import json
 import logging
-from typing import Any
+from typing import Any, cast
 
 
 class BasedPyrightLSPClient:
     """Client for interacting with the basedpyright LSP server."""
 
-    def __init__(self, server_path: str = "basedpyright-langserver"):
+    def __init__(self, server_path: str = "basedpyright-langserver") -> None:
         """Initialize the BasedPyrightLSPClient."""
         self.server_path = server_path
         self.process: asyncio.subprocess.Process | None = None
@@ -82,7 +82,7 @@ class BasedPyrightLSPClient:
     async def get_hover_info(self, uri: str, line: int, character: int) -> dict[str, Any] | None:
         """Get hover information at the specified position."""
         params = {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}}
-        return await self._send_request("textDocument/hover", params)
+        return cast(dict[str, Any] | None, await self._send_request("textDocument/hover", params))
 
     async def get_references(
         self, uri: str, line: int, character: int, include_declaration: bool = True
@@ -101,8 +101,7 @@ class BasedPyrightLSPClient:
     async def get_declaration(self, uri: str, line: int, character: int) -> dict[str, Any] | None:
         """Get the declaration of the symbol at the specified position."""
         params = {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}}
-        response = await self._send_request("textDocument/declaration", params)
-        return response
+        return cast(dict[str, Any] | None, await self._send_request("textDocument/declaration", params))
 
     async def get_definition(self, uri: str, line: int, character: int) -> list[dict[str, Any]]:
         """Get the definition of the symbol at the specified position."""
@@ -120,8 +119,7 @@ class BasedPyrightLSPClient:
         Typically triggered when typing '(' or ',' in a function call.
         """
         params = {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}}
-        response = await self._send_request("textDocument/signatureHelp", params)
-        return response
+        return cast(dict[str, Any] | None, await self._send_request("textDocument/signatureHelp", params))
 
     async def rename_symbol(self, uri: str, line: int, character: int, new_name: str) -> dict[str, Any] | None:
         """Rename a symbol at the specified position.
@@ -134,7 +132,7 @@ class BasedPyrightLSPClient:
             "newName": new_name,
         }
         response = await self._send_request("textDocument/rename", params)
-        return response
+        return cast(dict[str, Any] | None, response)
 
     async def prepare_rename(self, uri: str, line: int, character: int) -> dict[str, Any] | None:
         """Prepare a rename operation at the specified position.
@@ -142,8 +140,7 @@ class BasedPyrightLSPClient:
         Returns the range of the symbol to be renamed, or null if renaming is not allowed.
         """
         params = {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}}
-        response = await self._send_request("textDocument/prepareRename", params)
-        return response
+        return cast(dict[str, Any] | None, await self._send_request("textDocument/prepareRename", params))
 
     async def open_document(self, uri: str, content: str, language_id: str = "python") -> None:
         """Open a document in the server."""
@@ -173,11 +170,12 @@ class BasedPyrightLSPClient:
             "workspaceFolders": None,
         }
 
-        response = await self._send_request("initialize", params)
+        await self._send_request("initialize", params)
         await self._send_notification("initialized", {})
-        return response
 
-    async def _send_request(self, method: str, params: dict[str, Any] | None) -> Any:  # Changed type hint
+    async def _send_request(
+        self, method: str, params: dict[str, Any] | None
+    ) -> dict[str, Any] | list[dict[str, Any]] | None:
         """Send a JSON-RPC request and wait for response."""
         if not self.process or not self.process.stdin:
             raise RuntimeError("Server not started")

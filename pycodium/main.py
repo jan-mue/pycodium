@@ -7,12 +7,13 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from granian.constants import Interfaces
 from pytauri import AppHandle, Manager, RunEvent, builder_factory, context_factory
 from pytauri.ffi.lib import RunEventType
 from pytauri_plugins.dialog import init as init_dialog_plugin
 from reflex import constants
 from reflex.config import environment, get_config
-from reflex.state import reset_disk_state_manager
+from reflex.istate.manager import reset_disk_state_manager
 from reflex.utils import exec, processes  # noqa: A004
 
 from pycodium import __version__
@@ -49,6 +50,29 @@ def run(
     run_app_with_tauri()
 
 
+def run_reflex_backend(host: str, port: int) -> None:
+    """Run the Reflex backend with Granian."""
+    # TODO: use Granian's Python API
+    command = [
+        sys.executable,
+        "-m",
+        "granian",
+        *("--host", host),
+        *("--port", str(port)),
+        *("--interface", str(Interfaces.ASGI)),
+        *("--factory", exec.get_app_instance_from_file()),
+    ]
+
+    extra_env = {environment.REFLEX_SKIP_COMPILE.name: "true"}
+
+    if "GRANIAN_WORKERS" not in os.environ:
+        extra_env["GRANIAN_WORKERS"] = str(processes.get_num_workers())
+    if "GRANIAN_LOG_LEVEL" not in os.environ:
+        extra_env["GRANIAN_LOG_LEVEL"] = "critical"
+
+    processes.new_process(command, run=True, show_logs=True, env=extra_env)
+
+
 def run_app_with_tauri(
     window_title: str = "PyCodium IDE",
     backend_port: int | None = None,
@@ -64,6 +88,7 @@ def run_app_with_tauri(
     os.chdir(PROJECT_ROOT_DIR)
     config = get_config()
 
+    backend_port = backend_port or config.backend_port
     backend_host = backend_host or config.backend_host
 
     environment.REFLEX_ENV_MODE.set(constants.Env.PROD)
@@ -88,7 +113,7 @@ def run_app_with_tauri(
     get_config(reload=True)
 
     logger.info(f"Starting Reflex app on port {backend_port}")
-    commands = [(exec.run_backend_prod, backend_host, backend_port, config.loglevel.subprocess_level(), True)]
+    commands = [(run_reflex_backend, backend_host, backend_port)]
     with processes.run_concurrently_context(*commands):  # type: ignore[reportArgumentType]
 
         def app_setup(app_handle: AppHandle) -> None:

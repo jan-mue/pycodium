@@ -7,14 +7,15 @@ including file operations, editor commands, and Python interpreter selection.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import reflex as rx
 
 from pycodium.components.hotkey_watcher import GlobalHotkeyWatcher
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from reflex.event import EventCallback
+    from typing_extensions import Unpack
 
 
 @dataclass
@@ -49,8 +50,8 @@ COMMANDS: list[CommandItem] = [
 
 def command_palette_item(
     command: CommandItem,
-    on_select: Callable[[], rx.event.EventSpec],
-    is_selected: rx.Var[bool],
+    on_select: EventCallback[Unpack[tuple[()]]],
+    is_selected: bool,
 ) -> rx.Component:
     """Render a single command palette item."""
     return rx.el.div(
@@ -71,8 +72,8 @@ def command_palette_item(
 
 
 def command_palette_overlay(
-    is_open: rx.Var[bool],
-    on_close: rx.event.EventSpec,
+    is_open: bool,
+    on_close: EventCallback[Unpack[tuple[()]]],
 ) -> rx.Component:
     """Render the command palette overlay (backdrop)."""
     return rx.cond(
@@ -87,8 +88,8 @@ def command_palette_overlay(
 
 
 def command_palette_input(
-    search_query: rx.Var[str],
-    on_change: Callable[[str], rx.event.EventSpec],
+    search_query: str,
+    on_search_change: EventCallback[str],
     placeholder: rx.Var[str] | str = "Type a command or search...",
 ) -> rx.Component:
     """Render the command palette search input."""
@@ -96,7 +97,7 @@ def command_palette_input(
         type="text",
         placeholder=placeholder,
         value=search_query,
-        on_change=on_change,
+        on_change=on_search_change,
         class_name="w-full px-4 py-3 bg-transparent border-b border-border text-pycodium-text focus:outline-none box-border min-h-[48px]",
         auto_focus=True,
         id="command-palette-input",
@@ -104,9 +105,9 @@ def command_palette_input(
 
 
 def command_palette_list(
-    filtered_ids: rx.Var[list[str]],
-    selected_index: rx.Var[int],
-    on_select: Callable[[str], rx.event.EventSpec],
+    filtered_ids: list[str],
+    selected_index: int,
+    on_select: EventCallback[str],
 ) -> rx.Component:
     """Render the list of filtered commands."""
     return rx.el.div(
@@ -126,8 +127,8 @@ def command_palette_list(
 def command_palette_item_by_id(
     cmd_id: rx.Var[str],
     idx: rx.Var[int],
-    selected_index: rx.Var[int],
-    on_select: Callable[[str], rx.event.EventSpec],
+    selected_index: int,
+    on_select: EventCallback[str],
 ) -> rx.Component:
     """Render a command item by its ID."""
 
@@ -151,18 +152,14 @@ def command_palette_item_by_id(
             ),
         )
 
-    return rx.match(
-        cmd_id,
-        *[make_cmd_item(cmd) for cmd in COMMANDS],
-        rx.fragment(),  # Default case
-    )
+    return cast(rx.Component, rx.match(cmd_id, *[make_cmd_item(cmd) for cmd in COMMANDS], rx.fragment()))
 
 
 def python_interpreter_item(
     path: rx.Var[str],
     version: rx.Var[str],
-    is_selected: rx.Var[bool],
-    on_select: Callable[[str], rx.event.EventSpec],
+    is_selected: bool,
+    on_select: EventCallback[str],
 ) -> rx.Component:
     """Render a Python interpreter selection item."""
     return rx.el.div(
@@ -191,18 +188,18 @@ def python_interpreter_item(
 
 
 def command_palette(
-    is_open: rx.Var[bool],
-    search_query: rx.Var[str],
-    filtered_command_ids: rx.Var[list[str]],
-    selected_index: rx.Var[int],
-    mode: rx.Var[str],
-    python_interpreters: rx.Var[list[dict]],
-    current_interpreter: rx.Var[str],
-    on_close: rx.event.EventSpec,
-    on_search_change: Callable[[str], rx.event.EventSpec],
-    on_key_down: Callable[[str, rx.event.KeyInputInfo], rx.event.EventSpec],
-    on_select_command: Callable[[str], rx.event.EventSpec],
-    on_select_interpreter: Callable[[str], rx.event.EventSpec],
+    is_open: bool,
+    search_query: str,
+    filtered_command_ids: list[str],
+    selected_index: int,
+    mode: str,
+    python_interpreters: list[dict[str, str]] | rx.Var[list[dict[str, str]]],
+    current_interpreter: str,
+    on_close: EventCallback[Unpack[tuple[()]]],
+    on_search_change: EventCallback[str],
+    on_key_down: EventCallback[str, rx.event.KeyInputInfo],
+    on_select_command: EventCallback[str],
+    on_select_interpreter: EventCallback[str],
 ) -> rx.Component:
     """Main command palette component."""
     return rx.fragment(
@@ -262,7 +259,7 @@ def command_palette(
                             ),
                         ),
                         rx.cond(
-                            (mode == "commands") & (filtered_command_ids.length() == 0),
+                            (mode == "commands") & (filtered_command_ids.length() == 0),  # type: ignore[attr-defined]
                             rx.el.div(
                                 "No commands found",
                                 class_name="px-4 py-3 text-sm text-muted-foreground text-center",

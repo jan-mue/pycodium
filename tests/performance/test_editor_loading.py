@@ -1,6 +1,6 @@
 """Performance test for editor file loading.
 
-This test measures the complete time from app startup to displaying
+This test measures the complete time from page navigation to displaying
 a file's content in the Monaco editor.
 """
 
@@ -10,12 +10,13 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.helpers import create_app_harness_with_path, wait_for_editor_content
+from tests.helpers import navigate_to_app_with_path, wait_for_editor_content
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from playwright.sync_api import Page
+    from reflex.testing import AppHarness
 
 
 FILE_CONTENT = """# Test file
@@ -33,12 +34,9 @@ def test_file(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 @pytest.mark.benchmark
-def test_app_startup_to_editor_display_time(test_file: Path, page: Page) -> None:
-    """Benchmark the time from app startup to seeing file content in the editor."""
-    for harness in create_app_harness_with_path(test_file):
-        assert harness.frontend_url is not None
-
-        page.goto(harness.frontend_url)
-        page.wait_for_load_state("networkidle")
-
-        wait_for_editor_content(page, "Hello, World!", timeout=10000)
+def test_app_startup_to_editor_display_time(
+    reflex_web_app: AppHarness, test_file: Path, page: Page, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Benchmark the time from page navigation to seeing file content in the editor."""
+    navigate_to_app_with_path(reflex_web_app, page, test_file, monkeypatch)
+    wait_for_editor_content(page, "Hello, World!", timeout=10000)

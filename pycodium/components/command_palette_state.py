@@ -14,10 +14,16 @@ import asyncio
 import logging
 import subprocess
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import reflex as rx
 
 from pycodium.components.command_palette import COMMANDS
+
+if TYPE_CHECKING:
+    from pythonfinder.models.python_info import PythonInfo  # pyright: ignore[reportMissingTypeStubs]
+    from reflex.event import EventCallback, EventSpec
+    from typing_extensions import Unpack
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +129,7 @@ class CommandPaletteState(rx.State):
             await self.select_interpreter(interp["path"])
 
     @rx.event
-    async def select_command(self, command_id: str) -> rx.event.EventSpec | None:
+    async def select_command(self, command_id: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
         """Execute a command by its ID."""
         logger.info(f"Executing command: {command_id}")
 
@@ -141,7 +147,7 @@ class CommandPaletteState(rx.State):
         if not self._interpreters_loaded:
             await self._discover_python_interpreters()
 
-    def _get_command_action(self, command_id: str) -> rx.event.EventSpec | None:
+    def _get_command_action(self, command_id: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
         """Get the action for a command ID."""
         from pycodium.state import EditorState  # noqa: PLC0415
 
@@ -183,7 +189,7 @@ class CommandPaletteState(rx.State):
         return None
 
     @rx.event
-    async def select_interpreter(self, interpreter_path: str) -> rx.event.EventSpec | None:
+    async def select_interpreter(self, interpreter_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
         """Select a Python interpreter and restart the LSP server."""
         logger.info(f"Selecting Python interpreter: {interpreter_path}")
         self.current_interpreter = interpreter_path
@@ -239,14 +245,11 @@ class CommandPaletteState(rx.State):
 
     def _discover_with_pythonfinder(self, interpreters: list[dict[str, str]], seen_paths: set[str]) -> None:
         """Use pythonfinder to discover Python interpreters."""
-        from pythonfinder import Finder  # noqa: PLC0415
+        from pythonfinder import Finder  # pyright: ignore[reportMissingTypeStubs]  # noqa: PLC0415
 
         try:
             finder = Finder()
-            if not (finder.system_path and finder.system_path.pythons):
-                return
-
-            for path_entry in finder.system_path.pythons.values():
+            for path_entry in finder.find_all_python_versions():
                 if not (path_entry and path_entry.path):
                     continue
 
@@ -261,14 +264,13 @@ class CommandPaletteState(rx.State):
         except OSError as e:
             logger.warning(f"Error discovering interpreters with pythonfinder: {e}")
 
-    def _get_version_string(self, path_entry: object) -> str:
+    def _get_version_string(self, path_entry: PythonInfo) -> str:
         """Get version string from a pythonfinder path entry."""
         version_str = "Python"
-        if hasattr(path_entry, "py_version") and path_entry.py_version:
-            pv = path_entry.py_version
-            version_str = f"Python {pv.major}.{pv.minor}.{pv.patch}"
+        if path_entry.major is not None:
+            version_str = f"Python {path_entry.major}.{path_entry.minor}.{path_entry.patch}"
 
-            if hasattr(path_entry, "name") and path_entry.name:
+            if path_entry.name:
                 name = path_entry.name
                 if "conda" in name.lower():
                     version_str += " (conda)"

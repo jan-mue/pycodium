@@ -17,14 +17,12 @@ import pytest
 from playwright.sync_api import expect
 
 from tests.helpers import (
-    create_app_harness_with_path,
-    navigate_to_app,
+    navigate_to_app_with_path,
     open_file,
     wait_for_editor_visible,
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
     from pathlib import Path
 
     from playwright.sync_api import Page
@@ -93,16 +91,10 @@ def lsp_test_folder(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return test_dir
 
 
-@pytest.fixture(scope="module")
-def app_with_lsp(lsp_test_folder: Path) -> Generator[AppHarness, None, None]:
-    """Start the app with a test folder containing Python files."""
-    yield from create_app_harness_with_path(lsp_test_folder)
-
-
 @pytest.fixture
-def lsp_page(app_with_lsp: AppHarness, page: Page) -> Page:
+def lsp_page(reflex_web_app: AppHarness, page: Page, lsp_test_folder: Path, monkeypatch: pytest.MonkeyPatch) -> Page:
     """Navigate to the app, open Python file, and wait for LSP initialization."""
-    page = navigate_to_app(app_with_lsp, page, timeout=90000)
+    page = navigate_to_app_with_path(reflex_web_app, page, lsp_test_folder, monkeypatch)
     page.wait_for_timeout(3000)
 
     # Open the main.py file

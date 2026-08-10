@@ -11,13 +11,9 @@ from typing import TYPE_CHECKING
 import pytest
 from playwright.sync_api import expect
 
-from tests.helpers import (
-    create_app_harness_with_path,
-    navigate_to_app,
-)
+from tests.helpers import navigate_to_app_with_path
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
     from pathlib import Path
 
     from playwright.sync_api import Page
@@ -39,19 +35,12 @@ def command_palette_test_folder(tmp_path_factory: pytest.TempPathFactory) -> Pat
     return test_dir
 
 
-@pytest.fixture(scope="module")
-def app_with_test_folder(command_palette_test_folder: Path) -> Generator[AppHarness, None, None]:
-    """Start the app with a test folder.
-
-    Using module scope to share the app harness across all tests in this module.
-    """
-    yield from create_app_harness_with_path(command_palette_test_folder)
-
-
 @pytest.fixture
-def command_palette_page(app_with_test_folder: AppHarness, page: Page) -> Page:
+def command_palette_page(
+    reflex_web_app: AppHarness, page: Page, command_palette_test_folder: Path, monkeypatch: pytest.MonkeyPatch
+) -> Page:
     """Navigate to the app for command palette testing."""
-    page = navigate_to_app(app_with_test_folder, page, timeout=90000)
+    page = navigate_to_app_with_path(reflex_web_app, page, command_palette_test_folder, monkeypatch)
     page.wait_for_timeout(3000)
     return page
 

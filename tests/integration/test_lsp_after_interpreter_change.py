@@ -20,14 +20,12 @@ import pytest
 from playwright.sync_api import expect
 
 from tests.helpers import (
-    create_app_harness_with_path,
-    navigate_to_app,
+    navigate_to_app_with_path,
     open_file,
     wait_for_editor_visible,
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
     from pathlib import Path
 
     from playwright.sync_api import Page
@@ -69,14 +67,6 @@ def lsp_interpreter_test_folder(tmp_path_factory: pytest.TempPathFactory) -> Pat
     return test_dir
 
 
-@pytest.fixture(scope="module")
-def app_with_lsp_test_files(
-    lsp_interpreter_test_folder: Path,
-) -> Generator[AppHarness, None, None]:
-    """Start the app with a test folder for LSP interpreter testing."""
-    yield from create_app_harness_with_path(lsp_interpreter_test_folder)
-
-
 def _select_python_interpreter(page: Page) -> None:
     """Open command palette and select the first available Python interpreter.
 
@@ -109,7 +99,7 @@ class TestLSPAfterInterpreterChange:
     """Tests for LSP functionality after changing Python interpreter."""
 
     def test_go_to_definition_works_after_interpreter_change(
-        self, app_with_lsp_test_files: AppHarness, page: Page
+        self, reflex_web_app: AppHarness, page: Page, lsp_interpreter_test_folder: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test that go-to-definition works after changing the Python interpreter.
 
@@ -120,7 +110,7 @@ class TestLSPAfterInterpreterChange:
         4. LSP go-to-definition still works after the interpreter change
         """
         # Navigate to the app
-        page = navigate_to_app(app_with_lsp_test_files, page, timeout=90000)
+        page = navigate_to_app_with_path(reflex_web_app, page, lsp_interpreter_test_folder, monkeypatch)
         page.wait_for_timeout(3000)
 
         # Open the test file
@@ -161,14 +151,16 @@ class TestLSPAfterInterpreterChange:
         def_line = page.locator(".view-line:has-text('def greet(name: str)')")
         expect(def_line).to_be_visible(timeout=5000)
 
-    def test_file_opens_after_interpreter_change(self, app_with_lsp_test_files: AppHarness, page: Page) -> None:
+    def test_file_opens_after_interpreter_change(
+        self, reflex_web_app: AppHarness, page: Page, lsp_interpreter_test_folder: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test that files open correctly after changing the Python interpreter.
 
         This is a basic smoke test to ensure the interpreter change doesn't
         break basic file operations.
         """
         # Navigate to the app
-        page = navigate_to_app(app_with_lsp_test_files, page, timeout=90000)
+        page = navigate_to_app_with_path(reflex_web_app, page, lsp_interpreter_test_folder, monkeypatch)
         page.wait_for_timeout(3000)
 
         # Change the Python interpreter first
@@ -188,11 +180,11 @@ class TestLSPAfterInterpreterChange:
         expect(def_greet).to_be_visible(timeout=10000)
 
     def test_go_to_class_definition_works_after_interpreter_change(
-        self, app_with_lsp_test_files: AppHarness, page: Page
+        self, reflex_web_app: AppHarness, page: Page, lsp_interpreter_test_folder: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test that go-to-definition for classes works after interpreter change."""
         # Navigate to the app
-        page = navigate_to_app(app_with_lsp_test_files, page, timeout=90000)
+        page = navigate_to_app_with_path(reflex_web_app, page, lsp_interpreter_test_folder, monkeypatch)
         page.wait_for_timeout(3000)
 
         # Open the test file

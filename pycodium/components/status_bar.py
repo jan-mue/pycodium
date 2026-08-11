@@ -2,6 +2,7 @@
 
 import reflex as rx
 
+from pycodium.components.command_palette_state import CommandPaletteState
 from pycodium.state import EditorState
 
 
@@ -11,7 +12,7 @@ def status_bar() -> rx.Component:
         rx.el.div(
             rx.el.div(
                 rx.el.span(
-                    rx.icon("check", size=14),
+                    rx.icon("git-branch", size=14),
                     " main *",
                     class_name="flex items-center gap-1",
                 ),
@@ -25,11 +26,30 @@ def status_bar() -> rx.Component:
         ),
         rx.el.div(
             rx.el.div("Ln 1, Col 1", class_name="status-bar-item"),
-            rx.el.div("Spaces: 2", class_name="status-bar-item"),
-            rx.el.div(EditorState.active_tab.encoding, class_name="status-bar-item"),
-            rx.el.div("CRLF", class_name="status-bar-item"),
-            rx.el.div("TypeScript", class_name="status-bar-item"),
+            rx.el.div("Spaces: 4", class_name="status-bar-item"),
+            rx.cond(
+                EditorState.active_tab,
+                rx.el.div(
+                    EditorState.active_tab.encoding,
+                    class_name="status-bar-item",
+                ),
+                rx.fragment(),
+            ),
+            rx.el.div("LF", class_name="status-bar-item"),
+            rx.el.div(
+                EditorState.active_language_display,
+                class_name="status-bar-item",
+                id="status-bar-language",
+            ),
+            rx.el.div(
+                rx.icon("terminal", size=14),
+                CommandPaletteState.interpreter_display,
+                class_name="status-bar-item flex items-center gap-1 cursor-pointer hover:bg-white/10",
+                on_click=CommandPaletteState.open_interpreter_palette,
+                id="status-bar-interpreter",
+            ),
             class_name="flex",
         ),
         class_name="h-6 bg-pycodium-statusbar-bg text-white flex items-center text-xs",
+        id="status-bar",
     )

@@ -1,10 +1,13 @@
 """State and event handlers for the IDE."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import reflex as rx
@@ -16,10 +19,25 @@ from watchfiles import Change, awatch
 
 from pycodium.constants import INITIAL_PATH_ENV_VAR
 from pycodium.models.files import FilePath
+from pycodium.models.monaco import (
+    CompletionItem,
+    CompletionRequest,
+    DeclarationRequest,
+    HoverRequest,
+    PrepareRenameRequest,
+    ReferenceRequest,
+    RenameRequest,
+    SignatureHelpRequest,
+)
 from pycodium.models.tabs import EditorTab
 from pycodium.utils.detect_encoding import decode
 from pycodium.utils.detect_lang import detect_programming_language
+from pycodium.utils.lsp_client import get_lsp_client
 
+if TYPE_CHECKING:
+    from reflex.event import EventCallback, EventSpec, KeyInputInfo
+
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -35,6 +53,13 @@ class EditorState(rx.State):
     tabs: list[EditorTab] = []
     active_tab_id: str | None = None
     active_tab_history: list[str] = []
+    completion_response: dict[str, list[CompletionItem]] = {}
+    hover_info: dict[str, str] = {}
+    declaration_response: dict[str, Any] = {}
+    signature_help_response: dict[str, Any] = {}
+    reference_response: dict[str, Any] = {}
+    rename_response: dict[str, Any] = {}
+    prepare_rename_response: dict[str, Any] = {}
 
     # Explorer state
     project_root: Path = Path.cwd()
@@ -96,7 +121,7 @@ class EditorState(rx.State):
         logger.debug(f"Detected encoding for {path}: {encoding}")
         return decoded_content, encoding
 
-    def _create_tab(self, file_path: str, title: str, content: str, encoding: str) -> EditorTab:
+    async def _create_tab(self, file_path: str, title: str, content: str, encoding: str) -> EditorTab:
         """Create a new editor tab for a file.
 
         Args:
@@ -119,6 +144,9 @@ class EditorState(rx.State):
         )
         self.tabs.append(tab)
         logger.debug(f"Created tab {tab.id} for {file_path}")
+        lsp_client = await get_lsp_client()
+        uri = f"file://{self.project_root.parent / file_path}"
+        await lsp_client.open_document(uri, content, language_id=tab.language)
         return tab
 
     def _activate_tab(self, tab: EditorTab) -> EventCallback[Unpack[tuple[()]]]:
@@ -151,7 +179,7 @@ class EditorState(rx.State):
             if result is None:
                 return rx.toast.error("The file is either binary or uses an unsupported text encoding.")
             decoded_content, encoding = result
-            tab = self._create_tab(file_path, title=file_path, content=decoded_content, encoding=encoding)
+            tab = await self._create_tab(file_path, title=file_path, content=decoded_content, encoding=encoding)
 
         return self._activate_tab(tab)
 
@@ -189,7 +217,7 @@ class EditorState(rx.State):
             if result is None:
                 return rx.toast.error("The file is either binary or uses an unsupported text encoding.")
             decoded_content, encoding = result
-            tab = self._create_tab(file_path, title=path.name, content=decoded_content, encoding=encoding)
+            tab = await self._create_tab(file_path, title=path.name, content=decoded_content, encoding=encoding)
 
         return self._activate_tab(tab)
 
@@ -256,6 +284,12 @@ class EditorState(rx.State):
             logger.debug("No previous tab to switch to, setting active tab to None")
             self.active_tab_id = None
 
+        tab = next((t for t in self.tabs if t.id == tab_id), None)
+        if tab:
+            lsp_client = await get_lsp_client()
+            uri = f"file://{self.project_root.parent / tab.path}"
+            await lsp_client.close_document(uri)
+
     @rx.event
     async def set_active_tab(self, tab_id: str) -> EventCallback[Unpack[tuple[()]]] | None:
         """Set the active tab by its ID.
@@ -294,6 +328,46 @@ class EditorState(rx.State):
         if not active_tab:
             return ""
         return active_tab.content
+
+    @rx.var
+    def active_language_display(self) -> str:
+        """Get the formatted language name for the status bar.
+
+        Returns:
+            A properly capitalized language name.
+        """
+        active_tab = self.active_tab
+        if not active_tab or not active_tab.language:
+            return "Plain Text"
+
+        language = active_tab.language.lower()
+        language_map = {
+            "python": "Python",
+            "javascript": "JavaScript",
+            "typescript": "TypeScript",
+            "html": "HTML",
+            "css": "CSS",
+            "json": "JSON",
+            "yaml": "YAML",
+            "markdown": "Markdown",
+            "rust": "Rust",
+            "go": "Go",
+            "java": "Java",
+            "c": "C",
+            "cpp": "C++",
+            "csharp": "C#",
+            "ruby": "Ruby",
+            "php": "PHP",
+            "swift": "Swift",
+            "kotlin": "Kotlin",
+            "shell": "Shell",
+            "bash": "Bash",
+            "sql": "SQL",
+            "toml": "TOML",
+            "xml": "XML",
+            "plaintext": "Plain Text",
+        }
+        return language_map.get(language, language.capitalize())
 
     @rx.var
     def current_file(self) -> str | None:
@@ -502,3 +576,304 @@ class EditorState(rx.State):
                         self.tabs = self.tabs
                     logger.debug(f"Updated content of tab {active_tab.id} from file {file_path}")
         logger.debug(f"Stopped watching tab {active_tab.id} for changes from file {file_path}")
+
+    @rx.event
+    async def handle_completion_request(self, request: CompletionRequest) -> None:
+        """Handle completion requests from the editor using the basedpyright LSP server."""
+        text = request.get("text", "")
+        position = request.get("position", {})
+        line = position.get("line", 0)
+        column = position.get("column", 0)
+        file_path = request.get("file_path")
+
+        # Fall back to active tab's path if file_path is not provided or is an in-memory URI
+        if not file_path or file_path.startswith("inmemory://"):
+            active_tab = self.active_tab
+            if active_tab and active_tab.path:
+                file_path = active_tab.path
+
+        logger.debug(f"Received completion request for file {file_path}, line {line}, column {column}")
+        if not file_path:
+            # Return empty completions instead of raising an error
+            logger.warning("No file path available for completion request, returning empty results")
+            self.completion_response = {"items": []}
+            return
+
+        lsp_client = await get_lsp_client()
+        uri = f"file://{self.project_root.parent / file_path}"
+        await lsp_client.open_document(uri, text)
+        completions = await lsp_client.get_completions(uri, line, column)
+
+        def lsp_to_monaco(item: dict[str, Any]) -> CompletionItem:
+            return CompletionItem(
+                label=item.get("label", ""),
+                kind=item.get("kind", 1),
+                insert_text=item.get("insertText", item.get("label", "")),
+                documentation=item.get("documentation", ""),
+                detail=item.get("detail", ""),
+            )
+
+        completion_items = [lsp_to_monaco(item) for item in completions]
+        self.completion_response = {"items": completion_items}
+        logger.debug(f"Updated completion response for file {file_path}, line {line}, column {column}")
+
+    @rx.event
+    async def handle_hover_request(self, request: HoverRequest) -> None:
+        """Handle hover requests from the editor using the basedpyright LSP server."""
+        text = request.get("text", "")
+        position = request.get("position", {})
+        line = position.get("line", 0)
+        column = position.get("column", 0)
+        file_path = request.get("file_path")
+
+        # Fall back to active tab's path if file_path is not provided or is an in-memory URI
+        if not file_path or file_path.startswith("inmemory://"):
+            active_tab = self.active_tab
+            if active_tab and active_tab.path:
+                file_path = active_tab.path
+
+        logger.debug(f"Received hover request for file {file_path}, line {line}, column {column}")
+        if not file_path:
+            # Return empty hover info instead of raising an error
+            logger.warning("No file path available for hover request, returning empty results")
+            self.hover_info = {}
+            return
+        lsp_client = await get_lsp_client()
+        uri = f"file://{self.project_root.parent / file_path}"
+        await lsp_client.open_document(uri, text)
+        hover = await lsp_client.get_hover_info(uri, line, column)
+
+        # TODO: refactor this
+        contents = ""
+        if hover:
+            hover_contents = hover.get("contents")
+            if isinstance(hover_contents, dict):
+                contents = hover_contents.get("value", str(hover_contents))
+            elif isinstance(hover_contents, list):
+                # Join all values if list of dicts/strings
+                values = []
+                for item in hover_contents:
+                    if isinstance(item, dict):
+                        values.append(item.get("value", str(item)))
+                    else:
+                        values.append(str(item))
+                contents = "\n".join(values)
+            elif isinstance(hover_contents, str):
+                contents = hover_contents
+            else:
+                contents = str(hover_contents)
+        self.hover_info = {"contents": contents} if contents else {}
+        logger.debug(f"Updated hover info for file {file_path}, line {line}, column {column}")
+
+    @rx.event
+    async def handle_declaration_request(self, request: DeclarationRequest) -> None:
+        """Handle declaration requests from the editor using the basedpyright LSP server."""
+        text = request.get("text", "")
+        position = request.get("position", {})
+        line = position.get("line", 0)
+        column = position.get("column", 0)
+        file_path = request.get("file_path")
+
+        # Fall back to active tab's path if file_path is not provided or is an in-memory URI
+        if not file_path or file_path.startswith("inmemory://"):
+            active_tab = self.active_tab
+            if active_tab and active_tab.path:
+                file_path = active_tab.path
+
+        logger.debug(f"Received declaration request for file {file_path}, line {line}, column {column}")
+        if not file_path:
+            # Return empty declaration info instead of raising an error
+            logger.warning("No file path available for declaration request, returning empty results")
+            self.declaration_response = {"items": []}
+            return
+        lsp_client = await get_lsp_client()
+        uri = f"file://{self.project_root.parent / file_path}"
+        await lsp_client.open_document(uri, text)
+        declaration = await lsp_client.get_declaration(uri, line, column)
+
+        def lsp_to_monaco_location(item: dict[str, Any]) -> dict[str, Any]:
+            """Convert LSP location to Monaco location format.
+
+            LSP uses 0-indexed line/character with format:
+            { uri, range: { start: { line, character }, end: { line, character } } }
+
+            Monaco uses 1-indexed lineNumber/column with format:
+            { uri, range: { startLineNumber, startColumn, endLineNumber, endColumn } }
+            """
+            lsp_range = item.get("range", {})
+            start = lsp_range.get("start", {})
+            end = lsp_range.get("end", {})
+            return {
+                "uri": item.get("uri", uri),
+                "range": {
+                    "startLineNumber": start.get("line", 0) + 1,
+                    "startColumn": start.get("character", 0) + 1,
+                    "endLineNumber": end.get("line", 0) + 1,
+                    "endColumn": end.get("character", 0) + 1,
+                },
+            }
+
+        locations = []
+        if isinstance(declaration, list):
+            locations = [lsp_to_monaco_location(item) for item in declaration if isinstance(item, dict)]
+        elif isinstance(declaration, dict):
+            locations = [lsp_to_monaco_location(declaration)]
+        self.declaration_response = {"items": locations}
+        logger.debug(f"Updated declaration response for file {file_path}, line {line}, column {column}")
+
+    @rx.event
+    async def handle_signature_help_request(self, request: SignatureHelpRequest) -> None:
+        """Handle signature help requests from the editor using the basedpyright LSP server."""
+        text = request.get("text", "")
+        position = request.get("position", {})
+        line = position.get("line", 0)
+        column = position.get("column", 0)
+        file_path = request.get("file_path")
+
+        if not file_path or file_path.startswith("inmemory://"):
+            active_tab = self.active_tab
+            if active_tab and active_tab.path:
+                file_path = active_tab.path
+
+        logger.debug(f"Received signature help request for file {file_path}, line {line}, column {column}")
+        if not file_path:
+            self.signature_help_response = {}
+            return
+
+        lsp_client = await get_lsp_client()
+        uri = f"file://{self.project_root.parent / file_path}"
+        await lsp_client.open_document(uri, text)
+        signature_help = await lsp_client.get_signature_help(uri, line, column)
+
+        if signature_help:
+            # Convert LSP SignatureHelp to Monaco format
+            signatures = []
+            for sig in signature_help.get("signatures", []):
+                monaco_sig = {
+                    "label": sig.get("label", ""),
+                    "documentation": sig.get("documentation", ""),
+                    "parameters": [
+                        {"label": p.get("label", ""), "documentation": p.get("documentation", "")}
+                        for p in sig.get("parameters", [])
+                    ],
+                }
+                signatures.append(monaco_sig)
+
+            self.signature_help_response = {
+                "signatures": signatures,
+                "activeSignature": signature_help.get("activeSignature", 0),
+                "activeParameter": signature_help.get("activeParameter", 0),
+            }
+        else:
+            self.signature_help_response = {}
+        logger.debug(f"Updated signature help for file {file_path}, line {line}, column {column}")
+
+    @rx.event
+    async def handle_reference_request(self, request: ReferenceRequest) -> None:
+        """Handle reference requests from the editor using the basedpyright LSP server."""
+        text = request.get("text", "")
+        position = request.get("position", {})
+        line = position.get("line", 0)
+        column = position.get("column", 0)
+        file_path = request.get("file_path")
+
+        if not file_path or file_path.startswith("inmemory://"):
+            active_tab = self.active_tab
+            if active_tab and active_tab.path:
+                file_path = active_tab.path
+
+        logger.debug(f"Received reference request for file {file_path}, line {line}, column {column}")
+        if not file_path:
+            self.reference_response = {"items": []}
+            return
+
+        lsp_client = await get_lsp_client()
+        uri = f"file://{self.project_root.parent / file_path}"
+        await lsp_client.open_document(uri, text)
+        references = await lsp_client.get_references(uri, line, column)
+
+        def lsp_to_monaco_location(item: dict[str, Any]) -> dict[str, Any]:
+            """Convert LSP location to Monaco location format."""
+            lsp_range = item.get("range", {})
+            start = lsp_range.get("start", {})
+            end = lsp_range.get("end", {})
+            return {
+                "uri": item.get("uri", uri),
+                "range": {
+                    "startLineNumber": start.get("line", 0) + 1,
+                    "startColumn": start.get("character", 0) + 1,
+                    "endLineNumber": end.get("line", 0) + 1,
+                    "endColumn": end.get("character", 0) + 1,
+                },
+            }
+
+        locations = [lsp_to_monaco_location(ref) for ref in references]
+        self.reference_response = {"items": locations}
+        logger.debug(f"Updated reference response for file {file_path}, line {line}, column {column}")
+
+    @rx.event
+    async def handle_prepare_rename_request(self, request: PrepareRenameRequest) -> None:
+        """Handle prepare rename requests from the editor."""
+        text = request.get("text", "")
+        position = request.get("position", {})
+        line = position.get("line", 0)
+        column = position.get("column", 0)
+        file_path = request.get("file_path")
+
+        if not file_path or file_path.startswith("inmemory://"):
+            active_tab = self.active_tab
+            if active_tab and active_tab.path:
+                file_path = active_tab.path
+
+        logger.debug(f"Received prepare rename request for file {file_path}, line {line}, column {column}")
+        if not file_path:
+            self.prepare_rename_response = {}
+            return
+
+        lsp_client = await get_lsp_client()
+        uri = f"file://{self.project_root.parent / file_path}"
+        await lsp_client.open_document(uri, text)
+        prepare_result = await lsp_client.prepare_rename(uri, line, column)
+
+        if prepare_result:
+            # Can be a Range or { range: Range, placeholder: string }
+            if "range" in prepare_result:
+                self.prepare_rename_response = prepare_result
+            else:
+                # It's just a range
+                self.prepare_rename_response = {"range": prepare_result}
+        else:
+            self.prepare_rename_response = {}
+        logger.debug(f"Updated prepare rename response for file {file_path}, line {line}, column {column}")
+
+    @rx.event
+    async def handle_rename_request(self, request: RenameRequest) -> None:
+        """Handle rename requests from the editor."""
+        text = request.get("text", "")
+        position = request.get("position", {})
+        line = position.get("line", 0)
+        column = position.get("column", 0)
+        file_path = request.get("file_path")
+        new_name = request.get("new_name", "")
+
+        if not file_path or file_path.startswith("inmemory://"):
+            active_tab = self.active_tab
+            if active_tab and active_tab.path:
+                file_path = active_tab.path
+
+        logger.debug(f"Received rename request for file {file_path}, line {line}, column {column}, new_name={new_name}")
+        if not file_path or not new_name:
+            self.rename_response = {}
+            return
+
+        lsp_client = await get_lsp_client()
+        uri = f"file://{self.project_root.parent / file_path}"
+        await lsp_client.open_document(uri, text)
+        workspace_edit = await lsp_client.rename_symbol(uri, line, column, new_name)
+
+        if workspace_edit:
+            # Convert LSP WorkspaceEdit to a format usable by Monaco
+            self.rename_response = {"edit": workspace_edit}
+        else:
+            self.rename_response = {}
+        logger.debug(f"Updated rename response for file {file_path}, line {line}, column {column}")

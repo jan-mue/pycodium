@@ -61,7 +61,7 @@ dev = [
     "deptry==0.25.1",
     "hatchling==1.32.0",
     "httpx==0.28.1",
-    "inline-snapshot[black,dirty-equals]==0.35.3",
+    "inline-snapshot[black,dirty-equals]==0.35.4",
     "playwright==1.62.0",
     "pyright==1.1.411",
     "pytest==9.1.1",

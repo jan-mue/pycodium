@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.4](https://github.com/jan-mue/pycodium/compare/v0.3.3...v0.3.4) (2026-08-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency charset-normalizer to v3.5.0 ([#782](https://github.com/jan-mue/pycodium/issues/782)) ([dae15e2](https://github.com/jan-mue/pycodium/commit/dae15e2d2ebb83ed03c50dec39803c55baacf393))
+* **deps:** update dependency charset-normalizer to v3.5.1 ([#792](https://github.com/jan-mue/pycodium/issues/792)) ([42051b8](https://github.com/jan-mue/pycodium/commit/42051b847b8eef6c6182b9f0ea3caae34eb02b9e))
+* **deps:** update dependency granian to v2.8.0 ([#764](https://github.com/jan-mue/pycodium/issues/764)) ([b119e56](https://github.com/jan-mue/pycodium/commit/b119e562d1894bdd5803b8d0ea255997f8722b33))
+* **deps:** update dependency granian to v2.8.1 ([#769](https://github.com/jan-mue/pycodium/issues/769)) ([45b6a46](https://github.com/jan-mue/pycodium/commit/45b6a46084d462629e11ce37892450a6e98ea2e6))
+* **deps:** update dependency reflex to v0.9.7 ([#752](https://github.com/jan-mue/pycodium/issues/752)) ([78b9083](https://github.com/jan-mue/pycodium/commit/78b90832256713373efe4ef7acf245789d1fd189))
+* **deps:** update dependency reflex to v0.9.8 ([#766](https://github.com/jan-mue/pycodium/issues/766)) ([3cf8186](https://github.com/jan-mue/pycodium/commit/3cf8186c10edb504dc1548a78076019a07452dc2))
+* **deps:** update dependency typer to v0.27.1 ([#763](https://github.com/jan-mue/pycodium/issues/763)) ([bb57180](https://github.com/jan-mue/pycodium/commit/bb571805fcca1a75816fe7891dcf1755331388ba))
+
 ## [0.3.3](https://github.com/jan-mue/pycodium/compare/v0.3.2...v0.3.3) (2026-08-07)
 
 

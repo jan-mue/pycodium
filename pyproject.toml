@@ -37,7 +37,7 @@ dependencies = [
     # Runtime data validation
     "pydantic==2.13.4",
     # To detect programming languages
-    "pygments==2.20.0",
+    "pygments==2.21.0",
     # Displays the web UI in a native Tauri window
     "pytauri-wheel==0.8.0",
     # Web framework used for the GUI

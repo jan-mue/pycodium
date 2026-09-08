@@ -45,7 +45,7 @@ repos:
         args: [--fix]
         exclude: CHANGELOG\.md|\.agents/
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0f34924c4110aca2294a4e4204aac7b3e31803fb # frozen: 0.12.7
+    rev: 6605b5285fc7e0a99749c766a1cc3332ed228b5a # frozen: 0.12.8
     hooks:
       - id: uv-lock
   - repo: https://github.com/fpgmaas/deptry.git

@@ -53,5 +53,5 @@ def editor_area() -> rx.Component:
     return rx.el.div(
         rx.cond(EditorState.tabs.length() > 0, editor_tabs()),  # type: ignore[attr-defined]
         editor_content(),
-        class_name="flex flex-col h-full",
+        class_name="flex flex-col h-full bg-pycodium-editor-bg",
     )

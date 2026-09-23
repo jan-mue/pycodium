@@ -24,11 +24,7 @@
   ```python
   # WRONG: rx.text(State.count if State.count % 2 == 0 else "Odd")
   # RIGHT:
-  rx.cond(
-      State.count % 2 == 0,
-      rx.text("Even"),
-      rx.text("Odd")
-  )
+  rx.cond(State.count % 2 == 0, rx.text("Even"), rx.text("Odd"))
   ```
 
 - Cannot iterate over lists with for loops - use `rx.foreach()` instead:
@@ -38,7 +34,7 @@
   # RIGHT:
   rx.foreach(
       State.items,
-      lambda item: rx.text(item)  # Note: item is a Var, not a str
+      lambda item: rx.text(item),  # Note: item is a Var, not a str
   )
   ```
 

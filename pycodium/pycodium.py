@@ -134,7 +134,7 @@ def index() -> rx.Component:
             class_name="flex-1 flex overflow-hidden",
         ),
         status_bar(),
-        class_name="h-screen flex flex-col overflow-hidden",
+        class_name="h-screen flex flex-col overflow-hidden bg-pycodium-bg",
     )
 
 

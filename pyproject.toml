@@ -72,6 +72,13 @@ dev = [
     "uvicorn==0.53.0",
 ]
 
+[tool.hatch.version]
+path = "pycodium/version.py"
+
+[tool.hatch.build.hooks.custom]
+path = "build_hook.py"
+require-runtime-dependencies = true
+
 [tool.hatch.build]
 include = [
     ".web/build/client",
@@ -84,13 +91,6 @@ include = [
     "Tauri.toml",
 ]
 ignore-vcs = true
-
-[tool.hatch.build.hooks.custom]
-path = "build_hook.py"
-require-runtime-dependencies = true
-
-[tool.hatch.version]
-path = "pycodium/version.py"
 
 [tool.ruff]
 target-version = "py310"
@@ -141,13 +141,13 @@ lint.pydocstyle.convention = "google"
 [tool.codespell]
 ignore-words-list = "nin"
 
-[tool.deptry.package_module_name_map]
-pytauri-wheel = [ "pytauri", "pytauri_plugins" ]
-
 [tool.deptry.per_rule_ignores]
 DEP004 = [
     "hatchling", # not required at runtime as it is only used to build the package
 ]
+
+[tool.deptry.package_module_name_map]
+pytauri-wheel = [ "pytauri", "pytauri_plugins" ]
 
 [tool.pyproject-fmt]
 column_width = 120
@@ -172,14 +172,14 @@ reportUnknownVariableType = false
 reportUnnecessaryTypeIgnoreComment = true
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
 
 [tool.coverage.report]
 exclude_also = [
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
     "@(abc\\.)?abstractmethod",
     "@(typing(_extensions)?\\.)?overload",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
 ]

@@ -59,7 +59,7 @@ scripts.pycodium = "pycodium.main:app"
 dev = [
     "coverage==7.16.1",
     "deptry==0.25.1",
-    "hatchling==1.32.0",
+    "hatchling==1.32.3",
     "httpx==0.28.1",
     "inline-snapshot[black,dirty-equals]==0.35.4",
     "playwright==1.63.0",

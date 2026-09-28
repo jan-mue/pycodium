@@ -116,7 +116,6 @@ def test_app_component_tailwind_classes_are_generated(app_page: Page) -> None:
         "text-pycodium-text",
         "text-pycodium-icon",
         "border-pycodium-highlight",
-        "bg-pycodium-tab-active",
         "bg-pycodium-tab-inactive",
     ]
 

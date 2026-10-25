@@ -38,3 +38,13 @@ async def test_basedpyright_lsp_client_integration(lsp_client: BasedPyrightLSPCl
     assert hover is not None, "Hover info should not be None"
 
     await lsp_client.close_document(TEST_URI)
+
+
+async def test_document_changes_refresh_diagnostics(lsp_client: BasedPyrightLSPClient) -> None:
+    await lsp_client.open_document(TEST_URI, 'value: int = "wrong"')
+    diagnostics = await lsp_client.get_diagnostics(TEST_URI)
+    assert any(item.get("severity") == 1 for item in diagnostics)
+    await lsp_client.open_document(TEST_URI, "value: int = 1")
+    assert await lsp_client.get_diagnostics(TEST_URI) == []
+    assert lsp_client.documents[TEST_URI][0] == 2
+    await lsp_client.close_document(TEST_URI)

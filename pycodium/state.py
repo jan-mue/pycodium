@@ -53,8 +53,9 @@ class EditorState(rx.State):
     tabs: list[EditorTab] = []
     active_tab_id: str | None = None
     active_tab_history: list[str] = []
-    completion_response: dict[str, list[CompletionItem]] = {}
-    hover_info: dict[str, str] = {}
+    completion_response: dict[str, Any] = {}
+    diagnostics_response: dict[str, Any] = {}
+    hover_info: dict[str, Any] = {}
     declaration_response: dict[str, Any] = {}
     signature_help_response: dict[str, Any] = {}
     reference_response: dict[str, Any] = {}
@@ -145,7 +146,9 @@ class EditorState(rx.State):
         self.tabs.append(tab)
         logger.debug(f"Created tab {tab.id} for {file_path}")
         lsp_client = await get_lsp_client()
-        uri = f"file://{self.project_root.parent / file_path}"
+        uri = (
+            file_path if file_path.startswith("file://") else (self.project_root.parent / file_path).resolve().as_uri()
+        )
         await lsp_client.open_document(uri, content, language_id=tab.language)
         return tab
 
@@ -307,6 +310,12 @@ class EditorState(rx.State):
         logger.debug(f"Setting active tab {tab_id}")
         tab.on_not_active.clear()
         return self._activate_tab(tab)
+
+    @rx.var
+    def active_file_uri(self) -> str:
+        """Use the same absolute URI in Monaco and the language server."""
+        tab = self.active_tab
+        return (self.project_root.parent / tab.path).resolve().as_uri() if tab else ""
 
     @rx.var
     def active_tab(self) -> EditorTab | None:
@@ -597,10 +606,13 @@ class EditorState(rx.State):
             # Return empty completions instead of raising an error
             logger.warning("No file path available for completion request, returning empty results")
             self.completion_response = {"items": []}
+            self.completion_response["request_id"] = request.get("request_id", "")
             return
 
         lsp_client = await get_lsp_client()
-        uri = f"file://{self.project_root.parent / file_path}"
+        uri = (
+            file_path if file_path.startswith("file://") else (self.project_root.parent / file_path).resolve().as_uri()
+        )
         await lsp_client.open_document(uri, text)
         completions = await lsp_client.get_completions(uri, line, column)
 
@@ -615,6 +627,7 @@ class EditorState(rx.State):
 
         completion_items = [lsp_to_monaco(item) for item in completions]
         self.completion_response = {"items": completion_items}
+        self.completion_response["request_id"] = request.get("request_id", "")
         logger.debug(f"Updated completion response for file {file_path}, line {line}, column {column}")
 
     @rx.event
@@ -637,9 +650,12 @@ class EditorState(rx.State):
             # Return empty hover info instead of raising an error
             logger.warning("No file path available for hover request, returning empty results")
             self.hover_info = {}
+            self.hover_info["request_id"] = request.get("request_id", "")
             return
         lsp_client = await get_lsp_client()
-        uri = f"file://{self.project_root.parent / file_path}"
+        uri = (
+            file_path if file_path.startswith("file://") else (self.project_root.parent / file_path).resolve().as_uri()
+        )
         await lsp_client.open_document(uri, text)
         hover = await lsp_client.get_hover_info(uri, line, column)
 
@@ -663,6 +679,7 @@ class EditorState(rx.State):
             else:
                 contents = str(hover_contents)
         self.hover_info = {"contents": contents} if contents else {}
+        self.hover_info["request_id"] = request.get("request_id", "")
         logger.debug(f"Updated hover info for file {file_path}, line {line}, column {column}")
 
     @rx.event
@@ -685,9 +702,12 @@ class EditorState(rx.State):
             # Return empty declaration info instead of raising an error
             logger.warning("No file path available for declaration request, returning empty results")
             self.declaration_response = {"items": []}
+            self.declaration_response["request_id"] = request.get("request_id", "")
             return
         lsp_client = await get_lsp_client()
-        uri = f"file://{self.project_root.parent / file_path}"
+        uri = (
+            file_path if file_path.startswith("file://") else (self.project_root.parent / file_path).resolve().as_uri()
+        )
         await lsp_client.open_document(uri, text)
         declaration = await lsp_client.get_declaration(uri, line, column)
 
@@ -719,6 +739,7 @@ class EditorState(rx.State):
         elif isinstance(declaration, dict):
             locations = [lsp_to_monaco_location(declaration)]
         self.declaration_response = {"items": locations}
+        self.declaration_response["request_id"] = request.get("request_id", "")
         logger.debug(f"Updated declaration response for file {file_path}, line {line}, column {column}")
 
     @rx.event
@@ -738,10 +759,13 @@ class EditorState(rx.State):
         logger.debug(f"Received signature help request for file {file_path}, line {line}, column {column}")
         if not file_path:
             self.signature_help_response = {}
+            self.signature_help_response["request_id"] = request.get("request_id", "")
             return
 
         lsp_client = await get_lsp_client()
-        uri = f"file://{self.project_root.parent / file_path}"
+        uri = (
+            file_path if file_path.startswith("file://") else (self.project_root.parent / file_path).resolve().as_uri()
+        )
         await lsp_client.open_document(uri, text)
         signature_help = await lsp_client.get_signature_help(uri, line, column)
 
@@ -764,8 +788,10 @@ class EditorState(rx.State):
                 "activeSignature": signature_help.get("activeSignature", 0),
                 "activeParameter": signature_help.get("activeParameter", 0),
             }
+            self.signature_help_response["request_id"] = request.get("request_id", "")
         else:
             self.signature_help_response = {}
+            self.signature_help_response["request_id"] = request.get("request_id", "")
         logger.debug(f"Updated signature help for file {file_path}, line {line}, column {column}")
 
     @rx.event
@@ -785,10 +811,13 @@ class EditorState(rx.State):
         logger.debug(f"Received reference request for file {file_path}, line {line}, column {column}")
         if not file_path:
             self.reference_response = {"items": []}
+            self.reference_response["request_id"] = request.get("request_id", "")
             return
 
         lsp_client = await get_lsp_client()
-        uri = f"file://{self.project_root.parent / file_path}"
+        uri = (
+            file_path if file_path.startswith("file://") else (self.project_root.parent / file_path).resolve().as_uri()
+        )
         await lsp_client.open_document(uri, text)
         references = await lsp_client.get_references(uri, line, column)
 
@@ -809,6 +838,7 @@ class EditorState(rx.State):
 
         locations = [lsp_to_monaco_location(ref) for ref in references]
         self.reference_response = {"items": locations}
+        self.reference_response["request_id"] = request.get("request_id", "")
         logger.debug(f"Updated reference response for file {file_path}, line {line}, column {column}")
 
     @rx.event
@@ -828,10 +858,13 @@ class EditorState(rx.State):
         logger.debug(f"Received prepare rename request for file {file_path}, line {line}, column {column}")
         if not file_path:
             self.prepare_rename_response = {}
+            self.prepare_rename_response["request_id"] = request.get("request_id", "")
             return
 
         lsp_client = await get_lsp_client()
-        uri = f"file://{self.project_root.parent / file_path}"
+        uri = (
+            file_path if file_path.startswith("file://") else (self.project_root.parent / file_path).resolve().as_uri()
+        )
         await lsp_client.open_document(uri, text)
         prepare_result = await lsp_client.prepare_rename(uri, line, column)
 
@@ -839,11 +872,14 @@ class EditorState(rx.State):
             # Can be a Range or { range: Range, placeholder: string }
             if "range" in prepare_result:
                 self.prepare_rename_response = prepare_result
+                self.prepare_rename_response["request_id"] = request.get("request_id", "")
             else:
                 # It's just a range
                 self.prepare_rename_response = {"range": prepare_result}
+                self.prepare_rename_response["request_id"] = request.get("request_id", "")
         else:
             self.prepare_rename_response = {}
+            self.prepare_rename_response["request_id"] = request.get("request_id", "")
         logger.debug(f"Updated prepare rename response for file {file_path}, line {line}, column {column}")
 
     @rx.event
@@ -864,16 +900,39 @@ class EditorState(rx.State):
         logger.debug(f"Received rename request for file {file_path}, line {line}, column {column}, new_name={new_name}")
         if not file_path or not new_name:
             self.rename_response = {}
+            self.rename_response["request_id"] = request.get("request_id", "")
             return
 
         lsp_client = await get_lsp_client()
-        uri = f"file://{self.project_root.parent / file_path}"
+        uri = (
+            file_path if file_path.startswith("file://") else (self.project_root.parent / file_path).resolve().as_uri()
+        )
         await lsp_client.open_document(uri, text)
         workspace_edit = await lsp_client.rename_symbol(uri, line, column, new_name)
 
         if workspace_edit:
             # Convert LSP WorkspaceEdit to a format usable by Monaco
             self.rename_response = {"edit": workspace_edit}
+            self.rename_response["request_id"] = request.get("request_id", "")
         else:
             self.rename_response = {}
+            self.rename_response["request_id"] = request.get("request_id", "")
         logger.debug(f"Updated rename response for file {file_path}, line {line}, column {column}")
+
+    @rx.event
+    async def handle_diagnostics_request(self, request: CompletionRequest) -> None:
+        """Publish language server diagnostics for the current document."""
+        file_path = request.get("file_path")
+        if not file_path:
+            return
+        uri = (
+            file_path if file_path.startswith("file://") else (self.project_root.parent / file_path).resolve().as_uri()
+        )
+        client = await get_lsp_client()
+        await client.open_document(uri, request["text"])
+        self.diagnostics_response = {
+            "request_id": request.get("request_id", ""),
+            "uri": file_path,
+            "items": await client.get_diagnostics(uri),
+            "text": request["text"],
+        }

@@ -2,6 +2,8 @@
 
 from typing import TypedDict
 
+from typing_extensions import NotRequired
+
 
 class Position(TypedDict):
     """Position in the editor."""
@@ -13,6 +15,7 @@ class Position(TypedDict):
 class CompletionRequest(TypedDict):
     """Completion request data."""
 
+    request_id: NotRequired[str]
     text: str
     position: Position
     file_path: str | None
@@ -21,6 +24,7 @@ class CompletionRequest(TypedDict):
 class HoverRequest(TypedDict):
     """Hover request data."""
 
+    request_id: NotRequired[str]
     text: str
     position: Position
     file_path: str | None
@@ -42,6 +46,7 @@ class CompletionItem(TypedDict):
 class DeclarationRequest(TypedDict):
     """Declaration request data."""
 
+    request_id: NotRequired[str]
     text: str
     position: dict[str, int]
     file_path: str
@@ -50,6 +55,7 @@ class DeclarationRequest(TypedDict):
 class SignatureHelpRequest(TypedDict):
     """Signature help request data."""
 
+    request_id: NotRequired[str]
     text: str
     position: Position
     file_path: str | None
@@ -58,6 +64,7 @@ class SignatureHelpRequest(TypedDict):
 class ReferenceRequest(TypedDict):
     """Reference request data."""
 
+    request_id: NotRequired[str]
     text: str
     position: Position
     file_path: str | None
@@ -66,6 +73,7 @@ class ReferenceRequest(TypedDict):
 class RenameRequest(TypedDict):
     """Rename request data."""
 
+    request_id: NotRequired[str]
     text: str
     position: Position
     file_path: str | None
@@ -75,6 +83,7 @@ class RenameRequest(TypedDict):
 class PrepareRenameRequest(TypedDict):
     """Prepare rename request data."""
 
+    request_id: NotRequired[str]
     text: str
     position: Position
     file_path: str | None

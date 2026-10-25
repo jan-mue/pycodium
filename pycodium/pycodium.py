@@ -70,7 +70,7 @@ def index() -> rx.Component:
             filtered_command_ids=CommandPaletteState.filtered_command_ids,
             selected_index=CommandPaletteState.selected_index,
             mode=CommandPaletteState.mode,
-            python_interpreters=CommandPaletteState.python_interpreters,
+            python_interpreters=CommandPaletteState.filtered_interpreters,
             current_interpreter=CommandPaletteState.current_interpreter,
             on_close=CommandPaletteState.close_command_palette,
             on_search_change=CommandPaletteState.update_search,
@@ -80,7 +80,7 @@ def index() -> rx.Component:
         ),
         GlobalHotkeyWatcher.create(
             on_key_down=lambda key, key_info: rx.cond(
-                key_info.meta_key & key_info.shift_key & (key == "p"),
+                (key_info.meta_key | key_info.ctrl_key) & key_info.shift_key & (key.lower() == "p"),
                 CommandPaletteState.toggle_command_palette.prevent_default,
                 rx.cond(
                     key_info.meta_key & rx.Var.create(["s", "w"]).contains(key),

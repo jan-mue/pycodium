@@ -37,13 +37,16 @@ def editor_content() -> rx.Component:
                 monaco(
                     value=active_tab.content,
                     language=active_tab.language,
-                    path=active_tab.path,
+                    path=EditorState.active_file_uri,
                     theme="vs-dark",
                     options=default_monaco_options,
                     on_change=lambda content: EditorState.update_tab_content(active_tab.id, content),
                     # LSP response state vars
                     completion_response=EditorState.completion_response,
+                    diagnostics_response=EditorState.diagnostics_response,
+                    on_diagnostics_request=EditorState.handle_diagnostics_request,
                     hover_info=EditorState.hover_info,
+                    declaration_response=EditorState.declaration_response,
                     signature_help_response=EditorState.signature_help_response,
                     reference_response=EditorState.reference_response,
                     rename_response=EditorState.rename_response,

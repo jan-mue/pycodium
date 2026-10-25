@@ -92,7 +92,9 @@ class CommandPaletteState(rx.State):
         logger.debug(f"Search updated: '{query}', filtered: {len(self.filtered_command_ids)} commands")
 
     @rx.event
-    async def handle_key_down(self, key: str, _key_info: rx.event.KeyInputInfo) -> None:
+    async def handle_key_down(
+        self, key: str, _key_info: rx.event.KeyInputInfo
+    ) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
         """Handle keyboard navigation in the command palette.
 
         Args:
@@ -105,7 +107,7 @@ class CommandPaletteState(rx.State):
 
         if key == "ArrowDown":
             max_index = (
-                len(self.filtered_command_ids) - 1 if self.mode == "commands" else len(self.python_interpreters) - 1
+                len(self.filtered_command_ids) - 1 if self.mode == "commands" else len(self.filtered_interpreters) - 1
             )
             if self.selected_index < max_index:
                 self.selected_index += 1
@@ -117,16 +119,16 @@ class CommandPaletteState(rx.State):
             return
 
         if key == "Enter":
-            await self._execute_selected()
+            return await self._execute_selected()
 
-    async def _execute_selected(self) -> None:
+    async def _execute_selected(self) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
         """Execute the currently selected item."""
         if self.mode == "commands" and 0 <= self.selected_index < len(self.filtered_command_ids):
             cmd_id = self.filtered_command_ids[self.selected_index]
-            await self.select_command(cmd_id)
-        elif self.mode == "interpreters" and 0 <= self.selected_index < len(self.python_interpreters):
-            interp = self.python_interpreters[self.selected_index]
-            await self.select_interpreter(interp["path"])
+            return await self.select_command(cmd_id)
+        elif self.mode == "interpreters" and 0 <= self.selected_index < len(self.filtered_interpreters):
+            interp = self.filtered_interpreters[self.selected_index]
+            return await self.select_interpreter(interp["path"])
 
     @rx.event
     async def select_command(self, command_id: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
@@ -216,7 +218,7 @@ class CommandPaletteState(rx.State):
         langserver_path = interpreter_dir / "basedpyright-langserver"
         langserver_path_str = str(langserver_path) if langserver_path.exists() else "basedpyright-langserver"
 
-        lsp_module.lsp_client = BasedPyrightLSPClient(server_path=langserver_path_str)
+        lsp_module.lsp_client = BasedPyrightLSPClient(server_path=langserver_path_str, python_path=interpreter_path)
         await lsp_module.lsp_client.start_server()
         logger.info(f"LSP server restarted with interpreter: {interpreter_path}")
 

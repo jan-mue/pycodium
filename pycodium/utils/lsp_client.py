@@ -9,11 +9,15 @@ from typing import Any, cast
 class BasedPyrightLSPClient:
     """Client for interacting with the basedpyright LSP server."""
 
-    def __init__(self, server_path: str = "basedpyright-langserver") -> None:
+    def __init__(self, server_path: str = "basedpyright-langserver", python_path: str | None = None) -> None:
         """Initialize the BasedPyrightLSPClient."""
         self.server_path = server_path
+        self.python_path = python_path
         self.process: asyncio.subprocess.Process | None = None
         self.request_id = 0
+        self.documents: dict[str, tuple[int, str]] = {}
+        self.diagnostics: dict[str, list[dict[str, Any]]] = {}
+        self.diagnostic_events: dict[str, asyncio.Event] = {}
         # TODO: improve type annotation for futures
         self.pending_requests: dict[int, asyncio.Future[Any]] = {}
         self.logger = logging.getLogger(__name__)
@@ -144,11 +148,37 @@ class BasedPyrightLSPClient:
 
     async def open_document(self, uri: str, content: str, language_id: str = "python") -> None:
         """Open a document in the server."""
-        params = {"textDocument": {"uri": uri, "languageId": language_id, "version": 1, "text": content}}
-        await self._send_notification("textDocument/didOpen", params)
+        previous = self.documents.get(uri)
+        if previous and previous[1] == content:
+            return
+        version = previous[0] + 1 if previous else 1
+        self.documents[uri] = (version, content)
+        self.diagnostic_events.setdefault(uri, asyncio.Event()).clear()
+        if previous:
+            await self._send_notification(
+                "textDocument/didChange",
+                {"textDocument": {"uri": uri, "version": version}, "contentChanges": [{"text": content}]},
+            )
+        else:
+            await self._send_notification(
+                "textDocument/didOpen",
+                {"textDocument": {"uri": uri, "languageId": language_id, "version": version, "text": content}},
+            )
+
+    async def get_diagnostics(self, uri: str) -> list[dict[str, Any]]:
+        """Wait for diagnostics for the latest document content."""
+        event = self.diagnostic_events.setdefault(uri, asyncio.Event())
+        try:
+            await asyncio.wait_for(event.wait(), timeout=10)
+        except asyncio.TimeoutError:
+            self.logger.warning("Timed out waiting for diagnostics for %s", uri)
+        return self.diagnostics.get(uri, [])
 
     async def close_document(self, uri: str) -> None:
         """Close a document in the server."""
+        self.documents.pop(uri, None)
+        self.diagnostics.pop(uri, None)
+        self.diagnostic_events.pop(uri, None)
         params = {"textDocument": {"uri": uri}}
         await self._send_notification("textDocument/didClose", params)
 
@@ -164,6 +194,8 @@ class BasedPyrightLSPClient:
                     },
                     "hover": {"contentFormat": ["markdown", "plaintext"]},
                     "references": {"dynamicRegistration": False},
+                    "rename": {"prepareSupport": True},
+                    "signatureHelp": {"signatureInformation": {"documentationFormat": ["markdown", "plaintext"]}},
                     "declaration": {"dynamicRegistration": False, "linkSupport": True},
                 }
             },
@@ -172,6 +204,10 @@ class BasedPyrightLSPClient:
 
         await self._send_request("initialize", params)
         await self._send_notification("initialized", {})
+        if self.python_path:
+            await self._send_notification(
+                "workspace/didChangeConfiguration", {"settings": {"python": {"pythonPath": self.python_path}}}
+            )
 
     async def _send_request(
         self, method: str, params: dict[str, Any] | None
@@ -287,6 +323,8 @@ class BasedPyrightLSPClient:
             request_id = message["id"]
             if request_id in self.pending_requests:
                 future = self.pending_requests[request_id]
+                if future.done():
+                    return
                 if "error" in message:
                     future.set_exception(Exception(f"LSP Error: {message['error']}"))
                 else:
@@ -294,6 +332,13 @@ class BasedPyrightLSPClient:
         else:
             # This is a notification from the server
             method = message.get("method")
+            if method == "textDocument/publishDiagnostics":
+                params = message["params"]
+                uri = params["uri"]
+                version = params.get("version")
+                if version is None or version == self.documents.get(uri, (None, ""))[0]:
+                    self.diagnostics[uri] = params.get("diagnostics", [])
+                    self.diagnostic_events.setdefault(uri, asyncio.Event()).set()
             if method:
                 self.logger.debug(f"Received notification: {method}")
 

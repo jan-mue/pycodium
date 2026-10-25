@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 import httpx
 from playwright.sync_api import ConsoleMessage, Page, expect
 
+from tests.helpers import open_file
+
 if TYPE_CHECKING:
     from reflex.testing import AppHarness
 
@@ -132,6 +134,37 @@ def test_app_component_tailwind_classes_are_generated(app_page: Page) -> None:
             class_name,
         )
         assert is_present, f"Tailwind class {class_name!r} is missing from the generated stylesheet"
+
+
+def test_editor_tab_colors_follow_active_tab(multi_file_page: Page) -> None:
+    """Check colors applied via @apply, which need not emit utility selectors."""
+    first_tab = open_file(multi_file_page, "first_file.py")
+    second_tab = open_file(multi_file_page, "second_file.py")
+
+    # Resolve the theme variables through CSS so this also works if the theme changes.
+    colors = multi_file_page.evaluate(
+        """() => {
+            const probe = document.createElement('div');
+            document.body.appendChild(probe);
+            const colors = ['active', 'inactive'].map(state => {
+                probe.style.backgroundColor = `var(--pycodium-tab-${state})`;
+                return getComputedStyle(probe).backgroundColor;
+            });
+            probe.remove();
+            return colors;
+        }"""
+    )
+    active_color, inactive_color = colors
+    assert active_color != inactive_color
+
+    expect(second_tab).to_have_css("background-color", active_color)
+    expect(first_tab).to_have_css("background-color", inactive_color)
+
+    first_tab.click()
+    # Move away from the tab to check its resting color rather than its hover color.
+    multi_file_page.locator('[title="Explorer"]').hover()
+    expect(first_tab).to_have_css("background-color", active_color)
+    expect(second_tab).to_have_css("background-color", inactive_color)
 
 
 def test_no_console_errors(app_page: Page) -> None:

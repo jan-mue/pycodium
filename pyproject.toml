@@ -92,6 +92,10 @@ include = [
 ]
 ignore-vcs = true
 
+[tool.uv]
+exclude-newer = "7 days"
+exclude-newer-package.certifi = false
+
 [tool.ruff]
 target-version = "py310"
 line-length = 120

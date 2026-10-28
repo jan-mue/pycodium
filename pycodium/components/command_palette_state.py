@@ -194,13 +194,13 @@ class CommandPaletteState(rx.State):
     async def select_interpreter(self, interpreter_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
         """Select a Python interpreter and restart the LSP server."""
         logger.info(f"Selecting Python interpreter: {interpreter_path}")
-        self.current_interpreter = interpreter_path
 
         try:
             await self._restart_lsp_with_interpreter(interpreter_path)
+            self.current_interpreter = interpreter_path
             await self.close_command_palette()
             return rx.toast.success(f"Python interpreter set to: {interpreter_path}")
-        except (FileNotFoundError, PermissionError) as e:
+        except (OSError, RuntimeError, asyncio.TimeoutError) as e:
             logger.error(f"Failed to set Python interpreter: {e}")
             return rx.toast.error(f"Failed to set interpreter: {e}")
 
@@ -209,17 +209,21 @@ class CommandPaletteState(rx.State):
         from pycodium.utils import lsp_client as lsp_module  # noqa: PLC0415
         from pycodium.utils.lsp_client import BasedPyrightLSPClient  # noqa: PLC0415
 
-        if lsp_module.lsp_client is not None:
-            await lsp_module.lsp_client.stop_server()
-            lsp_module.lsp_client = None
-
         # Find basedpyright-langserver in the interpreter's environment
         interpreter_dir = Path(interpreter_path).parent
         langserver_path = interpreter_dir / "basedpyright-langserver"
         langserver_path_str = str(langserver_path) if langserver_path.exists() else "basedpyright-langserver"
 
-        lsp_module.lsp_client = BasedPyrightLSPClient(server_path=langserver_path_str, python_path=interpreter_path)
-        await lsp_module.lsp_client.start_server()
+        candidate = BasedPyrightLSPClient(server_path=langserver_path_str, python_path=interpreter_path)
+        await candidate.start_server()
+        previous = lsp_module.lsp_client
+        try:
+            if previous is not None:
+                await previous.stop_server()
+        except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
+            await candidate.stop_server()
+            raise
+        lsp_module.lsp_client = candidate
         logger.info(f"LSP server restarted with interpreter: {interpreter_path}")
 
     async def _discover_python_interpreters(self) -> None:

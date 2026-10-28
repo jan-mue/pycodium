@@ -1,6 +1,7 @@
 """LSP client for interacting with the basedpyright language server."""
 
 import asyncio
+import contextlib
 import json
 import logging
 from typing import Any, cast
@@ -42,35 +43,44 @@ class BasedPyrightLSPClient:
 
             self.logger.info("basedpyright LSP server started successfully")
 
-        except Exception as e:
-            self.logger.error(f"Failed to start basedpyright server: {e}")
+        except (OSError, RuntimeError, asyncio.TimeoutError, asyncio.CancelledError):
+            self.logger.exception("Failed to start basedpyright server")
+            await self._terminate_process()
             raise
 
-    async def stop_server(self) -> None:
-        """Stop the basedpyright LSP server process."""
-        if self.process:
+    async def _terminate_process(self) -> None:
+        """Reap the child even if initialization or protocol shutdown failed."""
+        process = self.process
+        if process is None:
+            return
+        if process.returncode is None:
+            with contextlib.suppress(ProcessLookupError):
+                process.terminate()
             try:
-                # Send shutdown request with null params
-                await self._send_request("shutdown", None)  # Changed from {} to None
-
-                # Send exit notification
-                await self._send_notification("exit", None)  # Also change this for consistency
-
-                # Wait for process to terminate
-                await asyncio.wait_for(self.process.wait(), timeout=5.0)
-
+                await asyncio.wait_for(process.wait(), timeout=5)
             except asyncio.TimeoutError:
-                self.logger.warning("Server didn't shut down gracefully, terminating")
-                self.process.terminate()
-                await self.process.wait()
-            except OSError as e:
-                self.logger.error(f"Error during server shutdown: {e}")
-                if self.process.returncode is None:
-                    self.process.kill()
-                    await self.process.wait()
-            finally:
-                self.process = None
-                self.logger.info("basedpyright LSP server stopped")
+                self.logger.warning("Language server ignored termination; killing it")
+                with contextlib.suppress(ProcessLookupError):
+                    process.kill()
+                await asyncio.wait_for(process.wait(), timeout=5)
+        self.process = None
+        self.documents.clear()
+        self.diagnostics.clear()
+        self.diagnostic_events.clear()
+
+    async def stop_server(self) -> None:
+        """Attempt protocol shutdown and always reap the language server."""
+        if self.process is None:
+            return
+        try:
+            await self._send_request("shutdown", None)
+            await self._send_notification("exit", None)
+            await asyncio.wait_for(self.process.wait(), timeout=5)
+        except (OSError, RuntimeError, asyncio.TimeoutError):
+            self.logger.warning("Language server protocol shutdown failed", exc_info=True)
+        finally:
+            await self._terminate_process()
+        self.logger.info("basedpyright LSP server stopped")
 
     async def get_completions(self, uri: str, line: int, character: int) -> list[dict[str, Any]]:
         """Get code completions at the specified position."""
@@ -326,7 +336,7 @@ class BasedPyrightLSPClient:
                 if future.done():
                     return
                 if "error" in message:
-                    future.set_exception(Exception(f"LSP Error: {message['error']}"))
+                    future.set_exception(RuntimeError(f"LSP Error: {message['error']}"))
                 else:
                     future.set_result(message.get("result"))
         else:
@@ -350,6 +360,7 @@ async def get_lsp_client() -> BasedPyrightLSPClient:
     """Get the singleton instance of the BasedPyrightLSPClient."""
     global lsp_client  # noqa: PLW0603
     if lsp_client is None:
-        lsp_client = BasedPyrightLSPClient()
-        await lsp_client.start_server()
+        candidate = BasedPyrightLSPClient()
+        await candidate.start_server()
+        lsp_client = candidate
     return lsp_client

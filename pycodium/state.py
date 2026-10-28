@@ -30,6 +30,7 @@ from pycodium.models.monaco import (
     SignatureHelpRequest,
 )
 from pycodium.models.tabs import EditorTab
+from pycodium.utils import lsp_client as lsp_module
 from pycodium.utils.detect_encoding import decode
 from pycodium.utils.detect_lang import detect_programming_language
 from pycodium.utils.lsp_client import get_lsp_client
@@ -37,7 +38,6 @@ from pycodium.utils.lsp_client import get_lsp_client
 if TYPE_CHECKING:
     from reflex.event import EventCallback, EventSpec, KeyInputInfo
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -273,6 +273,7 @@ class EditorState(rx.State):
             tab_id: The ID of the tab to close.
         """
         logger.debug(f"Closing tab {tab_id}")
+        tab = next((tab for tab in self.tabs if tab.id == tab_id), None)
         self._stop_updating_active_tab()
         self.tabs = [tab for tab in self.tabs if tab.id != tab_id]
         self.active_tab_history = [tab for tab in self.active_tab_history if tab != tab_id]
@@ -287,11 +288,9 @@ class EditorState(rx.State):
             logger.debug("No previous tab to switch to, setting active tab to None")
             self.active_tab_id = None
 
-        tab = next((t for t in self.tabs if t.id == tab_id), None)
-        if tab:
-            lsp_client = await get_lsp_client()
-            uri = f"file://{self.project_root.parent / tab.path}"
-            await lsp_client.close_document(uri)
+        if tab and not tab.is_special and lsp_module.lsp_client is not None:
+            uri = (self.project_root.parent / tab.path).resolve().as_uri()
+            await lsp_module.lsp_client.close_document(uri)
 
     @rx.event
     async def set_active_tab(self, tab_id: str) -> EventCallback[Unpack[tuple[()]]] | None:

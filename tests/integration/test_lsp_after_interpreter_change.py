@@ -32,8 +32,6 @@ if TYPE_CHECKING:
     from reflex.testing import AppHarness
 
 
-# Python file designed to exercise LSP features
-# The file uses standard Python constructs that basedpyright can analyze
 LSP_TEST_FILE_CONTENT = '''"""Module with code to test LSP features."""
 
 
@@ -109,45 +107,36 @@ class TestLSPAfterInterpreterChange:
         3. The interpreter can be changed via command palette
         4. LSP go-to-definition still works after the interpreter change
         """
-        # Navigate to the app
         page = navigate_to_app_with_path(reflex_web_app, page, lsp_interpreter_test_folder, monkeypatch)
         page.wait_for_timeout(3000)
 
-        # Open the test file
         open_file(page, "main.py")
         wait_for_editor_visible(page, timeout=15000)
         page.wait_for_timeout(5000)
 
-        # Change the Python interpreter
         _select_python_interpreter(page)
 
-        # Wait for command palette to close
         command_palette = page.locator("#command-palette-container")
         expect(command_palette).not_to_be_visible(timeout=5000)
         page.wait_for_timeout(3000)
 
-        # Click on editor to focus it
         editor = page.locator(".monaco-editor")
         editor.click()
         page.wait_for_timeout(500)
 
-        # Navigate to line 20 where `result = greet("World")` is
         page.keyboard.press("Meta+g")
         page.wait_for_timeout(300)
         page.keyboard.type("20")
         page.keyboard.press("Enter")
         page.wait_for_timeout(500)
 
-        # Position cursor on "greet"
         page.keyboard.press("Home")
         for _ in range(9):
             page.keyboard.press("ArrowRight")
 
-        # Press F12 to go to definition
         page.keyboard.press("F12")
         page.wait_for_timeout(3000)
 
-        # Verify the function definition is visible
         def_line = page.locator(".view-line:has-text('def greet(name: str)')")
         expect(def_line).to_be_visible(timeout=5000)
 
@@ -159,23 +148,18 @@ class TestLSPAfterInterpreterChange:
         This is a basic smoke test to ensure the interpreter change doesn't
         break basic file operations.
         """
-        # Navigate to the app
         page = navigate_to_app_with_path(reflex_web_app, page, lsp_interpreter_test_folder, monkeypatch)
         page.wait_for_timeout(3000)
 
-        # Change the Python interpreter first
         _select_python_interpreter(page)
 
-        # Wait for command palette to close
         command_palette = page.locator("#command-palette-container")
         expect(command_palette).not_to_be_visible(timeout=5000)
         page.wait_for_timeout(2000)
 
-        # Now open the test file
         open_file(page, "main.py")
         wait_for_editor_visible(page, timeout=15000)
 
-        # Verify the file content is visible
         def_greet = page.locator(".view-line:has-text('def greet')")
         expect(def_greet).to_be_visible(timeout=10000)
 
@@ -183,44 +167,35 @@ class TestLSPAfterInterpreterChange:
         self, reflex_web_app: AppHarness, page: Page, lsp_interpreter_test_folder: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test that go-to-definition for classes works after interpreter change."""
-        # Navigate to the app
         page = navigate_to_app_with_path(reflex_web_app, page, lsp_interpreter_test_folder, monkeypatch)
         page.wait_for_timeout(3000)
 
-        # Open the test file
         open_file(page, "main.py")
         wait_for_editor_visible(page, timeout=15000)
         page.wait_for_timeout(5000)
 
-        # Change the Python interpreter
         _select_python_interpreter(page)
 
-        # Wait for command palette to close
         command_palette = page.locator("#command-palette-container")
         expect(command_palette).not_to_be_visible(timeout=5000)
         page.wait_for_timeout(3000)
 
-        # Click on editor to focus it
         editor = page.locator(".monaco-editor")
         editor.click()
         page.wait_for_timeout(500)
 
-        # Navigate to line 21 where `calc = Calculator(10)` is
         page.keyboard.press("Meta+g")
         page.wait_for_timeout(300)
         page.keyboard.type("21")
         page.keyboard.press("Enter")
         page.wait_for_timeout(500)
 
-        # Position cursor on "Calculator" (7 characters from start: "calc = ")
         page.keyboard.press("Home")
         for _ in range(7):
             page.keyboard.press("ArrowRight")
 
-        # Press F12 to go to definition
         page.keyboard.press("F12")
         page.wait_for_timeout(3000)
 
-        # Verify the class definition is visible
         class_def = page.locator(".view-line:has-text('class Calculator')")
         expect(class_def).to_be_visible(timeout=5000)

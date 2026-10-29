@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from reflex.testing import AppHarness
 
 
-# Python file for testing
 TEST_PYTHON_CONTENT = '''"""Module for LSP testing."""
 
 
@@ -71,11 +70,9 @@ def lsp_editor_page(
     page = navigate_to_app_with_path(reflex_web_app, page, lsp_test_folder, monkeypatch)
     page.wait_for_timeout(3000)
 
-    # Open the main.py file
     open_file(page, "main.py")
     wait_for_editor_visible(page, timeout=15000)
 
-    # Give editor time to fully render and LSP to initialize
     page.wait_for_timeout(5000)
     return page
 
@@ -92,33 +89,26 @@ class TestLSPHover:
         editor = lsp_editor_page.locator(".monaco-editor")
         editor.click()
 
-        # Go to line 20 where `result = greet("World")` is
         lsp_editor_page.keyboard.press("Meta+g")
         lsp_editor_page.wait_for_timeout(300)
         lsp_editor_page.keyboard.type("20")
         lsp_editor_page.keyboard.press("Enter")
         lsp_editor_page.wait_for_timeout(500)
 
-        # Position cursor on "greet" (after "result = ")
         lsp_editor_page.keyboard.press("Home")
         for _ in range(9):  # Move past "result = "
             lsp_editor_page.keyboard.press("ArrowRight")
 
-        # Trigger hover via keyboard shortcut (Cmd+K Cmd+I on Mac)
         lsp_editor_page.keyboard.press("Meta+k")
         lsp_editor_page.wait_for_timeout(100)
         lsp_editor_page.keyboard.press("Meta+i")
 
-        # Wait for hover widget to appear
         hover_widget = lsp_editor_page.locator(".monaco-hover")
         expect(hover_widget).to_be_visible(timeout=15000)
 
-        # Verify hover content contains function signature info
-        # basedpyright should show the function signature
         hover_content = lsp_editor_page.locator(".monaco-hover-content")
         expect(hover_content).to_be_visible(timeout=5000)
 
-        # The hover should contain "greet" and type information
         hover_text = hover_content.inner_text()
         assert "greet" in hover_text, f"Expected 'greet' in hover, got: {hover_text}"
 
@@ -127,28 +117,23 @@ class TestLSPHover:
         editor = lsp_editor_page.locator(".monaco-editor")
         editor.click()
 
-        # Go to line 21 where `calc = Calculator(10)` is
         lsp_editor_page.keyboard.press("Meta+g")
         lsp_editor_page.wait_for_timeout(300)
         lsp_editor_page.keyboard.type("21")
         lsp_editor_page.keyboard.press("Enter")
         lsp_editor_page.wait_for_timeout(500)
 
-        # Position cursor on "Calculator" (after "calc = ")
         lsp_editor_page.keyboard.press("Home")
         for _ in range(7):  # Move past "calc = "
             lsp_editor_page.keyboard.press("ArrowRight")
 
-        # Trigger hover
         lsp_editor_page.keyboard.press("Meta+k")
         lsp_editor_page.wait_for_timeout(100)
         lsp_editor_page.keyboard.press("Meta+i")
 
-        # Wait for hover widget
         hover_widget = lsp_editor_page.locator(".monaco-hover")
         expect(hover_widget).to_be_visible(timeout=15000)
 
-        # Verify hover contains class info
         hover_content = lsp_editor_page.locator(".monaco-hover-content")
         hover_text = hover_content.inner_text()
         assert "Calculator" in hover_text, f"Expected 'Calculator' in hover, got: {hover_text}"
@@ -165,25 +150,20 @@ class TestLSPGoToDefinition:
         editor = lsp_editor_page.locator(".monaco-editor")
         editor.click()
 
-        # Go to line 20 where `result = greet("World")` is
         lsp_editor_page.keyboard.press("Meta+g")
         lsp_editor_page.wait_for_timeout(300)
         lsp_editor_page.keyboard.type("20")
         lsp_editor_page.keyboard.press("Enter")
         lsp_editor_page.wait_for_timeout(500)
 
-        # Position cursor on "greet"
         lsp_editor_page.keyboard.press("Home")
         for _ in range(9):
             lsp_editor_page.keyboard.press("ArrowRight")
 
-        # Press F12 to go to definition
         lsp_editor_page.keyboard.press("F12")
         lsp_editor_page.wait_for_timeout(3000)
 
-        # Give time for the cursor to move
         lsp_editor_page.wait_for_timeout(500)
 
-        # Verify the definition line is visible somewhere in the editor
         def_line = lsp_editor_page.locator(".view-line:has-text('def greet(name: str)')")
         expect(def_line).to_be_visible(timeout=5000)

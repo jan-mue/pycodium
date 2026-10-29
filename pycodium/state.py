@@ -7,13 +7,12 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import uuid4
 
 import reflex as rx
 from anyio import Path as AsyncPath
 from anyio import open_file
-from reflex.event import EventCallback, EventSpec, KeyInputInfo
 from typing_extensions import Unpack
 from watchfiles import Change, awatch
 
@@ -34,9 +33,6 @@ from pycodium.utils import lsp_client as lsp_module
 from pycodium.utils.detect_encoding import decode
 from pycodium.utils.detect_lang import detect_programming_language
 from pycodium.utils.lsp_client import get_lsp_client
-
-if TYPE_CHECKING:
-    from reflex.event import EventCallback, EventSpec, KeyInputInfo
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +148,7 @@ class EditorState(rx.State):
         await lsp_client.open_document(uri, content, language_id=tab.language)
         return tab
 
-    def _activate_tab(self, tab: EditorTab) -> EventCallback[Unpack[tuple[()]]]:
+    def _activate_tab(self, tab: EditorTab) -> rx.event.EventCallback[Unpack[tuple[()]]]:
         """Activate a tab, updating history and stopping the previous tab's file watcher.
 
         Args:
@@ -168,7 +164,7 @@ class EditorState(rx.State):
         return EditorState.keep_active_tab_content_updated
 
     @rx.event
-    async def open_file(self, file_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+    async def open_file(self, file_path: str) -> rx.event.EventSpec | rx.event.EventCallback[Unpack[tuple[()]]] | None:
         """Open a file in the editor.
 
         Args:
@@ -199,7 +195,9 @@ class EditorState(rx.State):
         logger.debug(f"Content of tab {active_tab.id} saved successfully")
 
     @rx.event
-    async def menu_open_file(self, file_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+    async def menu_open_file(
+        self, file_path: str
+    ) -> rx.event.EventSpec | rx.event.EventCallback[Unpack[tuple[()]]] | None:
         """Open a file from an absolute path (triggered by native file dialog).
 
         Args:
@@ -225,7 +223,9 @@ class EditorState(rx.State):
         return self._activate_tab(tab)
 
     @rx.event
-    async def menu_open_folder(self, folder_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+    async def menu_open_folder(
+        self, folder_path: str
+    ) -> rx.event.EventSpec | rx.event.EventCallback[Unpack[tuple[()]]] | None:
         """Open a folder as the project root (triggered by native folder dialog).
 
         Args:
@@ -293,7 +293,7 @@ class EditorState(rx.State):
             await lsp_module.lsp_client.close_document(uri)
 
     @rx.event
-    async def set_active_tab(self, tab_id: str) -> EventCallback[Unpack[tuple[()]]] | None:
+    async def set_active_tab(self, tab_id: str) -> rx.event.EventCallback[Unpack[tuple[()]]] | None:
         """Set the active tab by its ID.
 
         Args:
@@ -511,7 +511,7 @@ class EditorState(rx.State):
         self.expanded_folders.add(self.project_root.name)
 
     @rx.event
-    async def open_project(self) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+    async def open_project(self) -> rx.event.EventSpec | rx.event.EventCallback[Unpack[tuple[()]]] | None:
         """Open a project in the editor."""
         path_str = os.environ.get(INITIAL_PATH_ENV_VAR)
         if path_str is None:
@@ -556,7 +556,7 @@ class EditorState(rx.State):
         await self.set_active_tab(settings_tab.id)
 
     @rx.event
-    async def on_key_down(self, key: str, key_info: KeyInputInfo) -> None:
+    async def on_key_down(self, key: str, key_info: rx.event.KeyInputInfo) -> None:
         """Handle global key down events."""
         logger.debug(f"Key pressed: {key}, Key Info: {key_info}")
         # TODO: make this work in pywebview
@@ -594,7 +594,6 @@ class EditorState(rx.State):
         column = position.get("column", 0)
         file_path = request.get("file_path")
 
-        # Fall back to active tab's path if file_path is not provided or is an in-memory URI
         if not file_path or file_path.startswith("inmemory://"):
             active_tab = self.active_tab
             if active_tab and active_tab.path:
@@ -602,7 +601,6 @@ class EditorState(rx.State):
 
         logger.debug(f"Received completion request for file {file_path}, line {line}, column {column}")
         if not file_path:
-            # Return empty completions instead of raising an error
             logger.warning("No file path available for completion request, returning empty results")
             self.completion_response = {"items": []}
             self.completion_response["request_id"] = request.get("request_id", "")
@@ -638,7 +636,6 @@ class EditorState(rx.State):
         column = position.get("column", 0)
         file_path = request.get("file_path")
 
-        # Fall back to active tab's path if file_path is not provided or is an in-memory URI
         if not file_path or file_path.startswith("inmemory://"):
             active_tab = self.active_tab
             if active_tab and active_tab.path:
@@ -646,7 +643,6 @@ class EditorState(rx.State):
 
         logger.debug(f"Received hover request for file {file_path}, line {line}, column {column}")
         if not file_path:
-            # Return empty hover info instead of raising an error
             logger.warning("No file path available for hover request, returning empty results")
             self.hover_info = {}
             self.hover_info["request_id"] = request.get("request_id", "")
@@ -658,14 +654,12 @@ class EditorState(rx.State):
         await lsp_client.open_document(uri, text)
         hover = await lsp_client.get_hover_info(uri, line, column)
 
-        # TODO: refactor this
         contents = ""
         if hover:
             hover_contents = hover.get("contents")
             if isinstance(hover_contents, dict):
                 contents = hover_contents.get("value", str(hover_contents))
             elif isinstance(hover_contents, list):
-                # Join all values if list of dicts/strings
                 values = []
                 for item in hover_contents:
                     if isinstance(item, dict):
@@ -690,7 +684,6 @@ class EditorState(rx.State):
         column = position.get("column", 0)
         file_path = request.get("file_path")
 
-        # Fall back to active tab's path if file_path is not provided or is an in-memory URI
         if not file_path or file_path.startswith("inmemory://"):
             active_tab = self.active_tab
             if active_tab and active_tab.path:
@@ -698,7 +691,6 @@ class EditorState(rx.State):
 
         logger.debug(f"Received declaration request for file {file_path}, line {line}, column {column}")
         if not file_path:
-            # Return empty declaration info instead of raising an error
             logger.warning("No file path available for declaration request, returning empty results")
             self.declaration_response = {"items": []}
             self.declaration_response["request_id"] = request.get("request_id", "")
@@ -769,7 +761,6 @@ class EditorState(rx.State):
         signature_help = await lsp_client.get_signature_help(uri, line, column)
 
         if signature_help:
-            # Convert LSP SignatureHelp to Monaco format
             signatures = []
             for sig in signature_help.get("signatures", []):
                 monaco_sig = {
@@ -868,12 +859,10 @@ class EditorState(rx.State):
         prepare_result = await lsp_client.prepare_rename(uri, line, column)
 
         if prepare_result:
-            # Can be a Range or { range: Range, placeholder: string }
             if "range" in prepare_result:
                 self.prepare_rename_response = prepare_result
                 self.prepare_rename_response["request_id"] = request.get("request_id", "")
             else:
-                # It's just a range
                 self.prepare_rename_response = {"range": prepare_result}
                 self.prepare_rename_response["request_id"] = request.get("request_id", "")
         else:
@@ -910,7 +899,6 @@ class EditorState(rx.State):
         workspace_edit = await lsp_client.rename_symbol(uri, line, column, new_name)
 
         if workspace_edit:
-            # Convert LSP WorkspaceEdit to a format usable by Monaco
             self.rename_response = {"edit": workspace_edit}
             self.rename_response["request_id"] = request.get("request_id", "")
         else:

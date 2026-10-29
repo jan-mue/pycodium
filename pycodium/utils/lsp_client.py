@@ -19,14 +19,12 @@ class BasedPyrightLSPClient:
         self.documents: dict[str, tuple[int, str]] = {}
         self.diagnostics: dict[str, list[dict[str, Any]]] = {}
         self.diagnostic_events: dict[str, asyncio.Event] = {}
-        # TODO: improve type annotation for futures
         self.pending_requests: dict[int, asyncio.Future[Any]] = {}
         self.logger = logging.getLogger(__name__)
 
     async def start_server(self) -> None:
         """Start the basedpyright LSP server process."""
         try:
-            # Start the basedpyright language server with stdio
             self.process = await asyncio.create_subprocess_exec(
                 self.server_path,
                 "--stdio",
@@ -35,10 +33,8 @@ class BasedPyrightLSPClient:
                 stderr=asyncio.subprocess.PIPE,
             )
 
-            # Start the response handler
             asyncio.create_task(self._handle_responses())  # noqa: RUF006
 
-            # Send initialize request
             await self._initialize()
 
             self.logger.info("basedpyright LSP server started successfully")
@@ -229,22 +225,17 @@ class BasedPyrightLSPClient:
         self.request_id += 1
         request_id = self.request_id
 
-        # TODO: improve type hint for message
         message: dict[str, Any] = {"jsonrpc": "2.0", "id": request_id, "method": method}
 
-        # Only add params if not None
         if params is not None:
             message["params"] = params
 
-        # Create future for response
         future = asyncio.Future()
         self.pending_requests[request_id] = future
 
-        # Send request
         await self._write_message(message)
 
         try:
-            # Wait for response with timeout
             response = await asyncio.wait_for(future, timeout=30.0)
             return response
         finally:
@@ -255,7 +246,6 @@ class BasedPyrightLSPClient:
         if not self.process or not self.process.stdin:
             raise RuntimeError("Server not started")
 
-        # TODO: improve type hint for message
         message: dict[str, Any] = {"jsonrpc": "2.0", "method": method}
 
         if params is not None:
@@ -292,14 +282,12 @@ class BasedPyrightLSPClient:
             buffer += data
 
             while True:
-                # Look for Content-Length header
                 if b"\r\n\r\n" not in buffer:
                     break
 
                 header_end = buffer.find(b"\r\n\r\n")
                 header = buffer[:header_end].decode("utf-8")
 
-                # Parse Content-Length
                 content_length = None
                 for line in header.split("\r\n"):
                     if line.startswith("Content-Length:"):
@@ -311,12 +299,10 @@ class BasedPyrightLSPClient:
                     buffer = buffer[header_end + 4 :]
                     continue
 
-                    # Check if we have the full message
                 message_start = header_end + 4
                 if len(buffer) < message_start + content_length:
                     break
 
-                    # Extract and process message
                 message_bytes = buffer[message_start : message_start + content_length]
                 buffer = buffer[message_start + content_length :]
 
@@ -329,7 +315,6 @@ class BasedPyrightLSPClient:
     async def _process_message(self, message: dict[str, Any]) -> None:
         """Process a message from the server."""
         if "id" in message:
-            # This is a response to a request
             request_id = message["id"]
             if request_id in self.pending_requests:
                 future = self.pending_requests[request_id]
@@ -340,7 +325,6 @@ class BasedPyrightLSPClient:
                 else:
                     future.set_result(message.get("result"))
         else:
-            # This is a notification from the server
             method = message.get("method")
             if method == "textDocument/publishDiagnostics":
                 params = message["params"]

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, get_type_hints
 
+import pytest
 import reflex as rx
 
 from pycodium.components.command_palette_state import CommandPaletteState
@@ -11,6 +12,8 @@ from pycodium.state import EditorState
 from pycodium.utils import lsp_client as lsp_module
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from pytest_mock import MockerFixture
 
 
@@ -95,3 +98,28 @@ async def test_failed_previous_cleanup_reaps_candidate(mocker: MockerFixture) ->
     candidate.stop_server.assert_awaited_once()
     assert state.current_interpreter == "/working/python"
     assert lsp_module.lsp_client is previous
+
+
+@pytest.mark.parametrize(
+    "handler",
+    [CommandPaletteState.handle_key_down, CommandPaletteState.select_command, CommandPaletteState.select_interpreter],
+)
+def test_event_annotations_resolve_at_runtime(handler: rx.EventHandler) -> None:
+    annotations = get_type_hints(handler.fn)
+    assert "return" in annotations
+
+
+async def test_interpreter_discovery_refreshes_for_current_project(mocker: MockerFixture, tmp_path: Path) -> None:
+    state = CommandPaletteState()
+    editor = mocker.Mock(project_root=tmp_path / "first")
+    mocker.patch.object(CommandPaletteState, "get_state", new_callable=mocker.AsyncMock, return_value=editor)
+    discover = mocker.patch("pycodium.components.command_palette_state.discover_python_interpreters", return_value=[])
+    await state.open_interpreter_palette()
+    discover.assert_called_with(tmp_path / "first", "")
+    await state.close_command_palette()
+    editor.project_root = tmp_path / "second"
+    await state.open_interpreter_palette()
+    discover.assert_called_with(tmp_path / "second", "")
+    await state.close_command_palette()
+    await state.open_interpreter_palette()
+    assert discover.call_count == 3

@@ -1,29 +1,18 @@
-"""Command Palette state management for PyCodium IDE.
-
-Manages the command palette state including:
-- Opening/closing the palette
-- Search filtering
-- Keyboard navigation
-- Command execution
-- Python interpreter discovery and selection
-"""
+"""Command palette state and actions."""
 
 from __future__ import annotations
 
 import asyncio
 import logging
-import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import reflex as rx
+from typing_extensions import Unpack
 
 from pycodium.components.command_palette import COMMANDS
-
-if TYPE_CHECKING:
-    from pythonfinder.models.python_info import PythonInfo  # pyright: ignore[reportMissingTypeStubs]
-    from reflex.event import EventCallback, EventSpec
-    from typing_extensions import Unpack
+from pycodium.state import EditorState
+from pycodium.utils import lsp_client as lsp_module
+from pycodium.utils.python_interpreters import discover_python_interpreters
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +27,6 @@ class CommandPaletteState(rx.State):
     mode: str = "commands"
     python_interpreters: list[dict[str, str]] = []
     current_interpreter: str = ""
-    _interpreters_loaded: bool = False
 
     @rx.event
     async def open_command_palette(self) -> None:
@@ -74,8 +62,7 @@ class CommandPaletteState(rx.State):
         self.search_query = ""
         self.selected_index = 0
         self.mode = "interpreters"
-        if not self._interpreters_loaded:
-            await self._discover_python_interpreters()
+        await self._discover_python_interpreters()
         logger.debug("Interpreter palette opened")
 
     @rx.event
@@ -94,7 +81,7 @@ class CommandPaletteState(rx.State):
     @rx.event
     async def handle_key_down(
         self, key: str, _key_info: rx.event.KeyInputInfo
-    ) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+    ) -> rx.event.EventSpec | rx.event.EventCallback[Unpack[tuple[()]]] | None:
         """Handle keyboard navigation in the command palette.
 
         Args:
@@ -121,7 +108,7 @@ class CommandPaletteState(rx.State):
         if key == "Enter":
             return await self._execute_selected()
 
-    async def _execute_selected(self) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+    async def _execute_selected(self) -> rx.event.EventSpec | rx.event.EventCallback[Unpack[tuple[()]]] | None:
         """Execute the currently selected item."""
         if self.mode == "commands" and 0 <= self.selected_index < len(self.filtered_command_ids):
             cmd_id = self.filtered_command_ids[self.selected_index]
@@ -131,7 +118,9 @@ class CommandPaletteState(rx.State):
             return await self.select_interpreter(interp["path"])
 
     @rx.event
-    async def select_command(self, command_id: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+    async def select_command(
+        self, command_id: str
+    ) -> rx.event.EventSpec | rx.event.EventCallback[Unpack[tuple[()]]] | None:
         """Execute a command by its ID."""
         logger.info(f"Executing command: {command_id}")
 
@@ -146,13 +135,12 @@ class CommandPaletteState(rx.State):
         self.mode = "interpreters"
         self.search_query = ""
         self.selected_index = 0
-        if not self._interpreters_loaded:
-            await self._discover_python_interpreters()
+        await self._discover_python_interpreters()
 
-    def _get_command_action(self, command_id: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+    def _get_command_action(
+        self, command_id: str
+    ) -> rx.event.EventSpec | rx.event.EventCallback[Unpack[tuple[()]]] | None:
         """Get the action for a command ID."""
-        from pycodium.state import EditorState  # noqa: PLC0415
-
         state_actions = {
             "toggle-sidebar": EditorState.toggle_sidebar,
             "open-settings": EditorState.open_settings,
@@ -191,7 +179,9 @@ class CommandPaletteState(rx.State):
         return None
 
     @rx.event
-    async def select_interpreter(self, interpreter_path: str) -> EventSpec | EventCallback[Unpack[tuple[()]]] | None:
+    async def select_interpreter(
+        self, interpreter_path: str
+    ) -> rx.event.EventSpec | rx.event.EventCallback[Unpack[tuple[()]]] | None:
         """Select a Python interpreter and restart the LSP server."""
         logger.info(f"Selecting Python interpreter: {interpreter_path}")
 
@@ -206,15 +196,11 @@ class CommandPaletteState(rx.State):
 
     async def _restart_lsp_with_interpreter(self, interpreter_path: str) -> None:
         """Restart the LSP server with the specified Python interpreter."""
-        from pycodium.utils import lsp_client as lsp_module  # noqa: PLC0415
-        from pycodium.utils.lsp_client import BasedPyrightLSPClient  # noqa: PLC0415
-
-        # Find basedpyright-langserver in the interpreter's environment
         interpreter_dir = Path(interpreter_path).parent
         langserver_path = interpreter_dir / "basedpyright-langserver"
         langserver_path_str = str(langserver_path) if langserver_path.exists() else "basedpyright-langserver"
 
-        candidate = BasedPyrightLSPClient(server_path=langserver_path_str, python_path=interpreter_path)
+        candidate = lsp_module.BasedPyrightLSPClient(server_path=langserver_path_str, python_path=interpreter_path)
         await candidate.start_server()
         previous = lsp_module.lsp_client
         try:
@@ -227,97 +213,11 @@ class CommandPaletteState(rx.State):
         logger.info(f"LSP server restarted with interpreter: {interpreter_path}")
 
     async def _discover_python_interpreters(self) -> None:
-        """Discover available Python interpreters on the system using pythonfinder."""
-        logger.debug("Discovering Python interpreters...")
-
-        interpreters = await asyncio.get_event_loop().run_in_executor(None, self._discover_interpreters_sync)
-
-        self.python_interpreters = interpreters
-        self._interpreters_loaded = True
-
-        if not self.current_interpreter and interpreters:
-            self.current_interpreter = interpreters[0]["path"]
-
-        logger.info(f"Discovered {len(interpreters)} Python interpreters")
-
-    def _discover_interpreters_sync(self) -> list[dict[str, str]]:
-        """Synchronous interpreter discovery using pythonfinder."""
-        interpreters: list[dict[str, str]] = []
-        seen_paths: set[str] = set()
-
-        self._discover_with_pythonfinder(interpreters, seen_paths)
-
-        return interpreters
-
-    def _discover_with_pythonfinder(self, interpreters: list[dict[str, str]], seen_paths: set[str]) -> None:
-        """Use pythonfinder to discover Python interpreters."""
-        from pythonfinder import Finder  # pyright: ignore[reportMissingTypeStubs]  # noqa: PLC0415
-
-        try:
-            finder = Finder()
-            for path_entry in finder.find_all_python_versions():
-                if not (path_entry and path_entry.path):
-                    continue
-
-                path_str = str(path_entry.path)
-                if path_str in seen_paths:
-                    continue
-                seen_paths.add(path_str)
-
-                version_str = self._get_version_string(path_entry)
-                interpreters.append({"path": path_str, "version": version_str})
-
-        except OSError as e:
-            logger.warning(f"Error discovering interpreters with pythonfinder: {e}")
-
-    def _get_version_string(self, path_entry: PythonInfo) -> str:
-        """Get version string from a pythonfinder path entry."""
-        version_str = "Python"
-        if path_entry.major is not None:
-            version_str = f"Python {path_entry.major}.{path_entry.minor}.{path_entry.patch}"
-
-            if path_entry.name:
-                name = path_entry.name
-                if "conda" in name.lower():
-                    version_str += " (conda)"
-                elif "pyenv" in str(path_entry.path).lower():
-                    version_str += " (pyenv)"
-
-        return version_str
-
-    def _discover_local_venvs(self, interpreters: list[dict[str, str]], seen_paths: set[str]) -> None:
-        """Discover local virtual environments that pythonfinder might miss."""
-        cwd = Path.cwd()
-        for venv_name in (".venv", "venv", ".env", "env"):
-            venv_dir = cwd / venv_name
-            python_path = venv_dir / "bin" / "python"
-            if not python_path.exists():
-                continue
-
-            path_str = str(python_path)
-            if path_str in seen_paths:
-                continue
-
-            seen_paths.add(path_str)
-            version_str = self._get_venv_version(path_str)
-            interpreters.insert(0, {"path": path_str, "version": version_str})
-
-    def _get_venv_version(self, path_str: str) -> str:
-        """Get version string for a venv Python interpreter."""
-        try:
-            result = subprocess.run(  # noqa: S603
-                [path_str, "--version"],
-                capture_output=True,
-                text=True,
-                timeout=2,
-                check=False,
-            )
-            version_str = result.stdout.strip() or "Python (venv)"
-            if "venv" not in version_str.lower():
-                version_str += " (venv)"
-            return version_str
-        except FileNotFoundError:
-            return "Python (venv)"
+        """Refresh interpreters for the project currently open in the editor."""
+        editor = await self.get_state(EditorState)
+        self.python_interpreters = await asyncio.to_thread(
+            discover_python_interpreters, editor.project_root, self.current_interpreter
+        )
 
     @rx.var
     def filtered_interpreters(self) -> list[dict[str, str]]:
@@ -345,13 +245,10 @@ class CommandPaletteState(rx.State):
         path = self.current_interpreter
         parts = path.split("/")
 
-        # Extract Python version from the executable name
         python_version = self._extract_python_version(parts)
 
-        # Detect package manager and venv name from path
         package_manager, venv_name = self._detect_venv_info(path, parts)
 
-        # Build the display string
         display_parts = []
 
         if package_manager:
@@ -383,7 +280,6 @@ class CommandPaletteState(rx.State):
         if ".venv" not in path and "venv" not in path and "envs" not in path:
             return package_manager, venv_name
 
-        # Find the venv directory name
         for i, part in enumerate(parts):
             if part in (".venv", "venv"):
                 venv_name = part

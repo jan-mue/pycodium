@@ -73,85 +73,59 @@ class MonacoEditor(rx.Component):
 
     is_default = True
 
-    # Value to display in the editor.
     value: rx.Var[str]
 
-    # Language to use in the editor.
     language: rx.Var[str]
 
-    # Path to the file in the editor.
     path: rx.Var[str]
 
-    # The theme to use for the editor.
     theme: rx.Var[str] = rx.color_mode_cond("light", "vs-dark")
 
-    # The line to jump to in the editor.
     line: rx.Var[int] = rx.Var.create(1)
 
-    # The width of the editor (default 100%).
     width: rx.Var[str]
 
-    # The height of the editor (default 100%).
     height: rx.Var[str]
 
-    # The default value to display in the editor.
     default_value: rx.Var[str]
 
-    # The default language to use for the editor.
     default_language: rx.Var[str]
 
-    # The path to the default file to load in the editor.
     default_path: rx.Var[str]
 
-    # Completion response from state
     completion_response: rx.Var[dict[str, Any]] = rx.Var.create({})
 
     diagnostics_response: rx.Var[dict[str, Any]] = rx.Var.create({})
     on_diagnostics_request: rx.EventHandler[rx.event.passthrough_event_spec(CompletionRequest)]
 
-    # Hover info from state
     hover_info: rx.Var[dict[str, Any]] = rx.Var.create({})
 
-    # Reference response from state
     reference_response: rx.Var[dict[str, list[dict[str, Any]]]] = rx.Var.create({})
 
-    # Declaration response from state
     declaration_response: rx.Var[dict[str, Any]] = rx.Var.create({})
 
-    # Signature help response from state
     signature_help_response: rx.Var[dict[str, Any]] = rx.Var.create({})
 
-    # Rename response from state
     rename_response: rx.Var[dict[str, Any]] = rx.Var.create({})
 
-    # Prepare rename response from state
     prepare_rename_response: rx.Var[dict[str, Any]] = rx.Var.create({})
 
-    # Triggered when the editor value changes.
     on_change: rx.EventHandler[rx.event.passthrough_event_spec(str)]
 
-    # Triggered when the content is validated. (limited to some languages)
     on_validate: rx.EventHandler[rx.event.passthrough_event_spec(str)]
 
-    # Triggered when a completion request is made.
     on_completion_request: rx.EventHandler[rx.event.passthrough_event_spec(CompletionRequest)]
 
-    # Triggered when a hover request is made.
     on_hover_request: rx.EventHandler[rx.event.passthrough_event_spec(HoverRequest)]
 
-    # Triggered when a declaration request is made.
     on_declaration_request: rx.EventHandler[rx.event.passthrough_event_spec(DeclarationRequest)]
 
-    # Triggered when a signature help request is made.
     on_signature_help_request: rx.EventHandler[rx.event.passthrough_event_spec(SignatureHelpRequest)]
 
-    # Triggered when a reference request is made.
     on_reference_request: rx.EventHandler[rx.event.passthrough_event_spec(ReferenceRequest)]
 
-    # Triggered when a prepare rename request is made.
     on_prepare_rename_request: rx.EventHandler[rx.event.passthrough_event_spec(PrepareRenameRequest)]
 
-    # Triggered when a rename request is made.
     on_rename_request: rx.EventHandler[rx.event.passthrough_event_spec(RenameRequest)]
 
     @override

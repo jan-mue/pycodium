@@ -41,7 +41,6 @@ def editor_content() -> rx.Component:
                     theme="vs-dark",
                     options=default_monaco_options,
                     on_change=lambda content: EditorState.update_tab_content(active_tab.id, content),
-                    # LSP response state vars
                     completion_response=EditorState.completion_response,
                     diagnostics_response=EditorState.diagnostics_response,
                     on_diagnostics_request=EditorState.handle_diagnostics_request,
@@ -51,7 +50,6 @@ def editor_content() -> rx.Component:
                     reference_response=EditorState.reference_response,
                     rename_response=EditorState.rename_response,
                     prepare_rename_response=EditorState.prepare_rename_response,
-                    # LSP request handlers
                     on_completion_request=EditorState.handle_completion_request,
                     on_hover_request=EditorState.handle_hover_request,
                     on_declaration_request=EditorState.handle_declaration_request,

@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import mimetypes
+import os
+import shutil
+import subprocess
+import sys
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
@@ -134,3 +138,37 @@ def test_lsp_after_interpreter_change(lsp_page: Page) -> None:
     expect(lsp_page.locator("#command-palette-container")).not_to_be_visible()
     action(lsp_page, "editor.action.showHover", 5, 11)
     expect(lsp_page.locator(".monaco-hover-content").first).to_contain_text("Greet a person", timeout=15000)
+
+
+def test_uv_project_environment_is_refreshed_and_selected(
+    lsp_page: Page, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    lsp_page.locator("#status-bar-interpreter").click()
+    expect(lsp_page.locator("#interpreter-list .command-palette-item").first).to_be_visible(timeout=15000)
+    lsp_page.keyboard.press("Escape")
+    expect(lsp_page.locator("#command-palette-container")).not_to_be_visible()
+
+    uv = shutil.which("uv")
+    assert uv is not None
+    environment = tmp_path / ".venv"
+    subprocess.run(
+        [uv, "venv", "--python", sys.executable, str(environment)],
+        env={**os.environ, "UV_CACHE_DIR": str(tmp_path / "uv-cache")},
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+
+    lsp_page.locator("#status-bar-interpreter").click()
+    first = lsp_page.locator("#interpreter-list .command-palette-item").first
+    expect(first).to_contain_text(str(python), timeout=15000)
+    lsp_page.keyboard.press("ArrowDown")
+    lsp_page.keyboard.press("ArrowUp")
+    expect(lsp_page.locator("#interpreter-list .bg-pycodium-highlight")).to_contain_text(str(python))
+    lsp_page.keyboard.press("Enter")
+    expect(lsp_page.get_by_text(f"Python interpreter set to: {python}", exact=False)).to_be_visible(timeout=15000)
+    expect(lsp_page.locator("#command-palette-container")).not_to_be_visible()
+    action(lsp_page, "editor.action.showHover", 5, 11)
+    expect(lsp_page.locator(".monaco-hover-content").first).to_contain_text("Greet a person", timeout=15000)
+    assert "Error transforming event payload" not in caplog.text

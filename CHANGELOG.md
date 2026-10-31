@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.5](https://github.com/jan-mue/pycodium/compare/v0.3.4...v0.3.5) (2026-10-31)
+
+
+### Bug Fixes
+
+* **deps:** update dependency granian to v2.8.5 ([#924](https://github.com/jan-mue/pycodium/issues/924)) ([b9c0c69](https://github.com/jan-mue/pycodium/commit/b9c0c69ce4ec94a13148fe64f8d209df225513b5))
+
 ## [0.3.4](https://github.com/jan-mue/pycodium/compare/v0.3.3...v0.3.4) (2026-10-25)
 
 

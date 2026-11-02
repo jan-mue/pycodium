@@ -70,7 +70,7 @@ repos:
         name: Check pyproject dependencies are pinned
         language: pygrep
         files: '(^|/)pyproject\.toml$'
-        entry: '^\s*"[^"]+\s*(>=|<=|~=|!=|<|>|==[^"]*\*)'
+        entry: '^\s*"[^";]+\s*(>=|<=|~=|!=|<|>|==[^";]*\*)'
       - id: forbid-ble001-ignore
         name: Forbid explicit BLE001 ignores
         language: pygrep

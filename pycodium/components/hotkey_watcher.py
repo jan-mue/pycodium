@@ -15,6 +15,11 @@ class GlobalHotkeyWatcher(rx.Fragment):
     on_key_down: rx.EventHandler[key_event]
 
     @override
+    def _exclude_props(self) -> list[str]:
+        """Keep the document listener callback off the React fragment."""
+        return [*super()._exclude_props(), "on_key_down"]
+
+    @override
     def add_imports(self) -> imports.ImportDict:
         """Add the imports for the component."""
         return {

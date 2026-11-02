@@ -10,6 +10,7 @@ import pytest
 from pycodium.constants import INITIAL_PATH_ENV_VAR
 from pycodium.models.tabs import EditorTab
 from pycodium.state import EditorState
+from pycodium.utils import lsp_client as lsp_module
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -503,3 +504,24 @@ async def test_open_project_with_file_path(state: EditorState, tmp_path: Path, m
 
     assert state.project_root == tmp_path
     assert state.file_tree is not None
+
+
+async def test_closing_tab_notifies_existing_server(state: EditorState, mocker: MockerFixture, tmp_path: Path) -> None:
+    tab = EditorTab(
+        id="1",
+        title="a file.py",
+        language="python",
+        content="",
+        encoding="utf-8",
+        path=str(tmp_path / "a file.py"),
+        on_not_active=asyncio.Event(),
+    )
+    state.tabs = [tab]
+    state.active_tab_id = tab.id
+    client = mocker.Mock()
+    client.close_document = mocker.AsyncMock()
+    mocker.patch.object(lsp_module, "lsp_client", client)
+    await state.close_tab(tab.id)
+    client.close_document.assert_awaited_once_with((tmp_path / "a file.py").as_uri())
+    assert not state.tabs
+    assert state.active_tab_id is None

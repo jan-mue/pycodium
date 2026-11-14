@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.5](https://github.com/jan-mue/pycodium/compare/v0.3.4...v0.3.5) (2026-11-14)
+
+
+### Bug Fixes
+
+* **deps:** update dependency anyio to v4.16.0 ([#952](https://github.com/jan-mue/pycodium/issues/952)) ([85bab4b](https://github.com/jan-mue/pycodium/commit/85bab4b361715467f28f3c0876f2068ed5bf558a))
+* **deps:** update dependency granian to v2.8.5 ([#924](https://github.com/jan-mue/pycodium/issues/924)) ([b9c0c69](https://github.com/jan-mue/pycodium/commit/b9c0c69ce4ec94a13148fe64f8d209df225513b5))
+* **deps:** update dependency granian to v2.8.6 ([#947](https://github.com/jan-mue/pycodium/issues/947)) ([20ccbb3](https://github.com/jan-mue/pycodium/commit/20ccbb39e355ff9ccd7c627e0bb6de77b094e039))
+* **deps:** update dependency granian to v2.8.7 ([#948](https://github.com/jan-mue/pycodium/issues/948)) ([984cd26](https://github.com/jan-mue/pycodium/commit/984cd2687d5c1cca8d21d11ad066b0a8465f48c2))
+* **deps:** update dependency pydantic to v2.14.2 ([#949](https://github.com/jan-mue/pycodium/issues/949)) ([bcc23ba](https://github.com/jan-mue/pycodium/commit/bcc23ba30c6ed83001756e781753de3e6033e206))
+* **deps:** update dependency pydantic to v2.14.3 ([#970](https://github.com/jan-mue/pycodium/issues/970)) ([e5693d6](https://github.com/jan-mue/pycodium/commit/e5693d6428c2a0c0d3ad0c8ae7aaec48be46909c))
+* **deps:** update dependency typer to v0.28.0 ([#971](https://github.com/jan-mue/pycodium/issues/971)) ([5cc3de9](https://github.com/jan-mue/pycodium/commit/5cc3de9aedb8a82aa0bd233feca3225e9c0a40c6))
+
 ## [0.3.4](https://github.com/jan-mue/pycodium/compare/v0.3.3...v0.3.4) (2026-10-25)
 
 
